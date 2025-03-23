@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beautiful Interface Demo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #4f46e5;
+            --accent-color: #ec4899;
+            --success-color: #10b981;
+            --text-color: #f8fafc;
+            --light-text: #94a3b8;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #2d3748;
+            --sidebar-bg: #131c31;
+            --border-radius: 12px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .app-window {
+            width: 900px;
+            height: 550px;
+            background-color: var(--bg-color);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--card-border);
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            display: flex;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--card-border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .app-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .app-logo {
+            color: var(--primary-color);
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        
+        .app-name {
+            font-size: 20px;
+            font-weight: 600;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .search-box {
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .search-icon {
+            color: var(--light-text);
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        
+        .search-input {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+        }
+        
+        .search-input::placeholder {
+            color: var(--light-text);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: var(--light-text);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .sidebar-header-icon {
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-item:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+        
+        .sidebar-item.active {
+            background-color: rgba(99, 102, 241, 0.15);
+        }
+        
+        .sidebar-item-icon {
+            width: 16px;
+            margin-right: 10px;
+            color: var(--light-text);
+        }
+        
+        .sidebar-item.active .sidebar-item-icon {
+            color: var(--primary-color);
+        }
+        
+        .sidebar-item-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .request-bar {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .method-selector {
+            position: relative;
+        }
+        
+        .method-button {
+            background-color: rgba(99, 102, 241, 0.15);
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .method-icon {
+            font-size: 12px;
+        }
+        
+        .url-bar {
+            flex: 1;
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+        
+        .send-button {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
+        }
+        
+        .send-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
+        }
+        
+        .tabs-row {
+            display: flex;
+            border-bottom: 1px solid var(--card-border);
+            padding: 0 20px;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--light-text);
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+        
+        .response-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .response-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .status-pill {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        
+        .response-meta {
+            display: flex;
+            gap: 15px;
+            color: var(--light-text);
+            font-size: 13px;
+        }
+        
+        .response-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .response-body {
+            flex: 1;
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow: auto;
+        }
+        
+        .json-key {
+            color: #f59e0b;
+        }
+        
+        .json-string {
+            color: #10b981;
+        }
+        
+        .json-number {
+            color: #3b82f6;
+        }
+        
+        .json-boolean {
+            color: #ec4899;
+        }
+        
+        .json-null {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-window">
+        <div class="sidebar">
+            <div class="app-title">
+                <div class="app-logo">
+                    <i class="fas fa-code"></i>
+                </div>
+                <div class="app-name">Restify</div>
+            </div>
+            
+            <div class="search-box">
+                <div class="search-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <input type="text" class="search-input" placeholder="Search...">
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <div>Collections</div>
+                    <div class="sidebar-header-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                </div>
+                
+                <div class="sidebar-item active">
+                    <div class="sidebar-item-icon">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="sidebar-item-text">User API</div>
+                </div>
+                
+                <div class="sidebar-item">
+                    <div class="sidebar-item-icon">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="sidebar-item-text">Products API</div>
+                </div>
+                
+                <div class="sidebar-item">
+                    <div class="sidebar-item-icon">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="sidebar-item-text">Auth Service</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <div>History</div>
+                </div>
+                
+                <div class="sidebar-item">
+                    <div class="sidebar-item-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="sidebar-item-text">GET /users</div>
+                </div>
+                
+                <div class="sidebar-item">
+                    <div class="sidebar-item-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="sidebar-item-text">POST /login</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="request-bar">
+                <div class="method-selector">
+                    <button class="method-button">
+                        GET
+                        <i class="fas fa-chevron-down method-icon"></i>
+                    </button>
+                </div>
+                
+                <input type="text" class="url-bar" value="https://api.example.com/users">
+                
+                <button class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                    Send
+                </button>
+            </div>
+            
+            <div class="tabs-row">
+                <div class="tab">Params</div>
+                <div class="tab">Headers</div>
+                <div class="tab active">Body</div>
+                <div class="tab">Auth</div>
+            </div>
+            
+            <div class="response-area">
+                <div class="response-header">
+                    <div class="status-pill">200 OK</div>
+                    <div class="response-meta">
+                        <div class="response-meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span>85 ms</span>
+                        </div>
+                        <div class="response-meta-item">
+                            <i class="fas fa-database"></i>
+                            <span>1.2 KB</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="response-body">
+                    <pre><span class="json-key">{</span>
+  <span class="json-key">"users"</span><span>: </span><span class="json-key">[</span>
+    <span class="json-key">{</span>
+      <span class="json-key">"id"</span><span>: </span><span class="json-number">1</span><span>,</span>
+      <span class="json-key">"name"</span><span>: </span><span class="json-string">"John Doe"</span><span>,</span>
+      <span class="json-key">"email"</span><span>: </span><span class="json-string">"john@example.com"</span><span>,</span>
+      <span class="json-key">"is_active"</span><span>: </span><span class="json-boolean">true</span><span>,</span>
+      <span class="json-key">"created_at"</span><span>: </span><span class="json-string">"2023-04-15T10:30:00Z"</span>
+    <span class="json-key">}</span><span>,</span>
+    <span class="json-key">{</span>
+      <span class="json-key">"id"</span><span>: </span><span class="json-number">2</span><span>,</span>
+      <span class="json-key">"name"</span><span>: </span><span class="json-string">"Jane Smith"</span><span>,</span>
+      <span class="json-key">"email"</span><span>: </span><span class="json-string">"jane@example.com"</span><span>,</span>
+      <span class="json-key">"is_active"</span><span>: </span><span class="json-boolean">true</span><span>,</span>
+      <span class="json-key">"created_at"</span><span>: </span><span class="json-string">"2023-05-20T14:45:00Z"</span>
+    <span class="json-key">}</span><span>,</span>
+    <span class="json-key">{</span>
+      <span class="json-key">"id"</span><span>: </span><span class="json-number">3</span><span>,</span>
+      <span class="json-key">"name"</span><span>: </span><span class="json-string">"Robert Johnson"</span><span>,</span>
+      <span class="json-key">"email"</span><span>: </span><span class="json-string">"robert@example.com"</span><span>,</span>
+      <span class="json-key">"is_active"</span><span>: </span><span class="json-boolean">false</span><span>,</span>
+      <span class="json-key">"created_at"</span><span>: </span><span class="json-string">"2023-06-10T09:15:00Z"</span>
+    <span class="json-key">}</span>
+  <span class="json-key">]</span><span>,</span>
+  <span class="json-key">"metadata"</span><span>: </span><span class="json-key">{</span>
+    <span class="json-key">"total"</span><span>: </span><span class="json-number">3</span><span>,</span>
+    <span class="json-key">"page"</span><span>: </span><span class="json-number">1</span><span>,</span>
+    <span class="json-key">"limit"</span><span>: </span><span class="json-number">10</span>
+  <span class="json-key">}</span>
+<span class="json-key">}</span></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

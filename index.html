@@ -5,16 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restify - A Modern REST API Client for Developers</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cereal:wght@300;400;500;600;700&display=swap">
     <style>
         :root {
             --primary-color: #6366f1;
             --secondary-color: #4f46e5;
-            --dark-color: #1e1e2e;
             --text-color: #f8fafc;
             --light-text: #94a3b8;
-            --accent-color: #ec4899;
             --bg-color: #0f172a;
             --card-bg: #1e293b;
+            --dark-color: #1e1e2e;
+            --border-radius: 12px;
+            --shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            --accent-color: #ec4899;
+            --card-border: #2d3748;
+            --glow-color: rgba(99, 102, 241, 0.2);
         }
         
         * {
@@ -24,24 +29,26 @@
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            font-family: 'Cereal', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            line-height: 1.6;
+            line-height: 1.5;
         }
         
         header {
-            background-color: var(--dark-color);
-            padding: 1.5rem 0;
+            background-color: rgba(20, 24, 42, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 1.25rem 0;
             position: sticky;
             top: 0;
             z-index: 10;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
         }
         
         .container {
             width: 90%;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
@@ -78,149 +85,605 @@
             color: var(--light-text);
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.3s;
+            transition: color 0.2s;
         }
         
         nav ul li a:hover {
-            color: var(--accent-color);
+            color: var(--primary-color);
+        }
+        
+        .hero-wrapper {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-color) 0%, rgba(15, 23, 42, 0.9) 100%);
+        }
+        
+        .hero-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 0%, var(--glow-color) 0%, transparent 50%);
+            z-index: 1;
+            opacity: 0.6;
         }
         
         .hero {
-            padding: 6rem 0;
+            padding: 8rem 0 10rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        .hero-content {
+            max-width: 650px;
             text-align: center;
+            margin-bottom: 4rem;
         }
         
         .hero h1 {
-            font-size: 3.5rem;
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1.1;
             margin-bottom: 1.5rem;
             background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: fadeInUp 0.8s ease-out forwards;
+            letter-spacing: -0.03em;
         }
         
         .hero p {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             color: var(--light-text);
-            max-width: 700px;
-            margin: 0 auto 2.5rem;
+            margin-bottom: 2.5rem;
+            font-weight: 400;
+            animation: fadeInUp 0.8s ease-out 0.2s forwards;
+            opacity: 0;
+            max-width: 540px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .cta-buttons {
             display: flex;
-            justify-content: center;
             gap: 1rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeInUp 0.8s ease-out 0.4s forwards;
+            opacity: 0;
+        }
+        
+        .hero-image-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            transform: perspective(1000px) rotateX(5deg);
+            filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.5));
+            transition: all 0.3s ease;
+            animation: floatUpDown 6s ease-in-out infinite, fadeIn 1s ease 0.6s forwards;
+            opacity: 0;
+        }
+        
+        .hero-image-container:hover {
+            transform: perspective(1000px) rotateX(0deg) scale(1.02);
+        }
+        
+        .hero-image {
+            width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 0 30px var(--glow-color), 
+                        inset 0 0 20px rgba(99, 102, 241, 0.1);
+        }
+        
+        .floating-badge {
+            position: absolute;
+            background: rgba(30, 30, 46, 0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            color: var(--text-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            animation: fadeInSlideUp 0.8s ease forwards;
+            opacity: 0;
+        }
+        
+        .badge-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 0.75rem;
+            font-size: 0.85rem;
+        }
+        
+        .badge-text {
+            font-weight: 600;
+        }
+        
+        .badge-1 {
+            left: 5%;
+            top: 10%;
+            animation-delay: 0.8s;
+        }
+        
+        .badge-2 {
+            right: 5%;
+            top: 20%;
+            animation-delay: 1s;
+        }
+        
+        .badge-3 {
+            left: 10%;
+            bottom: 10%;
+            animation-delay: 1.2s;
         }
         
         .button {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
         }
         
         .primary-button {
-            background-color: var(--primary-color);
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
             color: white;
-            border: 2px solid var(--primary-color);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
         
         .primary-button:hover {
-            background-color: var(--secondary-color);
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.5);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
         }
         
         .secondary-button {
-            background-color: transparent;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--text-color);
+            border: 1px solid rgba(99, 102, 241, 0.3);
         }
         
         .secondary-button:hover {
-            background-color: rgba(99, 102, 241, 0.1);
+            background-color: rgba(99, 102, 241, 0.2);
             transform: translateY(-2px);
         }
         
-        .download-section {
-            background-color: var(--card-bg);
-            padding: 4rem 0;
-            text-align: center;
-            border-radius: 1rem;
-            margin: 4rem auto;
-            max-width: 1000px;
+        .features-section {
+            padding: 8rem 0;
+            background-color: var(--bg-color);
+            position: relative;
         }
         
-        .download-section h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 5rem;
+        }
+        
+        .section-header h2 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
             color: var(--text-color);
+        }
+        
+        .section-header p {
+            font-size: 1.25rem;
+            color: var(--light-text);
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2.5rem;
+            margin-top: 3rem;
+            position: relative;
+        }
+        
+        .bento-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .bento-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 0%, transparent 50%, rgba(99, 102, 241, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 1;
+        }
+        
+        .bento-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: var(--primary-color);
+        }
+        
+        .bento-card:hover::before {
+            opacity: 1;
+        }
+        
+        .bento-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .bento-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background-color: rgba(99, 102, 241, 0.15);
+            color: var(--primary-color);
+            font-size: 1.25rem;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            margin-right: 1.5rem;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bento-icon::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .bento-text {
+            flex: 1;
+        }
+        
+        .bento-card:hover .bento-icon {
+            transform: scale(1.1) rotate(-5deg);
+            background-color: rgba(99, 102, 241, 0.25);
+        }
+        
+        .bento-card:hover .bento-icon::after {
+            opacity: 1;
+        }
+        
+        .bento-card:nth-child(2) .bento-icon {
+            background-color: rgba(236, 72, 153, 0.15);
+            color: var(--accent-color);
+        }
+        
+        .bento-card:nth-child(2):hover .bento-icon {
+            background-color: rgba(236, 72, 153, 0.25);
+        }
+        
+        .bento-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .bento-card p {
+            color: var(--light-text);
+            line-height: 1.6;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .bento-image-container {
+            margin-top: auto;
+            position: relative;
+            z-index: 2;
+            border-radius: calc(var(--border-radius) - 4px);
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+            transform-origin: center bottom;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            background: var(--bg-color);
+        }
+        
+        .bento-card:hover .bento-image-container {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .bento-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top;
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .bento-card:hover .bento-image {
+            transform: scale(1.05);
+        }
+        
+        .feature-highlight {
+            display: inline-block;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .feature-highlight::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        
+        .bento-card:hover .feature-highlight::after {
+            transform: scaleX(1);
+        }
+        
+        .download-section {
+            background-color: #101827;
+            padding: 8rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .download-section::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle at 10% 50%, var(--glow-color) 0%, transparent 45%);
+            opacity: 0.3;
         }
         
         .download-options {
             display: flex;
             justify-content: center;
-            gap: 2rem;
-            margin-top: 2rem;
+            gap: 2.5rem;
+            margin-top: 3rem;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .download-card {
-            background-color: var(--dark-color);
-            border-radius: 1rem;
-            padding: 2rem;
-            width: 300px;
+            background-color: #1a1e2e;
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            width: 320px;
             text-align: center;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--card-border);
         }
         
         .download-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.4), 0 0 30px var(--glow-color);
+            border-color: var(--primary-color);
         }
         
         .download-card h3 {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             margin-bottom: 1rem;
+            font-weight: 600;
             color: var(--text-color);
         }
         
         .download-card p {
-            font-size: 1rem;
+            font-size: 1.1rem;
             color: var(--light-text);
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .download-card .button {
+            width: 100%;
+            background: #6366f1;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+        
+        .download-card .button:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .version-info {
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--light-text);
+            font-size: 0.95rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .version-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .version-info a:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
         }
         
         footer {
-            background-color: var(--dark-color);
-            padding: 3rem 0;
-            text-align: center;
+            background-color: #101827;
+            padding: 5rem 0 2rem;
+            border-top: 1px solid var(--card-border);
         }
         
-        footer p {
-            color: var(--light-text);
-            margin-top: 1rem;
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
         }
         
         .social-links {
             display: flex;
-            justify-content: center;
             gap: 1.5rem;
-            margin-top: 1rem;
         }
         
         .social-links a {
             color: var(--light-text);
             font-size: 1.5rem;
-            transition: color 0.3s;
+            transition: all 0.2s;
         }
         
         .social-links a:hover {
-            color: var(--accent-color);
+            color: var(--primary-color);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            width: 100%;
+            text-align: center;
+            margin-top: 3rem;
+            color: var(--light-text);
+            font-size: 0.95rem;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes floatUpDown {
+            0%, 100% {
+                transform: perspective(1000px) rotateX(5deg) translateY(0);
+            }
+            50% {
+                transform: perspective(1000px) rotateX(5deg) translateY(-10px);
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .hero h1 {
+                font-size: 3.5rem;
+            }
+            
+            .floating-badge {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            .hero-image-container {
+                transform: none;
+                max-width: 95%;
+                margin-top: 3rem;
+                animation: fadeIn 1s ease 0.6s forwards;
+            }
+            
+            .hero-content {
+                max-width: 100%;
+                text-align: center;
+                margin: 0 auto;
+            }
+            
+            .hero h1 {
+                font-size: 3.2rem;
+            }
+            
+            .hero {
+                padding: 6rem 0;
+            }
+            
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
         }
         
         @media (max-width: 768px) {
@@ -229,12 +692,25 @@
             }
             
             .hero p {
-                font-size: 1.1rem;
+                font-size: 1.25rem;
             }
             
-            .download-options {
+            .section-header h2 {
+                font-size: 2.2rem;
+            }
+            
+            .footer-content {
                 flex-direction: column;
-                align-items: center;
+                text-align: center;
+            }
+            
+            .hero {
+                padding: 5rem 0;
+            }
+            
+            .features-section,
+            .download-section {
+                padding: 5rem 0;
             }
         }
     </style>
@@ -250,86 +726,119 @@
                 <ul>
                     <li><a href="#features">Features</a></li>
                     <li><a href="#download">Download</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="https://github.com/electron-react-boilerplate/electron-react-boilerplate" target="_blank">GitHub</a></li>
+                    <li><a href="https://github.com/AugmentedMode/Restify" target="_blank">GitHub</a></li>
                 </ul>
             </nav>
         </div>
     </header>
     
-    <section class="hero">
+    <div class="hero-wrapper">
+        <section class="hero">
+            <div class="container hero-container">
+                <div class="hero-content">
+                    <h1>Beautifully Simple REST API Client</h1>
+                    <p>A beautiful, intuitive REST API client designed for modern developers.</p>
+                    
+                    <div class="cta-buttons">
+                        <a href="#download" class="button primary-button">
+                            <i class="fas fa-download" style="margin-right: 8px;"></i>
+                            Download Now
+                        </a>
+                        <a href="#features" class="button secondary-button">Learn More</a>
+                    </div>
+                </div>
+                
+                <div class="hero-image-container">
+                    <img src="assets/app1.png" alt="Restify App Screenshot" class="hero-image">
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <section id="features" class="features-section">
         <div class="container">
-            <h1>A Modern REST API Client for Developers</h1>
-            <p>Restify helps you build, test, and debug APIs faster. It's packed with powerful features designed for modern developers, with a beautiful and intuitive interface.</p>
+            <div class="section-header">
+                <h2>Why developers love Restify</h2>
+                <p>Designed with your workflow in mind</p>
+            </div>
             
-            <div class="cta-buttons">
-                <a href="#download" class="button primary-button">Download Now</a>
-                <a href="#features" class="button secondary-button">Learn More</a>
+            <div class="bento-grid">
+                <div class="bento-card">
+                    <div class="bento-card-header">
+                        <div class="bento-icon">
+                            <i class="fas fa-file-import"></i>
+                        </div>
+                        <div class="bento-text">
+                            <h3>Seamless Imports</h3>
+                        </div>
+                    </div>
+                    <p>Import your entire <span class="feature-highlight">Postman</span> or <span class="feature-highlight">Insomnia</span> collections with just one click. All your endpoints, headers, and environments - instantly available.</p>
+                    <div class="bento-image-container">
+                        <img src="assets/import.png" class="bento-image" alt="Import collections from Postman and Insomnia">
+                    </div>
+                </div>
+                
+                <div class="bento-card">
+                    <div class="bento-card-header">
+                        <div class="bento-icon">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <div class="bento-text">
+                            <h3>Beautiful & Lightweight</h3>
+                        </div>
+                    </div>
+                    <p>A <span class="feature-highlight">stunning dark interface</span> that's easy on the eyes, with no bloat or unnecessary features to slow you down. Just pure API testing efficiency.</p>
+                    <div class="bento-image-container">
+                        <img src="assets/design.png" class="bento-image" alt="Beautiful dark interface with no bloat">
+                    </div>
+                </div>
             </div>
         </div>
     </section>
     
-    <section id="download" class="download-section container">
-        <h2>Download Restify</h2>
-        <p>Choose the right version for your Mac:</p>
-        
-        <div class="download-options">
-            <div class="download-card">
-                <h3>Apple Silicon</h3>
-                <p>For Macs with M1/M2/M3 chips</p>
-                <a href="downloads/Restify-1.0.0-arm64.dmg" class="button primary-button">Download for Apple Silicon</a>
+    <section id="download" class="download-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Download Restify</h2>
+                <p>Get the latest version for your Mac</p>
             </div>
             
-            <div class="download-card">
-                <h3>Intel Mac</h3>
-                <p>For Macs with Intel processors</p>
-                <a href="downloads/Restify-1.0.0.dmg" class="button primary-button">Download for Intel Mac</a>
-            </div>
-        </div>
-        
-        <p style="margin-top: 2rem; color: var(--light-text);">
-            Version 1.0.0 | <a href="#" style="color: var(--primary-color);">View Release Notes</a>
-        </p>
-    </section>
-    
-    <section id="features" class="container" style="padding: 4rem 0;">
-        <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 3rem;">Key Features</h2>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
-            <div style="background-color: var(--card-bg); padding: 2rem; border-radius: 1rem;">
-                <i class="fas fa-bolt" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
-                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Lightning Fast</h3>
-                <p style="color: var(--light-text);">Built with performance in mind, Restify gives you instant responses even for complex API calls.</p>
+            <div class="download-options">
+                <div class="download-card">
+                    <h3>Apple Silicon</h3>
+                    <p>For Macs with M1, M2 or M3 chips</p>
+                    <a href="downloads/Restify-1.0.0-arm64.dmg" class="button">Download for Apple Silicon</a>
+                </div>
+                
+                <div class="download-card">
+                    <h3>Intel Mac</h3>
+                    <p>For Macs with Intel processors</p>
+                    <a href="downloads/Restify-1.0.0.dmg" class="button">Download for Intel Mac</a>
+                </div>
             </div>
             
-            <div style="background-color: var(--card-bg); padding: 2rem; border-radius: 1rem;">
-                <i class="fas fa-palette" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
-                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Beautiful Interface</h3>
-                <p style="color: var(--light-text);">A clean, intuitive interface that makes API testing a pleasure, not a chore.</p>
-            </div>
-            
-            <div style="background-color: var(--card-bg); padding: 2rem; border-radius: 1rem;">
-                <i class="fas fa-code" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
-                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Advanced Editor</h3>
-                <p style="color: var(--light-text);">Built-in syntax highlighting and code formatting for JSON, XML, and more.</p>
+            <div class="version-info">
+                Version 1.0.0 • <a href="#">Release Notes</a> • <a href="#">Previous Versions</a>
             </div>
         </div>
     </section>
     
     <footer>
         <div class="container">
-            <a href="#" class="logo">
-                <i class="fas fa-code"></i>
-                Restify
-            </a>
-            
-            <div class="social-links">
-                <a href="#"><i class="fab fa-github"></i></a>
-                <a href="#"><i class="fab fa-twitter"></i></a>
-                <a href="#"><i class="fab fa-discord"></i></a>
+            <div class="footer-content">
+                <a href="#" class="logo">
+                    <i class="fas fa-code"></i>
+                    Restify
+                </a>
+                
+                <div class="social-links">
+                    <a href="https://github.com/AugmentedMode/Restify"><i class="fab fa-github"></i></a>
+                </div>
+                
+                <div class="copyright">
+                    &copy; 2025 Restify. All rights reserved.
+                </div>
             </div>
-            
-            <p>&copy; 2025 Restify. All rights reserved.</p>
         </div>
     </footer>
 </body>
