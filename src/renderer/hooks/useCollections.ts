@@ -53,9 +53,12 @@ export default function useCollections(initialCollections: Folder[] = []): UseCo
       try {
         setLoading(true);
         const result = await loadCollections();
-        if (result.success && result.collections && result.collections.length > 0) {
-          setCollections(result.collections);
+        if (result.success) {
+          // If collections were successfully loaded (even if it's an empty array),
+          // use them instead of the initial collections
+          setCollections(result.collections || []);
         } else {
+          // Only use initialCollections if we couldn't load from storage
           setCollections(initialCollections);
         }
         setError(null);
@@ -82,7 +85,7 @@ export default function useCollections(initialCollections: Folder[] = []): UseCo
       }
     };
 
-    if (collections.length > 0 && !loading) {
+    if (!loading) {
       persistCollections();
     }
   }, [collections, loading]);

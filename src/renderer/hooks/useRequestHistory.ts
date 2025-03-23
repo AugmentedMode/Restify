@@ -40,7 +40,7 @@ export default function useRequestHistory() {
       }
     };
 
-    if (requestHistory.length > 0 && !loading) {
+    if (!loading) {
       persistHistory();
     }
   }, [requestHistory, loading]);
