@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restify - A Modern REST API Client for Developers</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #4f46e5;
+            --dark-color: #1e1e2e;
+            --text-color: #f8fafc;
+            --light-text: #94a3b8;
+            --accent-color: #ec4899;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--dark-color);
+            padding: 1.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            color: var(--accent-color);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 2rem;
+        }
+        
+        nav ul li a {
+            color: var(--light-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        nav ul li a:hover {
+            color: var(--accent-color);
+        }
+        
+        .hero {
+            padding: 6rem 0;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--light-text);
+            max-width: 700px;
+            margin: 0 auto 2.5rem;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+        
+        .primary-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: 2px solid var(--primary-color);
+        }
+        
+        .primary-button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.5);
+        }
+        
+        .secondary-button {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .secondary-button:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .download-section {
+            background-color: var(--card-bg);
+            padding: 4rem 0;
+            text-align: center;
+            border-radius: 1rem;
+            margin: 4rem auto;
+            max-width: 1000px;
+        }
+        
+        .download-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+        }
+        
+        .download-options {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .download-card {
+            background-color: var(--dark-color);
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 300px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .download-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .download-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+        
+        .download-card p {
+            font-size: 1rem;
+            color: var(--light-text);
+            margin-bottom: 1.5rem;
+        }
+        
+        footer {
+            background-color: var(--dark-color);
+            padding: 3rem 0;
+            text-align: center;
+        }
+        
+        footer p {
+            color: var(--light-text);
+            margin-top: 1rem;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .social-links a {
+            color: var(--light-text);
+            font-size: 1.5rem;
+            transition: color 0.3s;
+        }
+        
+        .social-links a:hover {
+            color: var(--accent-color);
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .download-options {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container nav-container">
+            <a href="#" class="logo">
+                <i class="fas fa-code"></i>
+                Restify
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#download">Download</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="https://github.com/electron-react-boilerplate/electron-react-boilerplate" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <section class="hero">
+        <div class="container">
+            <h1>A Modern REST API Client for Developers</h1>
+            <p>Restify helps you build, test, and debug APIs faster. It's packed with powerful features designed for modern developers, with a beautiful and intuitive interface.</p>
+            
+            <div class="cta-buttons">
+                <a href="#download" class="button primary-button">Download Now</a>
+                <a href="#features" class="button secondary-button">Learn More</a>
+            </div>
+        </div>
+    </section>
+    
+    <section id="download" class="download-section container">
+        <h2>Download Restify</h2>
+        <p>Choose the right version for your Mac:</p>
+        
+        <div class="download-options">
+            <div class="download-card">
+                <h3>Apple Silicon</h3>
+                <p>For Macs with M1/M2/M3 chips</p>
+                <a href="downloads/Restify-1.0.0-arm64.dmg" class="button primary-button">Download for Apple Silicon</a>
+            </div>
+            
+            <div class="download-card">
+                <h3>Intel Mac</h3>
+                <p>For Macs with Intel processors</p>
+                <a href="downloads/Restify-1.0.0.dmg" class="button primary-button">Download for Intel Mac</a>
+            </div>
+        </div>
+        
+        <p style="margin-top: 2rem; color: var(--light-text);">
+            Version 1.0.0 | <a href="#" style="color: var(--primary-color);">View Release Notes</a>
+        </p>
+    </section>
+    
+    <section id="features" class="container" style="padding: 4rem 0;">
+        <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 3rem;">Key Features</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+            <div style="background-color: var(--card-bg); padding: 2rem; border-radius: 1rem;">
+                <i class="fas fa-bolt" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Lightning Fast</h3>
+                <p style="color: var(--light-text);">Built with performance in mind, Restify gives you instant responses even for complex API calls.</p>
+            </div>
+            
+            <div style="background-color: var(--card-bg); padding: 2rem; border-radius: 1rem;">
+                <i class="fas fa-palette" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Beautiful Interface</h3>
+                <p style="color: var(--light-text);">A clean, intuitive interface that makes API testing a pleasure, not a chore.</p>
+            </div>
+            
+            <div style="background-color: var(--card-bg); padding: 2rem; border-radius: 1rem;">
+                <i class="fas fa-code" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Advanced Editor</h3>
+                <p style="color: var(--light-text);">Built-in syntax highlighting and code formatting for JSON, XML, and more.</p>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <a href="#" class="logo">
+                <i class="fas fa-code"></i>
+                Restify
+            </a>
+            
+            <div class="social-links">
+                <a href="#"><i class="fab fa-github"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-discord"></i></a>
+            </div>
+            
+            <p>&copy; 2025 Restify. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html> 
