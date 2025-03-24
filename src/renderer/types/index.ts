@@ -90,4 +90,15 @@ export interface AppState {
   currentEnvironment: string | null;
   activeRequest: string | null;
   requestHistory: string[];
+  notes: Note[];
+  activeNote: string | null;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+  tags?: string[];
 }

@@ -11,7 +11,8 @@ import Sidebar from './components/Sidebar';
 import RequestPanel from './components/RequestPanel';
 import ResponsePanel from './components/ResponsePanel';
 import GlobalStyle from './components/GlobalStyle';
-import { ApiRequest, ApiResponse, Folder, RequestHistoryItem, Environment } from './types';
+import NotesContainer from './components/notes/NotesContainer';
+import { ApiRequest, ApiResponse, Folder, RequestHistoryItem, Environment, Note } from './types';
 import { clearAllStorageData, executeRequest, processUrl } from './utils/apiUtils';
 import { findFirstRequest, findRequestById } from './helpers/CollectionHelpers';
 import { RequestService } from './services/RequestService';
@@ -314,12 +315,96 @@ function App() {
     }
   }, [activeRequest]);
 
+  // State for notes
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [activeNote, setActiveNote] = useState<string | null>(null);
+
+  // Load notes from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedNotes = localStorage.getItem('api-client-notes');
+      const savedActiveNote = localStorage.getItem('api-client-active-note');
+      
+      if (savedNotes) {
+        setNotes(JSON.parse(savedNotes));
+      }
+      
+      if (savedActiveNote) {
+        setActiveNote(JSON.parse(savedActiveNote));
+      }
+    } catch (error) {
+      console.error('Failed to load notes:', error);
+    }
+  }, []);
+
+  // Save notes to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('api-client-notes', JSON.stringify(notes));
+    } catch (error) {
+      console.error('Failed to save notes:', error);
+    }
+  }, [notes]);
+
+  // Save active note ID to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('api-client-active-note', JSON.stringify(activeNote));
+    } catch (error) {
+      console.error('Failed to save active note ID:', error);
+    }
+  }, [activeNote]);
+
+  // Handle notes operations
+  const addNote = () => {
+    const newNote: Note = {
+      id: uuidv4(),
+      title: 'New Note',
+      content: '# New Note\n\nStart writing your markdown here...',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    setNotes(prev => [...prev, newNote]);
+    setActiveNote(newNote.id);
+    setActiveRequest(null); // Clear active request when switching to a note
+  };
+
+  const updateNote = (updatedNote: Note) => {
+    setNotes(prev => 
+      prev.map(note => note.id === updatedNote.id ? updatedNote : note)
+    );
+  };
+
+  const deleteNote = (noteId: string) => {
+    setNotes(prev => prev.filter(note => note.id !== noteId));
+    if (activeNote === noteId) {
+      setActiveNote(null);
+    }
+  };
+
+  const selectNote = (note: Note) => {
+    setActiveNote(note.id);
+    setActiveRequest(null); // Clear active request when switching to a note
+  };
+
+  const renameNote = (noteId: string, newTitle: string) => {
+    setNotes(prev => 
+      prev.map(note => {
+        if (note.id === noteId) {
+          return { ...note, title: newTitle, updatedAt: Date.now() };
+        }
+        return note;
+      })
+    );
+  };
+
   // Handle selecting a request from sidebar
   const handleSelectRequest = useCallback(
     (request: ApiRequest) => {
-    setActiveRequest(request);
-    // Use stored response if available for this request
-    setActiveResponse(responseMap[request.id] || null);
+      setActiveRequest(request);
+      setActiveNote(null); // Clear active note when switching to a request
+      // Use stored response if available for this request
+      setActiveResponse(responseMap[request.id] || null);
     },
     [responseMap],
   );
@@ -512,6 +597,38 @@ function App() {
     };
   }, [activeRequest, loading, handleSendRequest]);
 
+  // Determine what content to show in the main area
+  const renderMainContent = () => {
+    if (activeNote) {
+      return (
+        <NotesContainer
+          notes={notes}
+          activeNoteId={activeNote}
+          onAddNote={addNote}
+          onUpdateNote={updateNote}
+        />
+      );
+    } else if (activeRequest) {
+      return (
+        <RequestResponseContainer>
+          <RequestContainer>
+            <RequestPanel
+              request={activeRequest}
+              onRequestChange={handleRequestChange}
+              onSendRequest={handleRequestSend}
+              isLoading={loading}
+              lastRequestTime={lastRequestTime}
+              currentEnvironment={getCurrentEnvironment()}
+            />
+          </RequestContainer>
+          <ResponsePanel response={activeResponse} request={activeRequest} isLoading={loading} />
+        </RequestResponseContainer>
+      );
+    } else {
+      return <EmptyStateView onCreateCollection={addFolder} />;
+    }
+  };
+
   // Render the app
   return (
     <>
@@ -519,7 +636,7 @@ function App() {
       <AppContainer>
         <Sidebar
           collections={collections}
-          activeRequestId={activeRequest?.id ?? null}
+          activeRequestId={activeRequest?.id || null}
           onSelectRequest={handleSelectRequest}
           onAddFolder={addFolder}
           onAddRequest={addRequest}
@@ -529,7 +646,7 @@ function App() {
           onDuplicateRequest={duplicateRequest}
           onImportFromCurl={handleImportFromCurl}
           onImportFromFile={handleImportFromFile}
-          requestHistory={requestHistory.slice().reverse()}
+          requestHistory={requestHistory}
           onRestoreFromHistory={handleRestoreFromHistory}
           onClearHistory={clearHistory}
           environments={environments}
@@ -538,25 +655,15 @@ function App() {
           onUpdateEnvironment={updateEnvironment}
           onDeleteEnvironment={deleteEnvironment}
           onSelectEnvironment={selectEnvironment}
+          notes={notes}
+          activeNoteId={activeNote}
+          onSelectNote={selectNote}
+          onAddNote={addNote}
+          onRenameNote={renameNote}
+          onDeleteNote={deleteNote}
         />
         <MainContent>
-          {activeRequest ? (
-            <RequestResponseContainer>
-              <RequestContainer>
-                <RequestPanel
-                  request={activeRequest}
-                  onRequestChange={handleRequestChange}
-                  onSendRequest={handleRequestSend}
-                  isLoading={loading}
-                  lastRequestTime={lastRequestTime}
-                  currentEnvironment={getCurrentEnvironment()}
-                />
-              </RequestContainer>
-              <ResponsePanel response={activeResponse} request={activeRequest} isLoading={loading} />
-            </RequestResponseContainer>
-          ) : (
-            <EmptyStateView onCreateCollection={addFolder} />
-          )}
+          {renderMainContent()}
         </MainContent>
       </AppContainer>
     </>

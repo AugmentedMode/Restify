@@ -20,9 +20,12 @@ import {
   FaTerminal,
   FaCopy,
   FaGlobeAmericas,
+  FaStickyNote,
+  FaFile,
+  FaFileAlt,
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ApiRequest, Folder, HttpMethod, RequestHistoryItem, Environment } from '../types';
+import { ApiRequest, Folder, HttpMethod, RequestHistoryItem, Environment, Note } from '../types';
 import { getMethodColor } from '../utils/uiUtils';
 import {
   Sidebar as SidebarContainer,
@@ -124,6 +127,12 @@ interface SidebarProps {
   onUpdateEnvironment?: (environment: Environment) => void;
   onDeleteEnvironment?: (environmentId: string) => void;
   onSelectEnvironment?: (environmentId: string | null) => void;
+  notes?: Note[];
+  activeNoteId?: string | null;
+  onSelectNote?: (note: Note) => void;
+  onAddNote?: () => void;
+  onRenameNote?: (noteId: string, newName: string) => void;
+  onDeleteNote?: (noteId: string) => void;
 }
 
 function Sidebar({
@@ -147,6 +156,12 @@ function Sidebar({
   onUpdateEnvironment = () => {},
   onDeleteEnvironment = () => {},
   onSelectEnvironment = () => {},
+  notes = [],
+  activeNoteId = null,
+  onSelectNote = () => {},
+  onAddNote = () => {},
+  onRenameNote = () => {},
+  onDeleteNote = () => {},
 }: SidebarProps) {
   // Load expanded folders from localStorage
   const getInitialExpandedFolders = (): Record<string, boolean> => {
@@ -231,10 +246,12 @@ function Sidebar({
     collections: boolean;
     history: boolean;
     environments: boolean;
+    notes: boolean;
   }>({
     collections: true,
     history: false,
     environments: false,
+    notes: true,
   });
 
   const toggleFolder = (folderId: string, e: React.MouseEvent) => {
@@ -600,7 +617,7 @@ function Sidebar({
   };
 
   // Toggle section expanded state
-  const toggleSectionExpanded = (section: 'collections' | 'history' | 'environments') => {
+  const toggleSectionExpanded = (section: 'collections' | 'history' | 'environments' | 'notes') => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
@@ -617,6 +634,21 @@ function Sidebar({
   const filteredCollections = filter
     ? filterCollections(collections, filter)
     : collections;
+
+  // Filter notes based on search input
+  const filterNotes = (notes: Note[], filter: string): Note[] => {
+    if (!filter.trim()) return notes;
+    
+    const lowerFilter = filter.toLowerCase();
+    return notes.filter(note => 
+      note.title.toLowerCase().includes(lowerFilter) || 
+      (note.content && note.content.toLowerCase().includes(lowerFilter))
+    );
+  };
+
+  const filteredNotes = filter
+    ? filterNotes(notes, filter)
+    : notes;
 
   // Save expanded folders state to localStorage when it changes
   useEffect(() => {
@@ -792,6 +824,25 @@ function Sidebar({
                 className="nav-item"
               >
                 <FaHistory size={20} />
+              </div>
+            </NavTooltip>
+
+            <NavTooltip title="Notes">
+              <div
+                style={{
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  backgroundColor: expandedSections.notes
+                    ? 'rgba(255, 56, 92, 0.1)'
+                    : 'transparent',
+                  color: expandedSections.notes ? '#FF385C' : 'inherit',
+                  transition: 'all 0.2s',
+                }}
+                onClick={() => toggleSectionExpanded('notes')}
+                className="nav-item"
+              >
+                <FaStickyNote size={20} />
               </div>
             </NavTooltip>
 
@@ -1118,6 +1169,136 @@ function Sidebar({
                   )}
                 </AnimatePresence>
               </CollapsibleSection>
+
+              {/* Notes Section */}
+              <CollapsibleSection expanded={expandedSections.notes}>
+                <SectionHeader onClick={() => toggleSectionExpanded('notes')}>
+                  <CollectionHeader>
+                    <CollectionIcon>
+                      <FaStickyNote />
+                    </CollectionIcon>
+                    <CollectionTitle>Notes</CollectionTitle>
+                  </CollectionHeader>
+                  <ActionButtons>
+                    <ActionButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddNote();
+                      }}
+                      title="Add Note"
+                      className="action-button"
+                    >
+                      <FaPlus />
+                    </ActionButton>
+                    <motion.div
+                      animate={
+                        expandedSections.notes ? 'expanded' : 'collapsed'
+                      }
+                      variants={iconVariants}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <FaChevronDown size={12} />
+                    </motion.div>
+                  </ActionButtons>
+                </SectionHeader>
+                <AnimatePresence>
+                  {expandedSections.notes && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      {filteredNotes.length === 0 ? (
+                        <EmptyHistoryMessage>
+                          {filter
+                            ? 'No matching notes found.'
+                            : 'No notes yet. Create one to get started.'}
+                        </EmptyHistoryMessage>
+                      ) : (
+                        <motion.div
+                          variants={listVariants}
+                          initial="hidden"
+                          animate="visible"
+                        >
+                          {filteredNotes.map((note) => (
+                            <motion.div
+                              key={note.id}
+                              variants={itemVariants}
+                              transition={{ duration: 0.2 }}
+                              whileHover={{ x: 4 }}
+                            >
+                              <RequestItemContainer
+                                active={activeNoteId === note.id}
+                                onClick={() => onSelectNote(note)}
+                                onContextMenu={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setContextMenu({
+                                    visible: true,
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                    item: note,
+                                    itemType: 'request', // Reuse request context menu for now
+                                    path: [],
+                                  });
+                                }}
+                              >
+                                <RequestItem>
+                                  <div
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      overflow: 'hidden',
+                                      flex: 1,
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        marginRight: 8,
+                                        color: '#6c757d',
+                                      }}
+                                    >
+                                      <FaFileAlt size={14} />
+                                    </div>
+                                    <div
+                                      style={{
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                      }}
+                                    >
+                                      {note.title}
+                                    </div>
+                                  </div>
+                                  <ActionButton
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setContextMenu({
+                                        visible: true,
+                                        x: e.clientX,
+                                        y: e.clientY,
+                                        item: note,
+                                        itemType: 'request', // Reuse request context menu
+                                        path: [],
+                                      });
+                                    }}
+                                    aria-label="Menu"
+                                    className="action-button"
+                                  >
+                                    <FaEllipsisV size={12} />
+                                  </ActionButton>
+                                </RequestItem>
+                              </RequestItemContainer>
+                            </motion.div>
+                          ))}
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CollapsibleSection>
             </SidebarContent>
           </>
         )}
@@ -1345,6 +1526,36 @@ function Sidebar({
                       itemType: contextMenu.itemType,
                       path: contextMenu.path,
                     });
+                    setContextMenu({ ...contextMenu, visible: false });
+                  }}
+                >
+                  <FaTrash size={12} />
+                  <span>Delete</span>
+                </ContextMenuItem>
+              </>
+            )}
+            
+            {/* Add note specific context menu handling if the item is a note */}
+            {contextMenu.item && 'title' in contextMenu.item && (
+              <>
+                <ContextMenuItem
+                  onClick={() => {
+                    setRenameModal({
+                      visible: true,
+                      item: contextMenu.item,
+                      itemType: 'request', // Reuse request rename for now
+                      path: [],
+                    });
+                    setContextMenu({ ...contextMenu, visible: false });
+                  }}
+                >
+                  <FaPen size={12} />
+                  <span>Rename</span>
+                </ContextMenuItem>
+                <ContextMenuDivider />
+                <ContextMenuItem
+                  onClick={() => {
+                    onDeleteNote(contextMenu.item.id);
                     setContextMenu({ ...contextMenu, visible: false });
                   }}
                 >
