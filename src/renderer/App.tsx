@@ -545,7 +545,7 @@ function App() {
                   currentEnvironment={getCurrentEnvironment()}
                 />
               </RequestContainer>
-              <ResponsePanel response={activeResponse} isLoading={loading} />
+              <ResponsePanel response={activeResponse} request={activeRequest} isLoading={loading} />
             </RequestResponseContainer>
           ) : (
             <EmptyStateView onCreateCollection={addFolder} />

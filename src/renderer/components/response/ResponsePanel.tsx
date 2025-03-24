@@ -6,8 +6,9 @@ import {
   FaCode,
   FaMagic,
   FaFileCode,
+  FaShieldAlt,
 } from 'react-icons/fa';
-import { ApiResponse } from '../../types';
+import { ApiResponse, ApiRequest } from '../../types';
 import {
   ResponseContainer,
   ResponseHeader,
@@ -30,13 +31,15 @@ import {
   MAX_ITEMS_TO_RENDER,
   VIRTUALIZED_CHUNK_SIZE,
 } from './constants';
+import SecurityAuditPanel from './components/SecurityAuditPanel';
 
 interface ResponsePanelProps {
   response: ApiResponse | null;
+  request?: ApiRequest | null;
   isLoading?: boolean;
 }
 
-function ResponsePanel({ response, isLoading = false }: ResponsePanelProps) {
+function ResponsePanel({ response, request, isLoading = false }: ResponsePanelProps) {
   const [activeTab, setActiveTab] = useState('body');
   const [copied, setCopied] = useState(false);
   const [showFullResponse, setShowFullResponse] = useState(false);
@@ -495,6 +498,8 @@ function ResponsePanel({ response, isLoading = false }: ResponsePanelProps) {
         return renderHeadersContent();
       case 'cookies':
         return renderCookiesContent();
+      case 'security':
+        return <SecurityAuditPanel request={request || null} response={response} />;
       default:
         return null;
     }
@@ -550,6 +555,14 @@ function ResponsePanel({ response, isLoading = false }: ResponsePanelProps) {
           onClick={() => setActiveTab('cookies')}
         >
           Cookies
+        </ResponseTab>
+        <ResponseTab
+          active={activeTab === 'security'}
+          onClick={() => setActiveTab('security')}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <FaShieldAlt size={14} />
+          Security
         </ResponseTab>
         {response && (
           <div
