@@ -101,7 +101,6 @@
     }
   },
   "dependencies": {
-    "@electron/notarize": "^3.0.0",
     "@monaco-editor/react": "^4.7.0",
     "axios": "^1.8.4",
     "electron-debug": "^4.1.0",
@@ -121,6 +120,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@electron/notarize": "^1.2.4",
     "@electron/rebuild": "^3.7.1",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@svgr/webpack": "^8.1.0",
@@ -146,7 +146,7 @@
     "css-minimizer-webpack-plugin": "^7.0.2",
     "detect-port": "^2.1.0",
     "electron": "^35.0.2",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^24.9.1",
     "electron-devtools-installer": "^4.0.0",
     "electronmon": "^2.0.3",
     "eslint": "^8.57.1",
@@ -200,22 +200,19 @@
       "package.json"
     ],
     "mac": {
-      "sign": false,
-      "notarize": false,
-      "target": {
-        "target": "default",
-        "arch": [
-          "arm64",
-          "x64"
-        ]
-      },
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "type": "distribution",
       "hardenedRuntime": true,
       "entitlements": "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
       "gatekeeperAssess": false,
       "icon": "assets/icon.icns",
-      "category": "public.app-category.developer-tools"
+      "category": "public.app-category.developer-tools",
+      "identity": "3BLRKVZ9R4",
+      "notarize": false
     },
     "dmg": {
       "contents": [
@@ -234,21 +231,20 @@
         "width": 540,
         "height": 380
       },
-      "internetEnabled": true,
-      "sign": false,
-      "background": "assets/dmg-background.png",
       "title": "Install Restify"
     },
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "icon": "assets/icon.ico"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
-      "category": "Development"
+      "category": "Development",
+      "icon": "assets/icon.png"
     },
     "directories": {
       "app": "release/app",

@@ -1,0 +1,11 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="256" fill="#1E1E1E"/>
+  
+  <!-- Code brackets - large and centered -->
+  <g transform="translate(512, 512) scale(1.5) translate(-512, -512)">
+    <path d="M400 400 L250 512 L400 624" stroke="white" stroke-width="50" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M624 400 L774 512 L624 624" stroke="white" stroke-width="50" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M480 700 L544 324" stroke="white" stroke-width="50" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+</svg> 

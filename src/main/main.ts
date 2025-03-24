@@ -17,10 +17,10 @@ import fs from 'fs';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
-// Configure logging
-autoUpdater.logger = log;
-autoUpdater.logger.transports.file.level = 'info';
+// Configure logging safely
 log.info('App starting...');
+// Configure autoUpdater to use electron-log
+autoUpdater.logger = log;
 
 // Check for updates
 const checkForUpdates = () => {
@@ -284,11 +284,31 @@ const createWindow = async () => {
     return path.join(RESOURCES_PATH, ...paths);
   };
 
+  // IMPORTANT: Force-use our custom icon instead of default Electron icon
+  // Use icon-custom.png directly instead of the standard icon names that might be cached
+  const iconPath = path.join(RESOURCES_PATH, 'icon-custom.png');
+  console.log('Using custom icon path:', iconPath);
+  console.log('Icon exists:', fs.existsSync(iconPath));
+  
+  // Debug log all files in the assets directory to check for available icons
+  console.log('Assets directory:', RESOURCES_PATH);
+  if (fs.existsSync(RESOURCES_PATH)) {
+    console.log('Assets directory contents:', fs.readdirSync(RESOURCES_PATH));
+    
+    // Check the icons subdirectory if it exists
+    const iconsDir = path.join(RESOURCES_PATH, 'icons');
+    if (fs.existsSync(iconsDir)) {
+      console.log('Icons directory contents:', fs.readdirSync(iconsDir));
+    }
+  }
+
   mainWindow = new BrowserWindow({
     show: false,
     width: 1280,
     height: 800,
-    icon: getAssetPath('icon.png'),
+    minWidth: 770,
+    minHeight: 660,
+    icon: iconPath, // Use our custom icon directly
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
@@ -322,9 +342,16 @@ const createWindow = async () => {
     return { action: 'deny' };
   });
 
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  new AppUpdater();
+  // Auto-updater (commented out for now as it's not properly defined)
+  // new AppUpdater();
+
+  // Set dock icon explicitly for macOS
+  if (process.platform === 'darwin') {
+    const restifyIconPath = path.join(RESOURCES_PATH, 'icon.icns');
+    console.log('Setting dock icon path:', restifyIconPath);
+    console.log('Dock icon exists:', fs.existsSync(restifyIconPath));
+    app.dock.setIcon(restifyIconPath);
+  }
 };
 
 /**
@@ -342,16 +369,25 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
-    createWindow();
-    
-    // Set dock icon explicitly for macOS
+    // Set app icon explicitly for all platforms
+    const RESOURCES_PATH = app.isPackaged
+      ? path.join(process.resourcesPath, 'assets')
+      : path.join(__dirname, '../../assets');
+        
     if (process.platform === 'darwin') {
-      const RESOURCES_PATH = app.isPackaged
-        ? path.join(process.resourcesPath, 'assets')
-        : path.join(__dirname, '../../assets');
-      const iconPath = path.join(RESOURCES_PATH, 'icon.png');
-      app.dock.setIcon(iconPath);
+      // Direct path to our custom icon to bypass any caching issues
+      const iconPath = path.join(RESOURCES_PATH, 'icon-custom.png');
+      console.log('Setting macOS app icon explicitly:', iconPath);
+      console.log('Icon exists:', fs.existsSync(iconPath));
+      try {
+        app.dock.setIcon(iconPath);
+      } catch (error) {
+        console.error('Failed to set dock icon:', error);
+      }
     }
+    
+    // Create the main window after setting the icon
+    createWindow();
     
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
