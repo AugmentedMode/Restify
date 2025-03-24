@@ -12,6 +12,15 @@ const SecurityAuditPanel: React.FC<SecurityAuditPanelProps> = ({ request, respon
   const [auditResult, setAuditResult] = useState<SecurityAuditResult | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [expandedIssues, setExpandedIssues] = useState<{ [key: string]: boolean }>({});
+  const [auditedRequestId, setAuditedRequestId] = useState<string | null>(null);
+
+  // Reset audit result when request or response changes
+  useEffect(() => {
+    // Reset audit state when new request/response is selected
+    setAuditResult(null);
+    setExpandedIssues({});
+    setAuditedRequestId(null);
+  }, [request?.id, response?.status]);
 
   // Run security audit
   const runSecurityAudit = async () => {
@@ -19,8 +28,11 @@ const SecurityAuditPanel: React.FC<SecurityAuditPanelProps> = ({ request, respon
 
     setLoading(true);
     try {
+      // Create a small delay to show the spinner
+      await new Promise(resolve => setTimeout(resolve, 400));
       const result = await SecurityAuditService.performSecurityAudit(request, response);
       setAuditResult(result);
+      setAuditedRequestId(request.id);
     } catch (error) {
       console.error('Error running security audit:', error);
     } finally {
@@ -77,6 +89,24 @@ const SecurityAuditPanel: React.FC<SecurityAuditPanelProps> = ({ request, respon
     return 'linear-gradient(90deg, #E53935 0%, #EF5350 100%)';
   };
 
+  // Helper to get background color for HTTP method
+  const getMethodColor = (method: string): string => {
+    switch (method.toUpperCase()) {
+      case 'GET':
+        return '#4CAF50';
+      case 'POST':
+        return '#2196F3';
+      case 'PUT':
+        return '#FF9800';
+      case 'DELETE':
+        return '#F44336';
+      case 'PATCH':
+        return '#9C27B0';
+      default:
+        return '#607D8B';
+    }
+  };
+
   // Render when no audit has been run
   const renderInitialState = () => (
     <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -93,30 +123,43 @@ const SecurityAuditPanel: React.FC<SecurityAuditPanelProps> = ({ request, respon
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
         }}
       >
-        <FaShieldAlt size={36} color="#7e7e7e" />
+        {loading ? (
+          <div style={{ animation: 'spin 1.5s linear infinite' }}>
+            <FaShieldAlt size={36} color="#4a6bff" />
+          </div>
+        ) : (
+          <FaShieldAlt size={36} color="#7e7e7e" />
+        )}
       </div>
       <h2 style={{ margin: '0 0 12px 0', color: '#e0e0e0', fontWeight: 500, fontSize: '20px' }}>Security Audit</h2>
       <p style={{ margin: '0 0 24px 0', color: '#999', textAlign: 'center', maxWidth: '400px' }}>
-        Run a security audit to check for CSRF, XSS, SQL Injection, and common security header issues.
+        {loading 
+          ? 'Running security checks, please wait...'
+          : 'Run a security audit to check for CSRF, XSS, SQL Injection, and common security header issues.'}
       </p>
       <button
         onClick={runSecurityAudit}
         disabled={!request || !response || loading}
         style={{
-          background: 'linear-gradient(90deg, #4a6bff 0%, #45a6ff 100%)',
+          background: loading 
+            ? '#333' 
+            : 'linear-gradient(90deg, #4a6bff 0%, #45a6ff 100%)',
           border: 'none',
           borderRadius: '6px',
           padding: '10px 20px',
           color: 'white',
           fontWeight: 'bold',
-          cursor: 'pointer',
+          cursor: loading ? 'default' : 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '8px',
-          boxShadow: '0 4px 12px rgba(74, 107, 255, 0.3)',
+          boxShadow: loading 
+            ? 'none' 
+            : '0 4px 12px rgba(74, 107, 255, 0.3)',
           transition: 'all 0.2s ease',
           opacity: (!request || !response || loading) ? 0.7 : 1,
+          width: loading ? '180px' : 'auto',
         }}
       >
         {loading ? (
@@ -336,6 +379,9 @@ const SecurityAuditPanel: React.FC<SecurityAuditPanelProps> = ({ request, respon
   const renderAuditResult = () => {
     if (!auditResult) return renderInitialState();
 
+    // Check if audit result is for current request
+    const isCurrentRequest = request && auditedRequestId === request.id;
+
     return (
       <div style={{ padding: '20px', height: '100%', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -345,23 +391,94 @@ const SecurityAuditPanel: React.FC<SecurityAuditPanelProps> = ({ request, respon
           </h2>
           <button
             onClick={runSecurityAudit}
+            disabled={loading}
             style={{
-              background: '#333',
+              background: loading 
+                ? '#444' 
+                : 'linear-gradient(90deg, #4a6bff 0%, #45a6ff 100%)',
               border: 'none',
               borderRadius: '4px',
               padding: '6px 12px',
               color: '#e0e0e0',
-              cursor: 'pointer',
+              cursor: loading ? 'default' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
               fontSize: '13px',
+              opacity: loading ? 0.7 : 1,
+              minWidth: '100px',
+              transition: 'all 0.2s ease',
+              boxShadow: loading ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.2)',
             }}
           >
-            {loading ? 'Running...' : 'Re-run Audit'}
+            {loading ? (
+              <>
+                <div style={{ animation: 'spin 1.5s linear infinite' }}>
+                  <FaShieldAlt size={14} />
+                </div>
+                <span>Running...</span>
+              </>
+            ) : (
+              <>
+                <FaShieldAlt size={14} />
+                <span>Re-run Audit</span>
+              </>
+            )}
           </button>
         </div>
+
+        {!isCurrentRequest && request && (
+          <div style={{ 
+            margin: '0 0 16px 0',
+            padding: '8px 12px',
+            background: 'rgba(255, 152, 0, 0.1)',
+            border: '1px solid rgba(255, 152, 0, 0.3)',
+            borderRadius: '4px',
+            color: '#FFC107',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <FaExclamationTriangle size={14} />
+            <span>This audit result is from a previous request. Run a new audit to analyze the current request.</span>
+          </div>
+        )}
+
+        {request && isCurrentRequest && (
+          <div style={{ 
+            margin: '0 0 16px 0',
+            padding: '10px',
+            background: '#2a2a2a',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <div style={{ 
+              padding: '4px 8px', 
+              borderRadius: '4px', 
+              background: getMethodColor(request.method),
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '12px'
+            }}>
+              {request.method}
+            </div>
+            <div style={{ 
+              flex: '1', 
+              overflow: 'hidden', 
+              textOverflow: 'ellipsis', 
+              whiteSpace: 'nowrap',
+              color: '#e0e0e0',
+              fontSize: '13px'
+            }}>
+              {request.url}
+            </div>
+          </div>
+        )}
+        
         <p style={{ margin: '0 0 20px 0', color: '#999', fontSize: '14px' }}>
           Completed {auditResult.timestamp ? new Date(auditResult.timestamp).toLocaleString() : ''}
         </p>

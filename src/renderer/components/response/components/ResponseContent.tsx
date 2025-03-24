@@ -6,7 +6,8 @@ import {
   FaEllipsisH, 
   FaCode, 
   FaFileAlt, 
-  FaPause 
+  FaPause,
+  FaSpinner
 } from 'react-icons/fa';
 import { ApiResponse } from '../../../types';
 import { formatBytes } from '../utils';
@@ -37,6 +38,7 @@ interface ResponseContentProps {
   handleShowMore: () => void;
   handleShowAll: () => void;
   setShowFullResponse: (value: boolean) => void;
+  isLoading?: boolean;
 }
 
 function ResponseContent({
@@ -61,10 +63,41 @@ function ResponseContent({
   handleShowMore,
   handleShowAll,
   setShowFullResponse,
+  isLoading,
 }: ResponseContentProps) {
   // Only render content for the active tab
   if (activeTab !== 'body') {
     return null;
+  }
+
+  // Show loading spinner when loading
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          padding: '20px',
+          textAlign: 'center',
+          color: 'rgba(255, 255, 255, 0.6)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+        }}
+      >
+        <div
+          style={{
+            fontSize: '32px',
+            marginBottom: '16px',
+            opacity: 0.7,
+            animation: 'spin 1.5s linear infinite',
+          }}
+        >
+          <FaSpinner size={32} />
+        </div>
+        <div>Loading response...</div>
+      </div>
+    );
   }
 
   // No response yet

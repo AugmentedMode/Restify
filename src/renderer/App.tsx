@@ -432,6 +432,10 @@ function App() {
     if (!request) return;
     
     try {
+      // Set loading state to true
+      setLoading(true);
+      setLastRequestTime(Date.now());
+      
       setActiveResponse({
         status: 0,
         statusText: 'Pending...',
@@ -479,6 +483,9 @@ function App() {
         ...prev,
         [request.id]: errorResponse
       }));
+    } finally {
+      // Always set loading to false when done
+      setLoading(false);
     }
   };
 

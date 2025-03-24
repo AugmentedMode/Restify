@@ -314,6 +314,33 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
 
   // Render headers tab content
   const renderHeadersContent = () => {
+    if (isLoading) {
+      return (
+        <div
+          style={{
+            padding: '20px',
+            textAlign: 'center',
+            color: 'rgba(255, 255, 255, 0.6)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
+          <FaSpinner
+            style={{
+              fontSize: '32px',
+              marginBottom: '16px',
+              opacity: 0.7,
+              animation: 'spin 1.5s linear infinite',
+            }}
+          />
+          <div>Loading response...</div>
+        </div>
+      );
+    }
+
     if (!response) return null;
 
     return (
@@ -348,7 +375,9 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
               >
                 {key}
               </div>
-              <div style={{ width: '70%', color: '#e0e0e0' }}>{value}</div>
+              <div style={{ width: '70%', color: '#e0e0e0' }}>
+                {typeof value === 'string' ? value : String(value)}
+              </div>
             </div>
           ))}
         </div>
@@ -374,6 +403,33 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
 
   // Render cookies tab content
   const renderCookiesContent = () => {
+    if (isLoading) {
+      return (
+        <div
+          style={{
+            padding: '20px',
+            textAlign: 'center',
+            color: 'rgba(255, 255, 255, 0.6)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
+          <FaSpinner
+            style={{
+              fontSize: '32px',
+              marginBottom: '16px',
+              opacity: 0.7,
+              animation: 'spin 1.5s linear infinite',
+            }}
+          />
+          <div>Loading response...</div>
+        </div>
+      );
+    }
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div
@@ -450,12 +506,25 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
             }}
           />
           <div>Loading response...</div>
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
+        </div>
+      );
+    }
+
+    if (!response) {
+      return (
+        <div
+          style={{
+            padding: '20px',
+            textAlign: 'center',
+            color: 'rgba(255, 255, 255, 0.6)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
+          No response data available
         </div>
       );
     }
@@ -492,6 +561,7 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
             handleShowMore={handleShowMore}
             handleShowAll={handleShowAll}
             setShowFullResponse={setShowFullResponse}
+            isLoading={isLoading}
           />
         );
       case 'headers':
@@ -499,6 +569,32 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
       case 'cookies':
         return renderCookiesContent();
       case 'security':
+        if (isLoading) {
+          return (
+            <div
+              style={{
+                padding: '20px',
+                textAlign: 'center',
+                color: 'rgba(255, 255, 255, 0.6)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+              }}
+            >
+              <FaSpinner
+                style={{
+                  fontSize: '32px',
+                  marginBottom: '16px',
+                  opacity: 0.7,
+                  animation: 'spin 1.5s linear infinite',
+                }}
+              />
+              <div>Loading response...</div>
+            </div>
+          );
+        }
         return <SecurityAuditPanel request={request || null} response={response} />;
       default:
         return null;
@@ -522,7 +618,16 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
         typeScript={generatedTypes} 
       />
       <ResponseHeader>
-        {response ? (
+        {isLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FaSpinner
+              style={{
+                animation: 'spin 1.5s linear infinite',
+              }}
+            />
+            <span>Loading...</span>
+          </div>
+        ) : response ? (
           <>
             <StatusPill
               success={response.status >= 200 && response.status < 300}
@@ -564,7 +669,7 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
           <FaShieldAlt size={14} />
           Security
         </ResponseTab>
-        {response && (
+        {response && !isLoading && (
           <div
             style={{
               display: 'flex',
