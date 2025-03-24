@@ -11,13 +11,14 @@ import Sidebar from './components/Sidebar';
 import RequestPanel from './components/RequestPanel';
 import ResponsePanel from './components/ResponsePanel';
 import GlobalStyle from './components/GlobalStyle';
-import { ApiRequest, ApiResponse, Folder, RequestHistoryItem } from './types';
-import { clearAllStorageData } from './utils/apiUtils';
+import { ApiRequest, ApiResponse, Folder, RequestHistoryItem, Environment } from './types';
+import { clearAllStorageData, executeRequest, processUrl } from './utils/apiUtils';
 import { findFirstRequest, findRequestById } from './helpers/CollectionHelpers';
 import { RequestService } from './services/RequestService';
 import { ImportService } from './services/ImportService';
 import useCollections from './hooks/useCollections';
 import useRequestHistory from './hooks/useRequestHistory';
+import { v4 as uuidv4 } from 'uuid';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -112,6 +113,27 @@ function EmptyStateView({
 }
 
 function App() {
+  // One-time cleanup for potential localStorage format issues
+  useEffect(() => {
+    try {
+      const savedActiveRequestId = localStorage.getItem('api-client-active-request-id');
+      if (savedActiveRequestId) {
+        try {
+          // Try to parse it as JSON
+          JSON.parse(savedActiveRequestId);
+        } catch (parseError) {
+          // If parsing fails, it's not valid JSON, so remove it
+          localStorage.removeItem('api-client-active-request-id');
+          console.log('Removed invalid active request ID from localStorage');
+        }
+      }
+    } catch (error) {
+      // If there's any other issue, just remove the problematic item
+      localStorage.removeItem('api-client-active-request-id');
+      console.error('Error handling localStorage cleanup:', error);
+    }
+  }, []);
+
   // Use our custom hooks for collections and history
   const {
     collections,
@@ -132,6 +154,76 @@ function App() {
   const [activeResponse, setActiveResponse] = useState<ApiResponse | null>(
     null,
   );
+
+  // State for environments
+  const [environments, setEnvironments] = useState<Environment[]>([]);
+  const [currentEnvironmentId, setCurrentEnvironmentId] = useState<string | null>(null);
+
+  // Load environments from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedEnvironments = localStorage.getItem('api-client-environments');
+      const savedCurrentEnvId = localStorage.getItem('api-client-current-environment');
+      
+      if (savedEnvironments) {
+        setEnvironments(JSON.parse(savedEnvironments));
+      }
+      
+      if (savedCurrentEnvId) {
+        setCurrentEnvironmentId(JSON.parse(savedCurrentEnvId));
+      }
+    } catch (error) {
+      console.error('Failed to load environments:', error);
+    }
+  }, []);
+
+  // Save environments to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('api-client-environments', JSON.stringify(environments));
+    } catch (error) {
+      console.error('Failed to save environments:', error);
+    }
+  }, [environments]);
+
+  // Save current environment ID to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('api-client-current-environment', JSON.stringify(currentEnvironmentId));
+    } catch (error) {
+      console.error('Failed to save current environment ID:', error);
+    }
+  }, [currentEnvironmentId]);
+
+  // Handle environment operations
+  const addEnvironment = (environment: Environment) => {
+    setEnvironments(prev => [...prev, environment]);
+  };
+
+  const updateEnvironment = (environment: Environment) => {
+    setEnvironments(prev => 
+      prev.map(env => env.id === environment.id ? environment : env)
+    );
+  };
+
+  const deleteEnvironment = (environmentId: string) => {
+    setEnvironments(prev => prev.filter(env => env.id !== environmentId));
+    if (currentEnvironmentId === environmentId) {
+      setCurrentEnvironmentId(null);
+    }
+  };
+
+  const selectEnvironment = (environmentId: string | null) => {
+    setCurrentEnvironmentId(environmentId);
+  };
+
+  // Get the current environment object
+  const getCurrentEnvironment = (): Environment | undefined => {
+    if (!currentEnvironmentId) return undefined;
+    return environments.find(env => env.id === currentEnvironmentId);
+  };
+
+  // State for loading
   const [loading, setLoading] = useState<boolean>(false);
   const [lastRequestTime, setLastRequestTime] = useState<number>(0);
   
@@ -162,55 +254,28 @@ function App() {
     }
   }, [responseMap]);
 
-  // When collections change or are first loaded, possibly set active request
+  // Initial load and history
   useEffect(() => {
-    // If no active request yet and collections are loaded, try to find one
-    if (!activeRequest && collections.length > 0) {
-          // Check for saved active request ID first
-      const savedActiveRequestId = localStorage.getItem(
-        'api-client-active-request-id',
-      );
-
-      if (savedActiveRequestId) {
-        // Try to find this request in collections
-        const request = findRequestById(collections, savedActiveRequestId);
-        if (request) {
-          console.log(`Found request to restore: ${request.name}`);
-          setActiveRequest(request);
-          
-          // Get response from responseMap if available
-          const response = responseMap[request.id];
-          if (response) {
-            setActiveResponse(response);
-            console.log(`Restored response for request ${request.name}`);
-          } else {
-            setActiveResponse(null);
-          }
-        } else {
-          console.log(
-            'Could not find saved request in collections, ID:',
-            savedActiveRequestId,
-          );
-          // If we couldn't find the saved request, clear the saved ID
-          localStorage.removeItem('api-client-active-request-id');
-
-          // Select first available request
-          const firstRequest = findFirstRequest(collections);
-          if (firstRequest) {
-            setActiveRequest(firstRequest);
-            setActiveResponse(responseMap[firstRequest.id] || null);
-          }
-        }
-      } else {
-        // No saved ID, select first request
-        const firstRequest = findFirstRequest(collections);
-        if (firstRequest) {
-          setActiveRequest(firstRequest);
-          setActiveResponse(responseMap[firstRequest.id] || null);
-        }
+    // Try to load the active request ID from localStorage
+    const savedActiveRequestId = localStorage.getItem(
+      'api-client-active-request-id',
+    );
+    if (savedActiveRequestId) {
+      const requestId = JSON.parse(savedActiveRequestId);
+      const savedRequest = findRequestById(collections, requestId);
+      if (savedRequest) {
+        setActiveRequest(savedRequest);
       }
     }
-  }, [collections, activeRequest, responseMap]);
+
+    // If no request is found in localStorage or if it's not valid, use the first one
+    if (!activeRequest && collections.length > 0) {
+      const firstRequest = findFirstRequest(collections);
+      if (firstRequest) {
+        setActiveRequest(firstRequest);
+      }
+    }
+  }, [collections]);
 
   // Ensure active request and response stay in sync
   const ensureResponseMatchesRequest = useCallback(() => {
@@ -232,7 +297,7 @@ function App() {
   // Save the active request ID when it changes
   useEffect(() => {
     if (activeRequest) {
-      localStorage.setItem('api-client-active-request-id', activeRequest.id);
+      localStorage.setItem('api-client-active-request-id', JSON.stringify(activeRequest.id));
     }
   }, [activeRequest]);
 
@@ -304,7 +369,7 @@ function App() {
       setActiveResponse(null);
 
         // Save the active request ID
-        localStorage.setItem('api-client-active-request-id', request.id);
+        localStorage.setItem('api-client-active-request-id', JSON.stringify(request.id));
       } catch (error) {
         console.error('Failed to import cURL command:', error);
       }
@@ -330,7 +395,7 @@ function App() {
         if (firstRequest) {
           setActiveRequest(firstRequest);
         setActiveResponse(null);
-          localStorage.setItem('api-client-active-request-id', firstRequest.id);
+          localStorage.setItem('api-client-active-request-id', JSON.stringify(firstRequest.id));
         }
       } catch (error) {
         console.error('Failed to import file:', error);
@@ -340,44 +405,55 @@ function App() {
   );
 
   // Handle sending a request
-  const handleSendRequest = useCallback(async () => {
+  const handleSendRequest = useCallback(() => {
     if (!activeRequest) return;
+    
+    setLoading(true);
+    setLastRequestTime(Date.now());
+    handleRequestSend(activeRequest);
+    setLoading(false);
+  }, [activeRequest]);
 
-      try {
-        // Start loading
-        setLoading(true);
-        const startTime = Date.now();
-        
-      // Execute the request using our service
-      const response = await RequestService.executeApiRequest(activeRequest);
-        
-        // Calculate elapsed time
-        const elapsed = Date.now() - startTime;
-        setLastRequestTime(elapsed);
-        
-        // Store the active request ID before updating any state
-        const activeRequestId = activeRequest.id;
-        
-        // Set the response state
-        setActiveResponse(response);
-        
-        // Save response for this request
-      setResponseMap((prev) => ({
-          ...prev,
-        [activeRequestId]: response,
-        }));
-        
-        // Add to history
-      addToHistory(activeRequest, response);
-        
-        // Ensure localStorage has the correct active request ID
-        localStorage.setItem('api-client-active-request-id', activeRequestId);
-      } catch (error) {
-        console.error('Failed to execute request:', error);
-      } finally {
-        setLoading(false);
-      }
-  }, [activeRequest, addToHistory]);
+  // Execute request with environment variables
+  const handleRequestSend = async (request: ApiRequest = activeRequest!) => {
+    if (!request) return;
+    
+    try {
+      setActiveResponse({
+        status: 0,
+        statusText: 'Pending...',
+        data: null,
+        headers: {},
+        time: 0,
+        size: 0,
+      });
+      
+      const currentEnvironment = getCurrentEnvironment();
+      const response = await executeRequest(request, currentEnvironment);
+      
+      setActiveResponse(response);
+      
+      // Create history item from request and response
+      const historyItem: RequestHistoryItem = {
+        id: uuidv4(),
+        timestamp: Date.now(),
+        request,
+        response,
+        name: request.name
+      };
+      
+      addToHistory(historyItem);
+    } catch (error: any) {
+      setActiveResponse({
+        status: 0,
+        statusText: 'Error',
+        data: error.message || 'An unknown error occurred',
+        headers: {},
+        time: 0,
+        size: 0,
+      });
+    }
+  };
 
   // Add keyboard shortcut for sending request
   useEffect(() => {
@@ -409,7 +485,7 @@ function App() {
       <AppContainer>
         <Sidebar
           collections={collections}
-          activeRequestId={activeRequest?.id || null}
+          activeRequestId={activeRequest?.id ?? null}
           onSelectRequest={handleSelectRequest}
           onAddFolder={addFolder}
           onAddRequest={addRequest}
@@ -419,9 +495,15 @@ function App() {
           onDuplicateRequest={duplicateRequest}
           onImportFromCurl={handleImportFromCurl}
           onImportFromFile={handleImportFromFile}
-          requestHistory={requestHistory}
+          requestHistory={requestHistory.slice().reverse()}
           onRestoreFromHistory={handleRestoreFromHistory}
           onClearHistory={clearHistory}
+          environments={environments}
+          currentEnvironmentId={currentEnvironmentId}
+          onAddEnvironment={addEnvironment}
+          onUpdateEnvironment={updateEnvironment}
+          onDeleteEnvironment={deleteEnvironment}
+          onSelectEnvironment={selectEnvironment}
         />
         <MainContent>
           {activeRequest ? (
@@ -430,9 +512,10 @@ function App() {
                 <RequestPanel
                   request={activeRequest}
                   onRequestChange={handleRequestChange}
-                  onSendRequest={handleSendRequest}
+                  onSendRequest={handleRequestSend}
                   isLoading={loading}
                   lastRequestTime={lastRequestTime}
+                  currentEnvironment={getCurrentEnvironment()}
                 />
               </RequestContainer>
               <ResponsePanel response={activeResponse} isLoading={loading} />

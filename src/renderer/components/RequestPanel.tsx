@@ -6,6 +6,9 @@ import {
   FaClock,
   FaSync,
   FaCode,
+  FaCopy,
+  FaLock,
+  FaCheckCircle
 } from 'react-icons/fa';
 import {
   ApiRequest,
@@ -13,6 +16,7 @@ import {
   RequestHeader,
   RequestParam,
   BodyType,
+  Environment,
 } from '../types';
 import {
   RequestHeader as RequestHeaderContainer,
@@ -33,13 +37,17 @@ import {
   StatusBar,
   StatusBarItem,
 } from '../styles/StyledComponents';
+import { processUrl } from '../utils/apiUtils';
+import { getMethodColor } from '../utils/uiUtils';
+import { motion } from 'framer-motion';
 
 interface RequestPanelProps {
   request: ApiRequest;
   onRequestChange: (updatedRequest: ApiRequest) => void;
-  onSendRequest: () => void;
+  onSendRequest: (request?: ApiRequest) => void;
   isLoading?: boolean;
   lastRequestTime?: number;
+  currentEnvironment?: Environment;
 }
 
 function RequestPanel({
@@ -48,6 +56,7 @@ function RequestPanel({
   onSendRequest,
   isLoading = false,
   lastRequestTime = 0,
+  currentEnvironment,
 }: RequestPanelProps) {
   const [activeTab, setActiveTab] = useState('params');
   const [lineCount, setLineCount] = useState(1);
@@ -112,11 +121,98 @@ function RequestPanel({
   };
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onRequestChange({ ...request, url: e.target.value });
+  };
+
+  // Get the processed URL with environment variables
+  const getProcessedUrl = () => {
+    if (!currentEnvironment) return request.url;
+    return processUrl(request.url, currentEnvironment);
+  };
+
+  // Environment variable suggestion helper
+  const [showEnvSuggestions, setShowEnvSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const urlInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle URL input focus and keydown
+  const handleUrlKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // If typing {{ show environment variable suggestions
+    const selectionStart = e.currentTarget.selectionStart || 0;
+    if (e.key === '{' && e.currentTarget.value[selectionStart - 1] === '{') {
+      if (currentEnvironment) {
+        const variables = Object.keys(currentEnvironment.variables);
+        if (variables.length > 0) {
+          setSuggestions(variables);
+          setShowEnvSuggestions(true);
+          setCursorPosition(selectionStart);
+        }
+      }
+    } 
+    // Handle Enter key to send request
+    else if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      setShowEnvSuggestions(false);
+      onSendRequest();
+    } 
+    // Close suggestions on escape
+    else if (e.key === 'Escape') {
+      setShowEnvSuggestions(false);
+    }
+  };
+
+  // Insert the selected environment variable
+  const insertEnvironmentVariable = (variable: string) => {
+    if (!urlInputRef.current) return;
+    
+    const input = urlInputRef.current;
+    const curText = request.url;
+    const curPos = input.selectionStart || 0;
+    
+    // Find the position of the opening {{
+    const openBracePos = curText.lastIndexOf('{{', curPos);
+    if (openBracePos === -1) return;
+    
+    // Build the new URL with the variable inserted
+    const newUrl = 
+      curText.substring(0, openBracePos) + 
+      '{{' + variable + '}}' + 
+      curText.substring(curPos);
+    
+    // Update the request URL
     onRequestChange({
       ...request,
-      url: e.target.value,
+      url: newUrl
     });
+    
+    // Close the suggestions
+    setShowEnvSuggestions(false);
+    
+    // Focus the input after state update
+    setTimeout(() => {
+      if (urlInputRef.current) {
+        urlInputRef.current.focus();
+        // Set cursor position after the inserted variable
+        const newCursorPos = openBracePos + variable.length + 4; // +4 for the {{}}
+        urlInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
   };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (urlInputRef.current && !urlInputRef.current.contains(e.target as Node)) {
+        setShowEnvSuggestions(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleBodyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onRequestChange({
@@ -275,11 +371,63 @@ function RequestPanel({
     ));
   };
 
+  // Function to render the processed URL with highlighted variables
+  const renderProcessedUrlWithHighlight = () => {
+    if (!currentEnvironment || !request.url.includes('{{')) return getProcessedUrl();
+    
+    // Split the URL by variable pattern {{...}}
+    const parts = getProcessedUrl().split(/(https?:\/\/|\/|\?|&|=)/g);
+    
+    return (
+      <>
+        {parts.map((part, index) => {
+          // Check if this part is a protocol, separator, or regular text
+          if (part === 'http://' || part === 'https://') {
+            return <span key={index} style={{ color: '#49cc90' }}>{part}</span>;
+          } else if (part === '/') {
+            return <span key={index} style={{ color: '#fca130' }}>{part}</span>;
+          } else if (part === '?' || part === '&' || part === '=') {
+            return <span key={index} style={{ color: '#f93e3e' }}>{part}</span>;
+          } else {
+            // Check if the original URL had a variable that was replaced in this part
+            const originalPart = request.url.split(/(https?:\/\/|\/|\?|&|=)/g)[index];
+            if (originalPart && originalPart.includes('{{') && originalPart.includes('}}')) {
+              return (
+                <motion.span 
+                  key={index}
+                  style={{ 
+                    color: '#FF385C',
+                    fontWeight: 'bold',
+                    position: 'relative',
+                    textDecoration: 'underline',
+                    textDecorationColor: 'rgba(255,56,92,0.3)',
+                    textDecorationStyle: 'dotted',
+                    textUnderlineOffset: '3px'
+                  }}
+                  whileHover={{ 
+                    scale: 1.02,
+                    color: '#FF5A7C'
+                  }}
+                >
+                  {part}
+                </motion.span>
+              );
+            }
+            return <span key={index}>{part}</span>;
+          }
+        })}
+      </>
+    );
+  };
+
   return (
     <>
       <RequestHeaderContainer>
         <UrlContainer>
-          <MethodSelector value={request.method} onChange={handleMethodChange}>
+          <MethodSelector
+            value={request.method}
+            onChange={handleMethodChange}
+          >
             <option value="GET">GET</option>
             <option value="POST">POST</option>
             <option value="PUT">PUT</option>
@@ -290,14 +438,62 @@ function RequestPanel({
           </MethodSelector>
 
           <UrlInput
+            ref={urlInputRef}
             type="text"
-            placeholder="http://api.example.com/endpoint"
-            value={request.url || ''}
+            value={request.url}
             onChange={handleUrlChange}
+            onKeyDown={handleUrlKeyDown}
+            placeholder="Enter request URL or paste cURL"
           />
+          
+          {/* Environment variable suggestions */}
+          {showEnvSuggestions && suggestions.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: '0',
+              zIndex: 10,
+              width: '100%',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              backgroundColor: '#2a2a2a',
+              border: '1px solid #444',
+              borderRadius: '4px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              marginTop: '4px'
+            }}>
+              {suggestions.map(variable => (
+                <div
+                  key={variable}
+                  onClick={() => insertEnvironmentVariable(variable)}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #444',
+                    transition: 'background-color 0.2s',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#333';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <span style={{ color: '#FF385C', fontWeight: 'bold', marginRight: '8px' }}>
+                    {variable}
+                  </span>
+                  <span style={{ color: '#999', fontSize: '12px' }}>
+                    {currentEnvironment?.variables[variable]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </UrlContainer>
 
-        <SendButton onClick={onSendRequest} disabled={isLoading}>
+        <SendButton onClick={() => onSendRequest(request)} disabled={isLoading}>
           {isLoading ? <Spinner /> : <FaPaperPlane />}
           {!isLoading && <span>Send</span>}
         </SendButton>
@@ -333,6 +529,116 @@ function RequestPanel({
       </TabContainer>
 
       <TabContent>
+        {/* Show processed URL preview with enhanced UI */}
+        {currentEnvironment && request.url.includes('{{') && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            style={{ 
+              margin: '4px 0 12px 0',
+              position: 'relative',
+            }}
+          >
+            <div style={{ 
+              padding: '14px',
+              borderRadius: '8px',
+              background: 'linear-gradient(145deg, rgba(14,14,16,0.8) 0%, rgba(22,22,26,0.8) 100%)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.05) inset',
+              backdropFilter: 'blur(10px)',
+              color: '#f5f5f5',
+              overflow: 'hidden',
+              position: 'relative',
+            }}>
+              {/* Subtle glow effect in the background */}
+              <div style={{
+                position: 'absolute',
+                top: '-30%',
+                left: '-10%',
+                width: '30%',
+                height: '150%',
+                background: 'radial-gradient(circle, rgba(255,56,92,0.05) 0%, rgba(255,56,92,0) 70%)',
+                zIndex: 0,
+              }} />
+              
+              <div style={{
+                position: 'relative',
+                zIndex: 1,
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '8px'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    color: 'rgba(255,255,255,0.6)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    <div style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      backgroundColor: '#FF385C',
+                      boxShadow: '0 0 6px rgba(255,56,92,0.5)'
+                    }} />
+                    Processed URL
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {/* Copy button with state feedback */}
+                    <CopyButton url={getProcessedUrl()} />
+                  </div>
+                </div>
+                
+                <div style={{
+                  fontSize: '13px',
+                  fontFamily: 'SF Mono, Consolas, monospace',
+                  lineHeight: '1.5',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  whiteSpace: 'nowrap',
+                  padding: '8px 10px',
+                  backgroundColor: 'rgba(0,0,0,0.3)',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(255,56,92,0.1)',
+                  position: 'relative',
+                }}>
+                  {/* Render the URL with highlighted variables */}
+                  {renderProcessedUrlWithHighlight()}
+                </div>
+                
+                {/* Environment indicator */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginTop: '8px',
+                  fontSize: '11px',
+                  color: 'rgba(255,255,255,0.4)',
+                }}>
+                  <FaLock size={9} />
+                  Using <span style={{ 
+                    fontWeight: 'bold', 
+                    color: 'rgba(255,56,92,0.8)',
+                    padding: '1px 5px',
+                    backgroundColor: 'rgba(255,56,92,0.08)',
+                    borderRadius: '3px'
+                  }}>
+                    {currentEnvironment.name}
+                  </span> environment
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+        
         {activeTab === 'params' && (
           <FormGroup>
             {request.params.map((param, index) => {
@@ -745,5 +1051,41 @@ function RequestPanel({
     </>
   );
 }
+
+// Copy button component with animation
+const CopyButton = ({ url }: { url: string }) => {
+  const [copied, setCopied] = useState(false);
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  
+  return (
+    <motion.button
+      onClick={handleCopy}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      style={{
+        backgroundColor: copied ? 'rgba(73,204,144,0.1)' : 'rgba(255,56,92,0.08)',
+        border: '1px solid',
+        borderColor: copied ? 'rgba(73,204,144,0.2)' : 'rgba(255,56,92,0.15)',
+        color: copied ? 'rgba(73,204,144,0.9)' : 'rgba(255,56,92,0.9)',
+        borderRadius: '4px',
+        padding: '4px 6px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        fontSize: '11px',
+        transition: 'all 0.2s ease-in-out',
+      }}
+    >
+      {copied ? <FaCheckCircle size={10} /> : <FaCopy size={10} />}
+      {copied ? 'Copied!' : 'Copy'}
+    </motion.button>
+  );
+};
 
 export default RequestPanel;

@@ -19,9 +19,11 @@ import {
   FaFileImport,
   FaTerminal,
   FaCopy,
+  FaGlobeAmericas,
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ApiRequest, Folder, HttpMethod, RequestHistoryItem } from '../types';
+import { ApiRequest, Folder, HttpMethod, RequestHistoryItem, Environment } from '../types';
+import { getMethodColor } from '../utils/uiUtils';
 import {
   Sidebar as SidebarContainer,
   SidebarHeader,
@@ -60,24 +62,7 @@ import DeleteModal from './modals/DeleteModal';
 import MoveModal from './modals/MoveModal';
 import ImportCurlModal from './modals/ImportCurlModal';
 import ImportFileModal from './modals/ImportFileModal';
-
-// Helper function to get color based on HTTP method
-const getMethodColor = (method: HttpMethod): string => {
-  switch (method) {
-    case 'GET':
-      return '#61affe';
-    case 'POST':
-      return '#49cc90';
-    case 'PUT':
-      return '#fca130';
-    case 'DELETE':
-      return '#f93e3e';
-    case 'PATCH':
-      return '#50e3c2';
-    default:
-      return '#9012fe';
-  }
-};
+import EnvironmentManager from './EnvironmentManager';
 
 // Animation variants
 const sidebarVariants = {
@@ -133,6 +118,12 @@ interface SidebarProps {
   requestHistory?: RequestHistoryItem[];
   onRestoreFromHistory?: (historyItem: RequestHistoryItem) => void;
   onClearHistory?: () => void;
+  environments?: Environment[];
+  currentEnvironmentId?: string | null;
+  onAddEnvironment?: (environment: Environment) => void;
+  onUpdateEnvironment?: (environment: Environment) => void;
+  onDeleteEnvironment?: (environmentId: string) => void;
+  onSelectEnvironment?: (environmentId: string | null) => void;
 }
 
 function Sidebar({
@@ -150,6 +141,12 @@ function Sidebar({
   requestHistory = [],
   onRestoreFromHistory = () => {},
   onClearHistory = () => {},
+  environments = [],
+  currentEnvironmentId = null,
+  onAddEnvironment = () => {},
+  onUpdateEnvironment = () => {},
+  onDeleteEnvironment = () => {},
+  onSelectEnvironment = () => {},
 }: SidebarProps) {
   // Load expanded folders from localStorage
   const getInitialExpandedFolders = (): Record<string, boolean> => {
@@ -233,9 +230,11 @@ function Sidebar({
   const [expandedSections, setExpandedSections] = useState<{
     collections: boolean;
     history: boolean;
+    environments: boolean;
   }>({
     collections: true,
     history: false,
+    environments: false,
   });
 
   const toggleFolder = (folderId: string, e: React.MouseEvent) => {
@@ -601,7 +600,7 @@ function Sidebar({
   };
 
   // Toggle section expanded state
-  const toggleSectionExpanded = (section: 'collections' | 'history') => {
+  const toggleSectionExpanded = (section: 'collections' | 'history' | 'environments') => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
@@ -755,6 +754,25 @@ function Sidebar({
                 className="nav-item"
               >
                 <FaBookmark size={20} />
+              </div>
+            </NavTooltip>
+
+            <NavTooltip title="Environments">
+              <div
+                style={{
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  backgroundColor: expandedSections.environments
+                    ? 'rgba(255, 56, 92, 0.1)'
+                    : 'transparent',
+                  color: expandedSections.environments ? '#FF385C' : 'inherit',
+                  transition: 'all 0.2s',
+                }}
+                onClick={() => toggleSectionExpanded('environments')}
+                className="nav-item"
+              >
+                <FaGlobeAmericas size={20} />
               </div>
             </NavTooltip>
 
@@ -971,6 +989,17 @@ function Sidebar({
                   )}
                 </AnimatePresence>
               </CollapsibleSection>
+
+              <EnvironmentManager 
+                environments={environments}
+                currentEnvironmentId={currentEnvironmentId}
+                onAddEnvironment={onAddEnvironment}
+                onUpdateEnvironment={onUpdateEnvironment}
+                onDeleteEnvironment={onDeleteEnvironment}
+                onSelectEnvironment={onSelectEnvironment}
+                expanded={expandedSections.environments}
+                onToggleExpanded={() => toggleSectionExpanded('environments')}
+              />
 
               <CollapsibleSection expanded={expandedSections.history}>
                 <SectionHeader onClick={() => toggleSectionExpanded('history')}>

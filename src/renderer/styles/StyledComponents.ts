@@ -1363,3 +1363,25 @@ export const InputGroup = styled.div`
     padding-right: 32px;
   }
 `;
+
+export const Button = styled.button`
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #f5f5f5;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  padding: 6px 12px;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: #333;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #FF385C;
+  }
+`;

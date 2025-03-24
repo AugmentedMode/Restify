@@ -46,14 +46,29 @@ export default function useRequestHistory() {
   }, [requestHistory, loading]);
 
   // Add a request to history
-  const addToHistory = useCallback((request: ApiRequest, response: ApiResponse) => {
-    const historyItem: RequestHistoryItem = {
-      id: uuidv4(),
-      timestamp: Date.now(),
-      request: { ...request },
-      response,
-      name: `${request.method} ${request.url.split('/').pop() || request.url}`,
-    };
+  const addToHistory = useCallback((
+    requestOrHistoryItem: ApiRequest | RequestHistoryItem, 
+    response?: ApiResponse
+  ) => {
+    let historyItem: RequestHistoryItem;
+
+    if ('timestamp' in requestOrHistoryItem) {
+      // It's already a history item
+      historyItem = requestOrHistoryItem;
+    } else {
+      // It's an ApiRequest with separate response
+      if (!response) {
+        throw new Error('Response required when adding request to history');
+      }
+      
+      historyItem = {
+        id: uuidv4(),
+        timestamp: Date.now(),
+        request: { ...requestOrHistoryItem },
+        response,
+        name: `${requestOrHistoryItem.method} ${requestOrHistoryItem.url.split('/').pop() || requestOrHistoryItem.url}`,
+      };
+    }
 
     // Add to history (limit to latest 100 items)
     setRequestHistory(prev => [historyItem, ...prev].slice(0, 100));
