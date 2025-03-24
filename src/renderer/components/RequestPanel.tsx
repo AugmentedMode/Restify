@@ -37,7 +37,7 @@ import {
   StatusBar,
   StatusBarItem,
 } from '../styles/StyledComponents';
-import { processUrl } from '../utils/apiUtils';
+import { processUrl, processUrlWithParams } from '../utils/apiUtils';
 import { getMethodColor } from '../utils/uiUtils';
 import { motion } from 'framer-motion';
 
@@ -124,10 +124,13 @@ function RequestPanel({
     onRequestChange({ ...request, url: e.target.value });
   };
 
-  // Get the processed URL with environment variables
+  // Get the processed URL with environment variables and parameters
   const getProcessedUrl = () => {
-    if (!currentEnvironment) return request.url;
-    return processUrl(request.url, currentEnvironment);
+    if (!currentEnvironment && (!request.params || request.params.length === 0)) {
+      return request.url;
+    }
+    
+    return processUrlWithParams(request.url, request.params, currentEnvironment);
   };
 
   // Environment variable suggestion helper
@@ -371,30 +374,40 @@ function RequestPanel({
     ));
   };
 
-  // Function to render the processed URL with highlighted variables
+  // Function to render the processed URL with highlighted variables and params
   const renderProcessedUrlWithHighlight = () => {
-    if (!currentEnvironment || !request.url.includes('{{')) return getProcessedUrl();
+    if (!request.url) return '';
     
-    // Split the URL by variable pattern {{...}}
-    const parts = getProcessedUrl().split(/(https?:\/\/|\/|\?|&|=)/g);
+    const processed = getProcessedUrl();
+    
+    // Get just the base URL with environment variables replaced
+    const baseUrlWithEnvVars = currentEnvironment ? processUrl(request.url, currentEnvironment) : request.url;
+    
+    // Check if we have query params to highlight
+    const hasQueryParams = processed.length > baseUrlWithEnvVars.length;
+    
+    if (!hasQueryParams && !currentEnvironment) {
+      return processed;
+    }
+    
+    // Split by query params
+    const [baseUrl, queryString] = processed.split(/\?(.+)/);
     
     return (
       <>
-        {parts.map((part, index) => {
-          // Check if this part is a protocol, separator, or regular text
+        {/* Split the baseUrl by components and highlight env vars */}
+        {baseUrl.split(/(https?:\/\/|\/)/g).map((part, index) => {
           if (part === 'http://' || part === 'https://') {
-            return <span key={index} style={{ color: '#49cc90' }}>{part}</span>;
+            return <span key={`base-${index}`} style={{ color: '#49cc90' }}>{part}</span>;
           } else if (part === '/') {
-            return <span key={index} style={{ color: '#fca130' }}>{part}</span>;
-          } else if (part === '?' || part === '&' || part === '=') {
-            return <span key={index} style={{ color: '#f93e3e' }}>{part}</span>;
+            return <span key={`base-${index}`} style={{ color: '#fca130' }}>{part}</span>;
           } else {
             // Check if the original URL had a variable that was replaced in this part
-            const originalPart = request.url.split(/(https?:\/\/|\/|\?|&|=)/g)[index];
+            const originalPart = request.url.split(/(https?:\/\/|\/)/g)[index];
             if (originalPart && originalPart.includes('{{') && originalPart.includes('}}')) {
               return (
                 <motion.span 
-                  key={index}
+                  key={`base-${index}`}
                   style={{ 
                     color: '#FF385C',
                     fontWeight: 'bold',
@@ -413,9 +426,37 @@ function RequestPanel({
                 </motion.span>
               );
             }
-            return <span key={index}>{part}</span>;
+            return <span key={`base-${index}`}>{part}</span>;
           }
         })}
+        
+        {/* If we have query params, highlight them differently */}
+        {hasQueryParams && queryString && (
+          <>
+            <span style={{ color: '#f93e3e' }}>?</span>
+            {queryString.split(/(&|=)/g).map((part, index) => {
+              if (part === '&') {
+                return <span key={`query-${index}`} style={{ color: '#f93e3e' }}>&amp;</span>;
+              } else if (part === '=') {
+                return <span key={`query-${index}`} style={{ color: '#f93e3e' }}>=</span>;
+              } else if (index % 4 === 0) { // Parameter names (every 4th item starting at 0)
+                return (
+                  <span 
+                    key={`query-${index}`} 
+                    style={{ 
+                      color: '#50e3c2',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    {part}
+                  </span>
+                );
+              } else { // Parameter values
+                return <span key={`query-${index}`}>{part}</span>;
+              }
+            })}
+          </>
+        )}
       </>
     );
   };
@@ -530,7 +571,8 @@ function RequestPanel({
 
       <TabContent>
         {/* Show processed URL preview with enhanced UI */}
-        {currentEnvironment && request.url.includes('{{') && (
+        {((currentEnvironment && request.url.includes('{{')) || 
+          (request.params && request.params.some(p => p.enabled && p.name.trim()))) && (
           <motion.div
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
@@ -610,30 +652,32 @@ function RequestPanel({
                   border: '1px solid rgba(255,56,92,0.1)',
                   position: 'relative',
                 }}>
-                  {/* Render the URL with highlighted variables */}
+                  {/* Render the URL with highlighted variables and params */}
                   {renderProcessedUrlWithHighlight()}
                 </div>
                 
                 {/* Environment indicator */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  marginTop: '8px',
-                  fontSize: '11px',
-                  color: 'rgba(255,255,255,0.4)',
-                }}>
-                  <FaLock size={9} />
-                  Using <span style={{ 
-                    fontWeight: 'bold', 
-                    color: 'rgba(255,56,92,0.8)',
-                    padding: '1px 5px',
-                    backgroundColor: 'rgba(255,56,92,0.08)',
-                    borderRadius: '3px'
+                {currentEnvironment && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginTop: '8px',
+                    fontSize: '11px',
+                    color: 'rgba(255,255,255,0.4)',
                   }}>
-                    {currentEnvironment.name}
-                  </span> environment
-                </div>
+                    <FaLock size={9} />
+                    Using <span style={{ 
+                      fontWeight: 'bold', 
+                      color: 'rgba(255,56,92,0.8)',
+                      padding: '1px 5px',
+                      backgroundColor: 'rgba(255,56,92,0.08)',
+                      borderRadius: '3px'
+                    }}>
+                      {currentEnvironment.name}
+                    </span> environment
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

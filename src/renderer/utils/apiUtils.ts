@@ -17,6 +17,37 @@ export const processUrl = (url: string, environment?: Environment): string => {
 };
 
 /**
+ * Process URL with both environment variables and query parameters
+ */
+export const processUrlWithParams = (
+  url: string, 
+  params: RequestParam[] = [], 
+  environment?: Environment
+): string => {
+  // First replace environment variables
+  let processedUrl = environment ? processUrl(url, environment) : url;
+  
+  // Then add query parameters
+  const enabledParams = params.filter(param => param.enabled && param.name.trim());
+  
+  if (enabledParams.length === 0) {
+    return processedUrl;
+  }
+  
+  // Create URLSearchParams
+  const searchParams = new URLSearchParams();
+  enabledParams.forEach(param => {
+    searchParams.append(param.name, param.value);
+  });
+  
+  // Check if URL already has query parameters
+  const hasQueryParams = processedUrl.includes('?');
+  
+  // Add query parameters to URL
+  return `${processedUrl}${hasQueryParams ? '&' : '?'}${searchParams.toString()}`;
+};
+
+/**
  * Convert request parameters to URL search params format
  */
 export const paramsToObject = (params: RequestParam[]): Record<string, string> => {
