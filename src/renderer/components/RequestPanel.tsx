@@ -398,9 +398,9 @@ function RequestPanel({
         {/* Split the baseUrl by components and highlight env vars */}
         {baseUrl.split(/(https?:\/\/|\/)/g).map((part, index) => {
           if (part === 'http://' || part === 'https://') {
-            return <span key={`base-${index}`} style={{ color: '#49cc90' }}>{part}</span>;
+            return <span key={`base-${index}`} style={{ color: '#61afef' }}>{part}</span>;
           } else if (part === '/') {
-            return <span key={`base-${index}`} style={{ color: '#fca130' }}>{part}</span>;
+            return <span key={`base-${index}`} style={{ color: '#c678dd' }}>{part}</span>;
           } else {
             // Check if the original URL had a variable that was replaced in this part
             const originalPart = request.url.split(/(https?:\/\/|\/)/g)[index];
@@ -426,25 +426,25 @@ function RequestPanel({
                 </motion.span>
               );
             }
-            return <span key={`base-${index}`}>{part}</span>;
+            return <span key={`base-${index}`} style={{ color: '#abb2bf' }}>{part}</span>;
           }
         })}
         
         {/* If we have query params, highlight them differently */}
         {hasQueryParams && queryString && (
           <>
-            <span style={{ color: '#f93e3e' }}>?</span>
+            <span style={{ color: '#e06c75' }}>?</span>
             {queryString.split(/(&|=)/g).map((part, index) => {
               if (part === '&') {
-                return <span key={`query-${index}`} style={{ color: '#f93e3e' }}>&amp;</span>;
+                return <span key={`query-${index}`} style={{ color: '#e06c75' }}>&amp;</span>;
               } else if (part === '=') {
-                return <span key={`query-${index}`} style={{ color: '#f93e3e' }}>=</span>;
+                return <span key={`query-${index}`} style={{ color: '#e06c75' }}>=</span>;
               } else if (index % 4 === 0) { // Parameter names (every 4th item starting at 0)
                 return (
                   <span 
                     key={`query-${index}`} 
                     style={{ 
-                      color: '#50e3c2',
+                      color: '#56b6c2',
                       fontWeight: 'bold'
                     }}
                   >
@@ -452,7 +452,7 @@ function RequestPanel({
                   </span>
                 );
               } else { // Parameter values
-                return <span key={`query-${index}`}>{part}</span>;
+                return <span key={`query-${index}`} style={{ color: '#98c379' }}>{part}</span>;
               }
             })}
           </>
