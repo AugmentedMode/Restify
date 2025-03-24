@@ -204,8 +204,8 @@ export const formatJSON = (
     const MAX_DEPTH = 10;
     const result: React.ReactNode[] = [];
 
-    // Base indentation for each level
-    const getIndent = (level: number) => level * 20;
+    // Base indentation for each level - changed from 20 to 12 for 2-space equivalent
+    const getIndent = (level: number) => level * 12;
 
     if (depth > MAX_DEPTH) {
       result.push(
@@ -219,6 +219,12 @@ export const formatJSON = (
     }
 
     if (Array.isArray(jsonData)) {
+      // Special case for empty arrays - put on a single line
+      if (jsonData.length === 0) {
+        result.push(createLineWithNumber('[]'));
+        return result;
+      }
+      
       // For large arrays, limit the number of items rendered
       const itemsToRender = isLargeResponse
         ? Math.min(jsonData.length, maxItems)
@@ -294,6 +300,13 @@ export const formatJSON = (
       result.push(createLineWithNumber(']'));
     } else if (typeof jsonData === 'object' && jsonData !== null) {
       const keys = Object.keys(jsonData);
+      
+      // Special case for empty objects - put on a single line
+      if (keys.length === 0) {
+        result.push(createLineWithNumber('{}'));
+        return result;
+      }
+      
       // For large objects, limit the number of keys rendered
       const keysToRender = isLargeResponse ? keys.slice(0, maxItems) : keys;
       const hasMoreKeys = keys.length > keysToRender.length;
