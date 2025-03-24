@@ -1230,6 +1230,7 @@ function Sidebar({
                           variants={listVariants}
                           initial="hidden"
                           animate="visible"
+                          style={{ marginLeft: 16 }}
                         >
                           {filteredNotes.map((note) => (
                             <motion.div
