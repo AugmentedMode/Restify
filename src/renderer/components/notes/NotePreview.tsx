@@ -18,7 +18,7 @@ const PreviewContainer = styled.div`
 
 const Header = styled.div`
   padding: 8px 16px;
-  background-color: #252526;
+  background-color: rgba(255, 255, 255, 0.03);
   border-bottom: 1px solid #333;
   font-size: 0.9rem;
   font-weight: 500;

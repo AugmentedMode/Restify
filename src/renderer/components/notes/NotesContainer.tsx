@@ -20,7 +20,7 @@ const Header = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background-color: #252526;
+  background-color: rgba(255, 255, 255, 0.03);
   border-bottom: 1px solid #333;
   z-index: 10;
 `;
@@ -134,7 +134,7 @@ const NoteControls = styled.div`
   display: flex;
   align-items: center;
   padding: 8px 16px;
-  background-color: #252526;
+  background-color: rgba(255, 255, 255, 0.03);
   border-bottom: 1px solid #333;
 `;
 
