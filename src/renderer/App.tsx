@@ -256,26 +256,39 @@ function App() {
 
   // Initial load and history
   useEffect(() => {
+    let foundSavedRequest = false;
+    
     // Try to load the active request ID from localStorage
     const savedActiveRequestId = localStorage.getItem(
       'api-client-active-request-id',
     );
+    
     if (savedActiveRequestId) {
-      const requestId = JSON.parse(savedActiveRequestId);
-      const savedRequest = findRequestById(collections, requestId);
-      if (savedRequest) {
-        setActiveRequest(savedRequest);
+      try {
+        const requestId = JSON.parse(savedActiveRequestId);
+        const savedRequest = findRequestById(collections, requestId);
+        
+        if (savedRequest) {
+          setActiveRequest(savedRequest);
+          // Also set the response from responseMap if available
+          if (responseMap[savedRequest.id]) {
+            setActiveResponse(responseMap[savedRequest.id]);
+          }
+          foundSavedRequest = true;
+        }
+      } catch (error) {
+        console.error('Error loading saved request:', error);
       }
     }
 
-    // If no request is found in localStorage or if it's not valid, use the first one
-    if (!activeRequest && collections.length > 0) {
+    // Only use the first request if we couldn't find a saved one
+    if (!foundSavedRequest && collections.length > 0) {
       const firstRequest = findFirstRequest(collections);
       if (firstRequest) {
         setActiveRequest(firstRequest);
       }
     }
-  }, [collections]);
+  }, [collections, responseMap]);
 
   // Ensure active request and response stay in sync
   const ensureResponseMatchesRequest = useCallback(() => {
@@ -433,6 +446,12 @@ function App() {
       
       setActiveResponse(response);
       
+      // Save the response to the responseMap for persistence
+      setResponseMap(prev => ({
+        ...prev,
+        [request.id]: response
+      }));
+      
       // Create history item from request and response
       const historyItem: RequestHistoryItem = {
         id: uuidv4(),
@@ -444,14 +463,22 @@ function App() {
       
       addToHistory(historyItem);
     } catch (error: any) {
-      setActiveResponse({
+      const errorResponse = {
         status: 0,
         statusText: 'Error',
         data: error.message || 'An unknown error occurred',
         headers: {},
         time: 0,
         size: 0,
-      });
+      };
+      
+      setActiveResponse(errorResponse);
+      
+      // Save error response to responseMap
+      setResponseMap(prev => ({
+        ...prev,
+        [request.id]: errorResponse
+      }));
     }
   };
 
