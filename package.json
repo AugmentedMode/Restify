@@ -1,38 +1,31 @@
 {
   "name": "restify",
-  "description": "A modern REST API client for developers",
+  "version": "1.0.0",
+  "description": "A modern REST API client for developers with features for testing, documenting, and organizing API requests",
   "keywords": [
     "electron",
-    "boilerplate",
+    "rest",
+    "api",
+    "client",
+    "http",
+    "developer-tools",
     "react",
-    "typescript",
-    "ts",
-    "sass",
-    "webpack",
-    "hot",
-    "reload"
+    "typescript"
   ],
-  "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
+  "homepage": "https://github.com/yourusername/restify#readme",
   "bugs": {
-    "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
+    "url": "https://github.com/yourusername/restify/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/electron-react-boilerplate/electron-react-boilerplate.git"
+    "url": "git+https://github.com/yourusername/restify.git"
   },
   "license": "MIT",
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://electron-react-boilerplate.js.org"
+    "name": "Your Name",
+    "email": "your.email@example.com"
   },
-  "contributors": [
-    {
-      "name": "Amila Welihinda",
-      "email": "amilajack@gmail.com",
-      "url": "https://github.com/amilajack"
-    }
-  ],
+  "contributors": [],
   "main": "./.erb/dll/main.bundle.dev.js",
   "scripts": {
     "build": "concurrently \"npm run build:main\" \"npm run build:renderer\"",
@@ -43,6 +36,9 @@
     "lint": "cross-env NODE_ENV=development eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "cross-env NODE_ENV=development eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "package": "ts-node ./.erb/scripts/clean.js dist && npm run build && electron-builder build --publish never && npm run build:dll",
+    "package:mac": "npm run package && bash scripts/build/build-macos.sh",
+    "package:mac:signed": "npm run package && bash scripts/build/build-signed.sh",
+    "package:mac:notarized": "npm run package && bash scripts/build/build-with-notarize.sh",
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir release/app",
     "prestart": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true NODE_OPTIONS=\"-r ts-node/register --no-warnings\" webpack --config ./.erb/configs/webpack.config.main.dev.ts",
     "start": "ts-node ./.erb/scripts/check-port-in-use.js && npm run prestart && npm run start:renderer",
@@ -199,6 +195,7 @@
       "node_modules",
       "package.json"
     ],
+    "afterSign": "scripts/build/.notarize-env.js",
     "mac": {
       "target": [
         "dmg",

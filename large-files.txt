@@ -1,9 +1,0 @@
-downloads/Restify-1.0.0-arm64.dmg
-downloads/Restify-1.0.0.dmg
-node_modules/electron/dist/Electron.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework
-release/build/Restify-1.0.0-arm64-mac.zip
-release/build/Restify-1.0.0-mac.zip
-release/build/mac/Restify.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework
-node_modules/
-release/
-downloads/ 

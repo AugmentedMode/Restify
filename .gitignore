@@ -6,6 +6,7 @@ release/
 downloads/
 dist/
 build/
+.erb/dll
 
 # Logs
 logs
@@ -20,16 +21,29 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.notarize-env.js
 
-# Misc
+# macOS specific
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# IDE/Editors
 .idea/
 .vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw? 
+*.sw?
 
-*.sh
+# Test coverage
+coverage/
+
+# Packaging
 *.dmg
+*.app
+*.exe
+*.zip
