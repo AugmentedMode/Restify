@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Note } from '../../types';
-import { FaSave, FaEye, FaEdit, FaTags, FaClock, FaFont, FaHeading, FaListUl, FaListOl, FaCode, FaQuoteLeft, FaLink, FaImage, FaFileAlt } from 'react-icons/fa';
+import { FaSave, FaEye, FaEdit, FaTags, FaClock, FaFont, FaHeading, FaListUl, FaListOl, FaCode, FaQuoteLeft, FaLink, FaImage, FaFileAlt, FaCheckSquare } from 'react-icons/fa';
 // @ts-ignore - React Markdown types issue
 import ReactMarkdown from 'react-markdown';
 
@@ -455,6 +455,29 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave, hideHeader = fals
     }, 0);
   };
 
+  const insertTaskList = () => {
+    if (!editorRef.current) return;
+    
+    const start = editorRef.current.selectionStart;
+    const prefix = '- [ ] ';
+    
+    let lineStart = start;
+    while (lineStart > 0 && content[lineStart - 1] !== '\n') {
+      lineStart--;
+    }
+    
+    const newText = content.substring(0, lineStart) + prefix + content.substring(lineStart);
+    setContent(newText);
+    
+    setTimeout(() => {
+      if (!editorRef.current) return;
+      const newCursorPos = lineStart + prefix.length;
+      editorRef.current.selectionStart = newCursorPos;
+      editorRef.current.selectionEnd = newCursorPos;
+      editorRef.current.focus();
+    }, 0);
+  };
+
   if (!note) {
     return (
       <EditorContainer>
@@ -522,6 +545,9 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave, hideHeader = fals
           </ToolbarButton>
           <ToolbarButton title="Numbered List" onClick={() => insertList(true)}>
             <FaListOl />
+          </ToolbarButton>
+          <ToolbarButton title="Task List" onClick={insertTaskList}>
+            <FaCheckSquare />
           </ToolbarButton>
           <ToolbarDivider />
           <ToolbarButton title="Code Block" onClick={insertCodeBlock}>

@@ -5,6 +5,8 @@ import { Note } from '../../types';
 import { FaPlus, FaStickyNote, FaSearch, FaTags, FaFilter, FaSortAmountDown, FaEllipsisH, FaEye, FaEdit, FaSave } from 'react-icons/fa';
 import NoteEditor from './NoteEditor';
 import NotePreview from './NotePreview';
+import NoteOptionsModal from './modals/NoteOptionsModal';
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -196,6 +198,10 @@ interface NotesContainerProps {
   activeNoteId: string | null;
   onAddNote: () => void;
   onUpdateNote: (updatedNote: Note) => void;
+  onRenameNote?: (noteId: string, newName: string) => void;
+  onDeleteNote?: (noteId: string) => void;
+  onDuplicateNote?: (note: Note) => void;
+  onExportNote?: (note: Note) => void;
 }
 
 const NotesContainer: React.FC<NotesContainerProps> = ({
@@ -203,10 +209,15 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
   activeNoteId,
   onAddNote,
   onUpdateNote,
+  onRenameNote = () => {},
+  onDeleteNote = () => {},
+  onDuplicateNote,
+  onExportNote,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'updated' | 'created' | 'alphabetical'>('updated');
+  const [optionsModalNote, setOptionsModalNote] = useState<Note | null>(null);
   
   // Find the active note
   const activeNote = notes.find(note => note.id === activeNoteId) || null;
@@ -226,6 +237,27 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
   // Handle content changes - this will save automatically
   const handleContentChange = (updatedNote: Note) => {
     onUpdateNote(updatedNote);
+  };
+  
+  // Open options modal for a note
+  const handleNoteOptions = (note: Note) => {
+    setOptionsModalNote(note);
+  };
+  
+  // Handle rename note from modal
+  const handleRenameNote = (updatedNote: Note) => {
+    if (onRenameNote) {
+      onRenameNote(updatedNote.id, updatedNote.title);
+    }
+  };
+  
+  // Handle updating tags
+  const handleUpdateTags = (note: Note, tags: string[]) => {
+    onUpdateNote({
+      ...note,
+      tags,
+      updatedAt: Date.now()
+    });
   };
 
   return (
@@ -283,8 +315,26 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
           )}
         </PreviewPanel>
       </Content>
+      
+      {/* Note options modal */}
+      {optionsModalNote && (
+        <NoteOptionsModal
+          isOpen={optionsModalNote !== null}
+          note={optionsModalNote}
+          onClose={() => setOptionsModalNote(null)}
+          onRename={handleRenameNote}
+          onDelete={onDeleteNote}
+          onUpdateTags={handleUpdateTags}
+          onDuplicate={onDuplicateNote}
+          onExport={onExportNote}
+        />
+      )}
     </Container>
   );
 };
 
-export default NotesContainer; 
+export default NotesContainer;
+
+export const handleNoteOptions = (note: Note, setOptionsModalNote: React.Dispatch<React.SetStateAction<Note | null>>) => {
+  setOptionsModalNote(note);
+}; 

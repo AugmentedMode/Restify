@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 // @ts-ignore - React Markdown types issue
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 const PreviewContainer = styled.div`
   display: flex;
@@ -96,6 +97,48 @@ const Content = styled.div`
   li {
     margin-bottom: 0.5em;
   }
+  
+  /* Style for task list items */
+  input[type="checkbox"] {
+    margin-right: 8px;
+    position: relative;
+    top: 2px;
+  }
+  
+  /* Add a class for task list items to style them properly */
+  .task-list-item {
+    display: flex;
+    align-items: flex-start;
+    list-style-type: none;
+    margin-left: -20px;
+  }
+  
+  .task-list-item-checkbox {
+    margin-right: 8px;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #555;
+    border-radius: 3px;
+    background-color: #252525;
+    position: relative;
+    top: 3px;
+    cursor: pointer;
+  }
+  
+  .task-list-item-checkbox:checked {
+    background-color: #FF385C;
+    border-color: #FF385C;
+  }
+  
+  .task-list-item-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 10px;
+    left: 2px;
+    top: -1px;
+  }
 
   code {
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
@@ -188,6 +231,28 @@ interface NotePreviewProps {
 }
 
 const NotePreview: React.FC<NotePreviewProps> = ({ content, title }) => {
+  // Function to process the markdown and handle task lists
+  const processTaskLists = (markdown: string): string => {
+    // Use a more comprehensive regex to match task list items
+    // This pattern looks for:
+    // - beginning of a line or after a newline
+    // - optional whitespace
+    // - a hyphen or asterisk
+    // - whitespace
+    // - square brackets with optional space or 'x' inside
+    // - whitespace
+    // - the rest of the line = the task text
+    const taskListItemPattern = /^(\s*)[-*]\s*\[([ x])\]\s*(.+)$/gm;
+    
+    return markdown.replace(
+      taskListItemPattern, 
+      (match, indent, checked, text) => {
+        const checkedAttr = checked === 'x' ? ' checked' : '';
+        return `${indent}- <div class="task-list-item"><input type="checkbox"${checkedAttr} class="task-list-item-checkbox" disabled />${text}</div>`;
+      }
+    );
+  };
+
   return (
     <PreviewContainer>
       <Header>
@@ -195,7 +260,9 @@ const NotePreview: React.FC<NotePreviewProps> = ({ content, title }) => {
         {title && <PreviewTitle>{title}</PreviewTitle>}
       </Header>
       <Content>
-        <ReactMarkdown>{content}</ReactMarkdown>
+        <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+          {processTaskLists(content)}
+        </ReactMarkdown>
       </Content>
     </PreviewContainer>
   );

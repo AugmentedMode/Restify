@@ -398,6 +398,47 @@ function App() {
     );
   };
 
+  // Adding duplicate note feature
+  const duplicateNote = (note: Note) => {
+    const duplicatedNote: Note = {
+      id: uuidv4(),
+      title: `${note.title} (Copy)`,
+      content: note.content,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      tags: note.tags ? [...note.tags] : [],
+    };
+    setNotes(prev => [...prev, duplicatedNote]);
+    setActiveNote(duplicatedNote.id);
+  };
+
+  // Adding export note feature
+  const exportNote = (note: Note) => {
+    try {
+      // Create a Blob with the note content
+      const blob = new Blob([note.content], { type: 'text/markdown' });
+      
+      // Create a link element
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      
+      // Clean up the note title for filename
+      const filename = note.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+      a.download = `${filename}.md`;
+      
+      // Trigger download
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (error) {
+      console.error('Failed to export note:', error);
+      alert('Failed to export note. Please try again.');
+    }
+  };
+
   // Handle selecting a request from sidebar
   const handleSelectRequest = useCallback(
     (request: ApiRequest) => {
@@ -661,6 +702,8 @@ function App() {
           onAddNote={addNote}
           onRenameNote={renameNote}
           onDeleteNote={deleteNote}
+          onDuplicateNote={duplicateNote}
+          onExportNote={exportNote}
         />
         <MainContent>
           {renderMainContent()}

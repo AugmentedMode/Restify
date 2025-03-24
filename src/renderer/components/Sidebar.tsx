@@ -66,6 +66,8 @@ import MoveModal from './modals/MoveModal';
 import ImportCurlModal from './modals/ImportCurlModal';
 import ImportFileModal from './modals/ImportFileModal';
 import EnvironmentManager from './EnvironmentManager';
+import { handleNoteOptions } from './notes/NotesContainer';
+import NoteOptionsModal from './notes/modals/NoteOptionsModal';
 
 // Animation variants
 const sidebarVariants = {
@@ -133,6 +135,8 @@ interface SidebarProps {
   onAddNote?: () => void;
   onRenameNote?: (noteId: string, newName: string) => void;
   onDeleteNote?: (noteId: string) => void;
+  onDuplicateNote?: (note: Note) => void;
+  onExportNote?: (note: Note) => void;
 }
 
 function Sidebar({
@@ -162,6 +166,8 @@ function Sidebar({
   onAddNote = () => {},
   onRenameNote = () => {},
   onDeleteNote = () => {},
+  onDuplicateNote = () => {},
+  onExportNote = () => {},
 }: SidebarProps) {
   // Load expanded folders from localStorage
   const getInitialExpandedFolders = (): Record<string, boolean> => {
@@ -253,6 +259,9 @@ function Sidebar({
     environments: false,
     notes: true,
   });
+
+  // Add state for the note options modal
+  const [noteOptionsModal, setNoteOptionsModal] = useState<Note | null>(null);
 
   const toggleFolder = (folderId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1275,16 +1284,9 @@ function Sidebar({
                                   <ActionButton
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setContextMenu({
-                                        visible: true,
-                                        x: e.clientX,
-                                        y: e.clientY,
-                                        item: note,
-                                        itemType: 'request', // Reuse request context menu
-                                        path: [],
-                                      });
+                                      setNoteOptionsModal(note);
                                     }}
-                                    aria-label="Menu"
+                                    aria-label="Options"
                                     className="action-button"
                                   >
                                     <FaEllipsisV size={12} />
@@ -1540,17 +1542,13 @@ function Sidebar({
               <>
                 <ContextMenuItem
                   onClick={() => {
-                    setRenameModal({
-                      visible: true,
-                      item: contextMenu.item,
-                      itemType: 'request', // Reuse request rename for now
-                      path: [],
-                    });
+                    // Instead of using the rename modal, open the options modal
+                    setNoteOptionsModal(contextMenu.item);
                     setContextMenu({ ...contextMenu, visible: false });
                   }}
                 >
                   <FaPen size={12} />
-                  <span>Rename</span>
+                  <span>Options</span>
                 </ContextMenuItem>
                 <ContextMenuDivider />
                 <ContextMenuItem
@@ -1597,6 +1595,35 @@ function Sidebar({
           collections={collections}
           itemType={moveModal.itemType}
           currentPath={moveModal.path}
+        />
+      )}
+
+      {/* Add the NoteOptionsModal */}
+      {noteOptionsModal && (
+        <NoteOptionsModal
+          isOpen={noteOptionsModal !== null}
+          note={noteOptionsModal}
+          onClose={() => setNoteOptionsModal(null)}
+          onRename={(updatedNote) => {
+            onRenameNote(updatedNote.id, updatedNote.title);
+            setNoteOptionsModal(null);
+          }}
+          onDelete={(noteId) => {
+            onDeleteNote(noteId);
+            setNoteOptionsModal(null);
+          }}
+          onUpdateTags={(note, tags) => {
+            // Just close the modal for now - the App component doesn't support tags directly
+            setNoteOptionsModal(null);
+          }}
+          onDuplicate={(note) => {
+            onDuplicateNote && onDuplicateNote(note);
+            setNoteOptionsModal(null);
+          }}
+          onExport={(note) => {
+            onExportNote && onExportNote(note);
+            setNoteOptionsModal(null);
+          }}
         />
       )}
     </motion.div>
