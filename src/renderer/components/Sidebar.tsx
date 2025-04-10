@@ -12,7 +12,6 @@ import {
   FaChevronDown,
   FaChevronRight,
   FaEraser,
-  FaHistory,
   FaBookmark,
   FaChevronUp,
   FaEllipsisV,
@@ -23,6 +22,7 @@ import {
   FaStickyNote,
   FaFile,
   FaFileAlt,
+  FaHistory,
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ApiRequest, Folder, HttpMethod, RequestHistoryItem, Environment, Note } from '../types';
@@ -739,7 +739,7 @@ function Sidebar({
         maxWidth: '100vw',
       }}
     >
-      <SidebarContainer ref={sidebarRef} style={{ width: '100%' }}>
+      <SidebarContainer ref={sidebarRef} style={{ width: '100%', overflowX: 'hidden' }}>
         <ResizeHandle
           className={isResizing ? 'active' : ''}
           onMouseDown={handleResizeStart}
@@ -906,8 +906,8 @@ function Sidebar({
               />
             </SearchContainer>
 
-            <SidebarContent>
-              <CollapsibleSection expanded={expandedSections.collections}>
+            <SidebarContent style={{ overflowX: 'hidden' }}>
+              <CollapsibleSection expanded={expandedSections.collections} style={{ overflowX: 'hidden' }}>
                 <SectionHeader
                   onClick={() => toggleSectionExpanded('collections')}
                 >
@@ -1062,7 +1062,7 @@ function Sidebar({
               />
 
                 {/* Notes Section */}
-                <CollapsibleSection expanded={expandedSections.notes}>
+                <CollapsibleSection expanded={expandedSections.notes} style={{ overflowX: 'hidden' }}>
                 <SectionHeader onClick={() => toggleSectionExpanded('notes')}>
                   <CollectionHeader>
                     <CollectionIcon>
@@ -1185,7 +1185,7 @@ function Sidebar({
                 </AnimatePresence>
               </CollapsibleSection>
 
-              <CollapsibleSection expanded={expandedSections.history}>
+              <CollapsibleSection expanded={expandedSections.history} style={{ overflowX: 'hidden' }}>
                 <SectionHeader onClick={() => toggleSectionExpanded('history')}>
                   <CollectionHeader>
                     <CollectionIcon>
@@ -1226,7 +1226,7 @@ function Sidebar({
                       transition={{ duration: 0.2 }}
                       style={{ overflow: 'hidden' }}
                     >
-                      <HistoryItemsContainer>
+                      <HistoryItemsContainer style={{ overflowX: 'hidden' }}>
                         {requestHistory.length === 0 ? (
                           <EmptyHistoryMessage>
                             No request history yet.

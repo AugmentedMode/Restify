@@ -94,20 +94,13 @@ function EmptyStateView({
   return (
     <EmptyStateContainer>
       <FaCode size={64} />
-      <h3>Welcome to API Client</h3>
+      <h3>Restify</h3>
       <p>
         Select a request from the sidebar or create a new collection to get
-        started. This client helps you build, test, and document APIs with ease.
+        started. Opensource IDE for exploring and testing APIs
       </p>
       <button type="button" onClick={onCreateCollection}>
         <FaPlus /> Create New Collection
-      </button>
-      <button 
-        type="button" 
-        onClick={handleClearStorage} 
-        style={{ marginTop: '10px', backgroundColor: '#e74c3c' }}
-      >
-        <FaTrash /> Clear All Storage Data
       </button>
     </EmptyStateContainer>
   );
