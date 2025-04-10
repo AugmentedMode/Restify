@@ -63,7 +63,8 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
       selectedBlockId: blocks[0].id,
       menuOpen: false,
       menuPosition: { x: 0, y: 0 },
-      menuAnchorBlockId: null
+      menuAnchorBlockId: null,
+      menuFilterText: ''
     };
   });
   
@@ -154,12 +155,17 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
   }, []);
   
   // Handle opening block type menu
-  const handleOpenBlockMenu = useCallback((blockId: string, position: { x: number, y: number }) => {
+  const handleOpenBlockMenu = useCallback((
+    blockId: string, 
+    position: { x: number, y: number },
+    initialFilterText: string = ''
+  ) => {
     setEditorState(prevState => ({
       ...prevState,
       menuOpen: true,
       menuPosition: position,
-      menuAnchorBlockId: blockId
+      menuAnchorBlockId: blockId,
+      menuFilterText: initialFilterText
     }));
   }, []);
   
@@ -174,22 +180,112 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
   
   // Handle changing block type from menu
   const handleChangeBlockType = useCallback((blockId: string, newType: BlockType) => {
-    setEditorState(prevState => {
-      const newBlocks = prevState.blocks.map(block => {
-        if (block.id === blockId) {
-          return { ...block, type: newType };
-        }
-        return block;
-      });
+    // First find the block element that had the slash command
+    const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+    const contentElement = blockElement?.querySelector('[contenteditable="true"]') as HTMLElement;
+    
+    // Get the current text content and remove the slash command text
+    if (contentElement) {
+      const text = contentElement.textContent || '';
+      const slashIndex = text.lastIndexOf('/');
       
-      return {
-        ...prevState,
-        blocks: newBlocks,
-        menuOpen: false,
-        menuAnchorBlockId: null
-      };
-    });
-  }, []);
+      if (slashIndex >= 0) {
+        // Create the new text without the slash and command text
+        const newText = text.substring(0, slashIndex);
+        
+        // Apply the new content
+        contentElement.textContent = newText;
+        
+        // Get the block data to update
+        const blockToUpdate = editorState.blocks.find(b => b.id === blockId);
+        if (blockToUpdate) {
+          // Update the block content
+          const updatedBlock = { 
+            ...blockToUpdate, 
+            content: newText,
+            type: newType 
+          };
+          
+          // Update state with the new block content and type
+          setEditorState(prevState => {
+            const newBlocks = prevState.blocks.map(block => {
+              if (block.id === blockId) {
+                return updatedBlock;
+              }
+              return block;
+            });
+            
+            return {
+              ...prevState,
+              blocks: newBlocks,
+              menuOpen: false,
+              menuAnchorBlockId: null
+            };
+          });
+        }
+      } else {
+        // If no slash found, just update the block type
+        setEditorState(prevState => {
+          const newBlocks = prevState.blocks.map(block => {
+            if (block.id === blockId) {
+              return { ...block, type: newType };
+            }
+            return block;
+          });
+          
+          return {
+            ...prevState,
+            blocks: newBlocks,
+            menuOpen: false,
+            menuAnchorBlockId: null
+          };
+        });
+      }
+      
+      // Set focus to the content element after a short delay
+      setTimeout(() => {
+        if (contentElement) {
+          contentElement.focus();
+          
+          // Place cursor at the end of the content
+          const range = document.createRange();
+          const selection = window.getSelection();
+          
+          // Set cursor at the end
+          if (contentElement.childNodes.length > 0) {
+            const lastNode = contentElement.childNodes[contentElement.childNodes.length - 1];
+            range.setStartAfter(lastNode);
+          } else {
+            range.setStart(contentElement, 0);
+          }
+          
+          range.collapse(true);
+          
+          if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        }
+      }, 10);
+    } else {
+      // Fallback if we couldn't find the content element
+      setEditorState(prevState => {
+        const newBlocks = prevState.blocks.map(block => {
+          if (block.id === blockId) {
+            return { ...block, type: newType };
+          }
+          return block;
+        });
+        
+        return {
+          ...prevState,
+          blocks: newBlocks,
+          menuOpen: false,
+          menuAnchorBlockId: null
+        };
+      });
+    }
+  }, [editorState.blocks]);
   
   // Set the selected block
   const handleSelectBlock = useCallback((blockId: string) => {
@@ -218,6 +314,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
             onDeleteBlock={handleDeleteBlock}
             onOpenBlockMenu={handleOpenBlockMenu}
             onSelect={handleSelectBlock}
+            data-block-id={block.id}
           />
         ))}
       </BlocksContainer>
@@ -229,6 +326,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
           onSelectBlockType={(type) => 
             handleChangeBlockType(editorState.menuAnchorBlockId!, type)
           }
+          initialFilterText={editorState.menuFilterText}
         />
       )}
     </EditorContainer>

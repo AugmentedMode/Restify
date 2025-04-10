@@ -31,6 +31,7 @@ export interface EditorState {
   menuOpen: boolean;
   menuPosition: { x: number; y: number };
   menuAnchorBlockId: string | null;
+  menuFilterText: string;
 }
 
 export interface Position {

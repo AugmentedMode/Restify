@@ -199,7 +199,7 @@ interface BlockProps {
   onUpdate: (block: BlockData) => void;
   onAddBlock: (blockId: string, blockType?: BlockType) => void;
   onDeleteBlock: (blockId: string) => void;
-  onOpenBlockMenu: (blockId: string, position: { x: number; y: number }) => void;
+  onOpenBlockMenu: (blockId: string, position: { x: number; y: number }, initialFilterText: string) => void;
   onSelect: (blockId: string) => void;
 }
 
@@ -215,6 +215,9 @@ const Block: React.FC<BlockProps> = ({
   const [content, setContent] = useState(block.content);
   const contentRef = useRef<HTMLDivElement>(null);
   const isInitialMount = useRef(true);
+  const [slashMenuActive, setSlashMenuActive] = useState(false);
+  const [slashMenuText, setSlashMenuText] = useState('');
+  const slashCommandSelectionRef = useRef<number | null>(null);
   
   // Update parent when content changes
   useEffect(() => {
@@ -228,12 +231,16 @@ const Block: React.FC<BlockProps> = ({
     }
   }, [content, block, onUpdate]);
   
-  // Update local state if block.content changes from parent
+  // Watch for changes to block content and update state
   useEffect(() => {
-    if (block.content !== content && !contentRef.current?.isSameNode(document.activeElement)) {
+    // If block content changed externally (like when a slash command is selected),
+    // update the local content and reset the slash menu state
+    if (block.content !== content && !isInitialMount.current) {
       setContent(block.content);
+      setSlashMenuActive(false);
+      setSlashMenuText('');
     }
-  }, [block.content]);
+  }, [block.content, content]);
   
   // Focus the block when selected
   useEffect(() => {
@@ -291,26 +298,117 @@ const Block: React.FC<BlockProps> = ({
     }
   };
   
+  // Close the slash menu and restore focus
+  const closeSlashMenu = () => {
+    setSlashMenuActive(false);
+    
+    // Focus the editor after a short delay to allow the UI to update
+    setTimeout(() => {
+      if (!contentRef.current) return;
+      
+      // Get the current content and find the slash position
+      const text = contentRef.current.textContent || '';
+      const slashIndex = text.lastIndexOf('/');
+      
+      if (slashIndex >= 0) {
+        // Remove the slash and filter text
+        const newContent = text.substring(0, slashIndex);
+        contentRef.current.textContent = newContent;
+        setContent(newContent);
+      }
+      
+      // Focus the content
+      contentRef.current.focus();
+    }, 10);
+  };
+  
   // Handle keyboard events like Enter, Backspace, etc.
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // If we're already in slash menu mode and user presses Escape, close it
+    if (slashMenuActive && e.key === 'Escape') {
+      e.preventDefault();
+      closeSlashMenu();
+      return;
+    }
+    
     // Handle /, which opens the block menu
-    if (e.key === '/' && content === '') {
+    if (e.key === '/' && !slashMenuActive) {
       e.preventDefault();
       
       if (contentRef.current) {
-        const rect = contentRef.current.getBoundingClientRect();
-        onOpenBlockMenu(block.id, { x: rect.left, y: rect.bottom });
+        // Get cursor position and add / to the content at that position
+        const selection = window.getSelection();
+        const range = selection?.getRangeAt(0);
+        
+        if (range) {
+          // Store the current position where the slash will be inserted
+          slashCommandSelectionRef.current = range.startOffset;
+          
+          // Insert the slash character
+          contentRef.current.focus();
+          document.execCommand('insertText', false, '/');
+          
+          const rect = contentRef.current.getBoundingClientRect();
+          
+          // Get cursor position details for better menu placement
+          let cursorRect = rect;
+          if (selection && selection.rangeCount > 0) {
+            cursorRect = range.getBoundingClientRect();
+          }
+          
+          // Activate slash menu mode
+          setSlashMenuActive(true);
+          setSlashMenuText('');
+          
+          onOpenBlockMenu(block.id, { 
+            x: cursorRect.left || rect.left, 
+            y: (cursorRect.bottom || rect.bottom) + 5
+          }, '');
+        }
       }
     }
     // Handle Enter to create a new block
     else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      
+      // If slash menu is active, close it
+      if (slashMenuActive) {
+        closeSlashMenu();
+        return;
+      }
+      
       onAddBlock(block.id);
     } 
     // Handle Backspace on empty block to delete
-    else if (e.key === 'Backspace' && content === '') {
-      e.preventDefault();
-      onDeleteBlock(block.id);
+    else if (e.key === 'Backspace') {
+      if (content === '') {
+        e.preventDefault();
+        onDeleteBlock(block.id);
+      } else if (slashMenuActive && slashMenuText === '') {
+        // If the user has deleted all text after slash, exit slash menu mode
+        closeSlashMenu();
+      }
+    }
+    // If slash menu is active, update the filter text for every keypress
+    else if (slashMenuActive && e.key.length === 1) { // Only capture printable characters
+      const newText = slashMenuText + e.key;
+      setSlashMenuText(newText);
+      
+      // Update the menu with new filter text
+      if (contentRef.current) {
+        const rect = contentRef.current.getBoundingClientRect();
+        const selection = window.getSelection();
+        let cursorRect = rect;
+        
+        if (selection && selection.rangeCount > 0) {
+          cursorRect = selection.getRangeAt(0).getBoundingClientRect();
+        }
+        
+        onOpenBlockMenu(block.id, { 
+          x: cursorRect.left || rect.left, 
+          y: (cursorRect.bottom || rect.bottom) + 5
+        }, newText);
+      }
     }
   };
   
@@ -318,7 +416,7 @@ const Block: React.FC<BlockProps> = ({
   const handleBlockTypeClick = () => {
     if (contentRef.current) {
       const rect = contentRef.current.getBoundingClientRect();
-      onOpenBlockMenu(block.id, { x: rect.left, y: rect.bottom });
+      onOpenBlockMenu(block.id, { x: rect.left, y: rect.bottom }, '');
     }
   };
 
@@ -326,6 +424,11 @@ const Block: React.FC<BlockProps> = ({
   const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
     const newContent = e.currentTarget.textContent || '';
     setContent(newContent);
+    
+    // If the content no longer contains the slash, exit slash menu mode
+    if (slashMenuActive && !newContent.includes('/')) {
+      setSlashMenuActive(false);
+    }
   };
 
   // Set initial content on mount
@@ -341,6 +444,7 @@ const Block: React.FC<BlockProps> = ({
       $isEmpty={content === ''} 
       $blockType={block.type}
       onClick={() => onSelect(block.id)}
+      data-block-id={block.id}
     >
       <BlockContent $blockType={block.type}>
         <BlockTypeIcon>
