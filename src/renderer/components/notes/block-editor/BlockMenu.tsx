@@ -231,6 +231,22 @@ const BlockMenu: React.FC<BlockMenuProps> = ({
     setSelectedIndex(0);
   }, [searchQuery]);
   
+  // Scroll selected option into view when selected index changes
+  useEffect(() => {
+    if (menuRef.current) {
+      const selectedElement = document.querySelector(`[data-option-index="${selectedIndex}"]`) as HTMLElement;
+      if (selectedElement) {
+        const menuRect = menuRef.current.getBoundingClientRect();
+        const selectedRect = selectedElement.getBoundingClientRect();
+        
+        // If selected element is outside visible area, scroll to it
+        if (selectedRect.bottom > menuRect.bottom || selectedRect.top < menuRect.top) {
+          selectedElement.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    }
+  }, [selectedIndex]);
+  
   // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -257,13 +273,43 @@ const BlockMenu: React.FC<BlockMenuProps> = ({
       else if (e.key === 'ArrowDown') {
         e.preventDefault();
         if (filteredOptions.length > 0) {
-          setSelectedIndex(prev => (prev + 1) % filteredOptions.length);
+          const newIndex = (selectedIndex + 1) % filteredOptions.length;
+          setSelectedIndex(newIndex);
+          
+          // Scroll the selected option into view
+          setTimeout(() => {
+            const selectedElement = document.querySelector(`[data-option-index="${newIndex}"]`) as HTMLElement;
+            if (selectedElement && menuRef.current) {
+              const menuRect = menuRef.current.getBoundingClientRect();
+              const selectedRect = selectedElement.getBoundingClientRect();
+              
+              // If selected element is below the visible area, scroll down
+              if (selectedRect.bottom > menuRect.bottom) {
+                menuRef.current.scrollTop += (selectedRect.bottom - menuRect.bottom) + 8;
+              }
+            }
+          }, 0);
         }
       }
       else if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (filteredOptions.length > 0) {
-          setSelectedIndex(prev => (prev - 1 + filteredOptions.length) % filteredOptions.length);
+          const newIndex = (selectedIndex - 1 + filteredOptions.length) % filteredOptions.length;
+          setSelectedIndex(newIndex);
+          
+          // Scroll the selected option into view
+          setTimeout(() => {
+            const selectedElement = document.querySelector(`[data-option-index="${newIndex}"]`) as HTMLElement;
+            if (selectedElement && menuRef.current) {
+              const menuRect = menuRef.current.getBoundingClientRect();
+              const selectedRect = selectedElement.getBoundingClientRect();
+              
+              // If selected element is above the visible area, scroll up
+              if (selectedRect.top < menuRect.top) {
+                menuRef.current.scrollTop += (selectedRect.top - menuRect.top) - 8;
+              }
+            }
+          }, 0);
         }
       }
       // Enter to select the highlighted item
@@ -326,6 +372,7 @@ const BlockMenu: React.FC<BlockMenuProps> = ({
               $isSelected={index === selectedIndex}
               onClick={() => handleOptionClick(option.type)}
               onMouseEnter={() => handleOptionHover(index)}
+              data-option-index={index}
             >
               <IconWrapper>
                 {option.icon}
