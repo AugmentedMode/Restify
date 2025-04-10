@@ -27,12 +27,8 @@ const BlockContainer = styled.div<BlockContainerProps>`
   position: relative;
   margin: 2px 0;
   border-radius: 4px;
-  background-color: ${props => props.$isSelected ? 'rgba(255, 255, 255, 0.05)' : 'transparent'};
+  background-color: transparent;
   transition: background-color 0.2s ease;
-  
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.03);
-  }
   
   &:hover .block-actions {
     opacity: 1;
@@ -447,10 +443,6 @@ const Block: React.FC<BlockProps> = ({
       data-block-id={block.id}
     >
       <BlockContent $blockType={block.type}>
-        <BlockTypeIcon>
-          {getBlockTypeIcon()}
-        </BlockTypeIcon>
-        
         <BlockInput
           ref={contentRef}
           $blockType={block.type}
@@ -459,17 +451,7 @@ const Block: React.FC<BlockProps> = ({
           onInput={handleContentChange}
           onKeyDown={handleKeyDown}
         />
-        
-        <BlockActions className="block-actions">
-          <BlockTypeButton onClick={handleBlockTypeClick}>
-            {getBlockTypeIcon()}
-          </BlockTypeButton>
-        </BlockActions>
       </BlockContent>
-      
-      <AddBlockButton onClick={() => onAddBlock(block.id)}>
-        <FaPlus size={12} />
-      </AddBlockButton>
     </BlockContainer>
   );
 };

@@ -142,19 +142,19 @@ const BlockMenu: React.FC<BlockMenuProps> = ({
     },
     {
       type: BlockType.Heading1,
-      label: 'Heading 1',
+      label: 'H1',
       icon: <FaHeading />,
       shortcut: '# '
     },
     {
       type: BlockType.Heading2,
-      label: 'Heading 2',
+      label: 'H2',
       icon: <FaHeading />,
       shortcut: '## '
     },
     {
       type: BlockType.Heading3,
-      label: 'Heading 3',
+      label: 'H3',
       icon: <FaHeading />,
       shortcut: '### '
     },
