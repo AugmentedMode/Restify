@@ -1,43 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Folder, ApiRequest } from '../types';
-import { saveCollections, loadCollections } from '../utils/apiUtils';
-import { updateRequestInCollections, findRequestById } from '../helpers/CollectionHelpers';
+import { CollectionsService } from '../services/DatabaseService';
 
+// Interface for the hook return value
 export interface UseCollectionsReturn {
   collections: Folder[];
   loading: boolean;
   error: string | null;
-  addFolder: () => void;
-  addRequest: (folderPath: string[]) => ApiRequest;
-  renameItem: (itemId: string, newName: string, itemType: 'collection' | 'folder' | 'request', path: string[]) => void;
-  deleteItem: (itemId: string, itemType: 'collection' | 'folder' | 'request', path: string[]) => void;
-  moveItem: (itemId: string, itemType: 'folder' | 'request', sourcePath: string[], targetPath: string[]) => void;
-  duplicateRequest: (requestId: string, path: string[]) => ApiRequest | null;
-  updateRequest: (updatedRequest: ApiRequest) => void;
+  addFolder: () => Folder;
+  addRequest: (request: ApiRequest, folderPath: string[]) => ApiRequest;
+  renameItem: (id: string, newName: string) => void;
+  deleteItem: (id: string) => void;
+  moveItem: (id: string, newFolderPath: string[]) => void;
+  duplicateRequest: (id: string) => ApiRequest | null;
+  updateRequest: (request: ApiRequest) => void;
   addCollection: (collection: Folder) => void;
 }
-
-// Create empty request template
-const createEmptyRequest = (folderPath: string[]): ApiRequest => ({
-  id: uuidv4(),
-  name: 'New Request',
-  method: 'GET',
-  url: '',
-  params: [],
-  headers: [],
-  body: '',
-  bodyType: 'none',
-  folderPath,
-  auth: {
-    type: 'none',
-    bearer: '',
-    basic: {
-      username: '',
-      password: '',
-    },
-  },
-});
 
 /**
  * Custom hook for managing collections state
@@ -47,18 +26,17 @@ export default function useCollections(initialCollections: Folder[] = []): UseCo
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load collections from storage on mount
+  // Load collections from IndexedDB on mount
   useEffect(() => {
     const fetchCollections = async () => {
       try {
         setLoading(true);
-        const result = await loadCollections();
-        if (result.success) {
-          // If collections were successfully loaded (even if it's an empty array),
-          // use them instead of the initial collections
-          setCollections(result.collections || []);
+        const loadedCollections = await CollectionsService.getAllCollections();
+        
+        if (loadedCollections && loadedCollections.length > 0) {
+          setCollections(loadedCollections);
         } else {
-          // Only use initialCollections if we couldn't load from storage
+          // Only use initialCollections if we couldn't load from IndexedDB
           setCollections(initialCollections);
         }
         setError(null);
@@ -78,7 +56,9 @@ export default function useCollections(initialCollections: Folder[] = []): UseCo
   useEffect(() => {
     const persistCollections = async () => {
       try {
-        await saveCollections(collections);
+        if (collections.length > 0) {
+          await CollectionsService.saveAllCollections(collections);
+        }
       } catch (err) {
         console.error('Failed to save collections:', err);
         setError('Failed to save collections');
@@ -103,314 +83,371 @@ export default function useCollections(initialCollections: Folder[] = []): UseCo
     return newFolder;
   }, []);
 
-  // Add a new request to a specific folder path
-  const addRequest = useCallback((folderPath: string[]) => {
-    const newRequest = createEmptyRequest(folderPath);
+  // Add a request to a specified folder path
+  const addRequest = useCallback((request: ApiRequest, folderPath: string[]) => {
+    const updatedRequest = { ...request, folderPath };
 
-    setCollections(prev => {
-      const updatedCollections = [...prev];
-
+    setCollections(prevCollections => {
       if (folderPath.length === 0) {
-        // Add to root level - not supported currently
-        return updatedCollections;
+        // If no folder path, add to main level
+        return [...prevCollections, { 
+          id: uuidv4(), 
+          name: 'Unsorted Requests',
+          items: [updatedRequest],
+          parentPath: [],
+        }];
       }
 
-      const collectionId = folderPath[0];
-      const collection = updatedCollections.find(c => c.id === collectionId);
-
-      if (collection) {
-        if (folderPath.length === 1) {
-          // Add to collection root
-          collection.items.push(newRequest);
-        } else {
-          // Add to subfolder
-          const folderId = folderPath[1];
-          const folder = collection.items.find(
-            item => 'items' in item && item.id === folderId,
-          ) as Folder | undefined;
-
-          if (folder) {
-            folder.items.push(newRequest);
-          }
+      // Find the target folder and add the request
+      return prevCollections.map(collection => {
+        if (collection.id === folderPath[0]) {
+          return addRequestToFolder(collection, updatedRequest, folderPath.slice(1));
         }
-      }
-
-      return updatedCollections;
+        return collection;
+      });
     });
 
-    return newRequest;
+    return updatedRequest;
   }, []);
 
-  // Rename an item (collection, folder, or request)
-  const renameItem = useCallback((
-    itemId: string,
-    newName: string,
-    itemType: 'collection' | 'folder' | 'request',
-    path: string[],
-  ) => {
-    setCollections(prev => {
-      const updatedCollections = [...prev];
-
-      if (itemType === 'collection') {
-        // Find and rename the collection
-        const collectionIndex = updatedCollections.findIndex(c => c.id === itemId);
-        if (collectionIndex !== -1) {
-          updatedCollections[collectionIndex].name = newName;
-        }
-      } else if (path.length > 0) {
-        // Find the collection
-        const collectionId = path[0];
-        const collection = updatedCollections.find(c => c.id === collectionId);
-
-        if (collection) {
-          if (path.length === 1) {
-            // Item is directly in collection
-            const itemIndex = collection.items.findIndex(item => item.id === itemId);
-            if (itemIndex !== -1) {
-              if (itemType === 'folder' && 'items' in collection.items[itemIndex]) {
-                (collection.items[itemIndex] as Folder).name = newName;
-              } else if (itemType === 'request' && !('items' in collection.items[itemIndex])) {
-                (collection.items[itemIndex] as ApiRequest).name = newName;
-              }
-            }
-          } else if (path.length === 2) {
-            // Item is in a folder
-            const folderId = path[1];
-            const folder = collection.items.find(
-              item => 'items' in item && item.id === folderId,
-            ) as Folder | undefined;
-
-            if (folder && itemType === 'request') {
-              const requestIndex = folder.items.findIndex(item => item.id === itemId);
-              if (requestIndex !== -1) {
-                (folder.items[requestIndex] as ApiRequest).name = newName;
-              }
-            }
-          }
-        }
-      }
-
-      return updatedCollections;
-    });
-  }, []);
-
-  // Delete an item (collection, folder, or request)
-  const deleteItem = useCallback((
-    itemId: string,
-    itemType: 'collection' | 'folder' | 'request',
-    path: string[],
-  ) => {
-    setCollections(prev => {
-      if (itemType === 'collection') {
-        // Delete the collection
-        return prev.filter(c => c.id !== itemId);
-      } else {
-        const updatedCollections = [...prev];
-
-        if (path.length > 0) {
-          // Find the collection
-          const collectionId = path[0];
-          const collection = updatedCollections.find(c => c.id === collectionId);
-
-          if (collection) {
-            if (path.length === 1) {
-              // Item is directly in collection
-              collection.items = collection.items.filter(item => item.id !== itemId);
-            } else if (path.length === 2) {
-              // Item is in a folder
-              const folderId = path[1];
-              const folder = collection.items.find(
-                item => 'items' in item && item.id === folderId,
-              ) as Folder | undefined;
-
-              if (folder) {
-                folder.items = folder.items.filter(item => item.id !== itemId);
-              }
-            }
-          }
-        }
-
-        return updatedCollections;
-      }
-    });
-  }, []);
-
-  // Move an item (folder or request) from one location to another
-  const moveItem = useCallback((
-    itemId: string,
-    itemType: 'folder' | 'request',
-    sourcePath: string[],
-    targetPath: string[],
-  ) => {
-    if (sourcePath.length === 0) {
-      return; // Can't move from root level
+  // Helper function to add a request to a nested folder
+  const addRequestToFolder = (folder: Folder, request: ApiRequest, remainingPath: string[]): Folder => {
+    if (remainingPath.length === 0) {
+      // We're at the target folder, add the request here
+      return {
+        ...folder,
+        items: [...folder.items, request],
+      };
     }
 
-    setCollections(prev => {
-      const updatedCollections = [...prev];
-      let movedItem: ApiRequest | Folder | null = null;
-
-      // 1. Remove the item from its source location
-      const sourceCollectionId = sourcePath[0];
-      const sourceCollection = updatedCollections.find(c => c.id === sourceCollectionId);
-
-      if (sourceCollection) {
-        if (sourcePath.length === 1) {
-          // Item is directly in collection
-          const itemIndex = sourceCollection.items.findIndex(item => item.id === itemId);
-          if (itemIndex !== -1) {
-            movedItem = sourceCollection.items[itemIndex];
-            sourceCollection.items.splice(itemIndex, 1);
-          }
-        } else if (sourcePath.length === 2) {
-          // Item is in a folder
-          const folderId = sourcePath[1];
-          const folder = sourceCollection.items.find(
-            item => 'items' in item && item.id === folderId,
-          ) as Folder | undefined;
-
-          if (folder) {
-            const itemIndex = folder.items.findIndex(item => item.id === itemId);
-            if (itemIndex !== -1) {
-              movedItem = folder.items[itemIndex];
-              folder.items.splice(itemIndex, 1);
-            }
-          }
+    // We need to go deeper, find the next folder in the path
+    return {
+      ...folder,
+      items: folder.items.map(item => {
+        if ('items' in item && item.id === remainingPath[0]) {
+          return addRequestToFolder(item, request, remainingPath.slice(1));
         }
-      }
+        return item;
+      }),
+    };
+  };
 
-      // If we have an item to move and a valid target path
-      if (movedItem) {
-        // 2. Add the item to its target location
-        if (targetPath.length === 0) {
-          // Not supported for now
-          return updatedCollections;
+  // Rename a collection or request
+  const renameItem = useCallback((id: string, newName: string) => {
+    setCollections(prevCollections => {
+      return prevCollections.map(collection => {
+        // Check if this is the item to rename
+        if (collection.id === id) {
+          return { ...collection, name: newName };
         }
 
-        const targetCollectionId = targetPath[0];
-        const targetCollection = updatedCollections.find(c => c.id === targetCollectionId);
-
-        if (targetCollection) {
-          if (targetPath.length === 1) {
-            // Target is collection root
-            targetCollection.items.push(movedItem);
-
-            // Update folderPath if it's a request
-            if (itemType === 'request' && !('items' in movedItem)) {
-              (movedItem as ApiRequest).folderPath = [targetCollectionId];
-            } else if (itemType === 'folder' && 'items' in movedItem) {
-              (movedItem as Folder).parentPath = [targetCollectionId];
-            }
-          } else if (targetPath.length === 2) {
-            // Target is a folder
-            const folderId = targetPath[1];
-            const folder = targetCollection.items.find(
-              item => 'items' in item && item.id === folderId,
-            ) as Folder | undefined;
-
-            if (folder) {
-              folder.items.push(movedItem);
-
-              // Update folderPath if it's a request
-              if (itemType === 'request' && !('items' in movedItem)) {
-                (movedItem as ApiRequest).folderPath = [targetCollectionId, folderId];
-              } else if (itemType === 'folder' && 'items' in movedItem) {
-                (movedItem as Folder).parentPath = [targetCollectionId, folderId];
-              }
-            }
-          }
-        }
-      }
-
-      return updatedCollections;
+        // Otherwise, search in items
+        return {
+          ...collection,
+          items: renameItemInFolder(collection.items, id, newName),
+        };
+      });
     });
   }, []);
 
-  // Duplicate a request
-  const duplicateRequest = useCallback((requestId: string, path: string[]) => {
-    let duplicatedRequest: ApiRequest | null = null;
-
-    setCollections(prev => {
-      // Find the original request to duplicate
-      const originalRequest = findRequestById(prev, requestId);
-
-      if (!originalRequest) {
-        console.error('Could not find request to duplicate');
-        return prev;
+  // Helper function to rename an item in a nested structure
+  const renameItemInFolder = (items: (Folder | ApiRequest)[], id: string, newName: string): (Folder | ApiRequest)[] => {
+    return items.map(item => {
+      if (item.id === id) {
+        return { ...item, name: newName };
       }
 
-      // Create a duplicate with a new ID
-      duplicatedRequest = {
-        ...JSON.parse(JSON.stringify(originalRequest)), // Deep copy to ensure no references
-        id: uuidv4(),
-        name: `${originalRequest.name} (Copy)`,
-        folderPath: [...path], // Ensure it's placed in the same folder
-      };
-
-      // Add the duplicated request to the same folder as the original
-      const updatedCollections = [...prev];
-
-      if (path.length === 0) {
-        // Should not happen as we always have a path
-        return updatedCollections;
+      // If it's a folder, recursively search its items
+      if ('items' in item) {
+        return {
+          ...item,
+          items: renameItemInFolder(item.items, id, newName),
+        };
       }
 
-      const collectionId = path[0];
-      const collectionIndex = updatedCollections.findIndex(c => c.id === collectionId);
+      return item;
+    });
+  };
 
-      if (collectionIndex === -1) {
-        console.error('Collection not found');
-        return updatedCollections;
+  // Delete a collection or request
+  const deleteItem = useCallback((id: string) => {
+    setCollections(prevCollections => {
+      // Handle deleting a top-level collection
+      const filteredCollections = prevCollections.filter(collection => collection.id !== id);
+      
+      if (filteredCollections.length < prevCollections.length) {
+        return filteredCollections;
       }
 
-      const collection = updatedCollections[collectionIndex];
+      // Handle deleting a nested item
+      return prevCollections.map(collection => ({
+        ...collection,
+        items: deleteItemFromFolder(collection.items, id),
+      }));
+    });
+  }, []);
 
-      if (path.length === 1) {
-        // Add to collection root
-        collection.items.push(duplicatedRequest);
-      } else {
-        // Navigate to the target folder
-        let currentItems = collection.items;
-        const currentPath = path.slice(1);
+  // Helper function to delete an item from a nested structure
+  const deleteItemFromFolder = (items: (Folder | ApiRequest)[], id: string): (Folder | ApiRequest)[] => {
+    // First, filter out the item if it's direct child
+    const filteredItems = items.filter(item => item.id !== id);
+    
+    if (filteredItems.length < items.length) {
+      return filteredItems;
+    }
 
-        for (let i = 0; i < currentPath.length; i++) {
-          const folderId = currentPath[i];
-          const folderIndex = currentItems.findIndex(
-            item => 'items' in item && item.id === folderId,
-          );
+    // Otherwise, recursively search folders
+    return filteredItems.map(item => {
+      if ('items' in item) {
+        return {
+          ...item,
+          items: deleteItemFromFolder(item.items, id),
+        };
+      }
+      return item;
+    });
+  };
 
-          if (folderIndex === -1) {
-            console.error('Folder not found in path');
-            return updatedCollections;
-          }
+  // Move an item to a new folder
+  const moveItem = useCallback((id: string, newFolderPath: string[]) => {
+    // Find the item first
+    let itemToMove: Folder | ApiRequest | null = null;
+    let itemType: 'folder' | 'request' = 'request';
 
-          const folder = currentItems[folderIndex] as Folder;
-
-          if (i === currentPath.length - 1) {
-            // We're at the target folder, add the request
-            folder.items.push(duplicatedRequest);
+    // Recursive function to find and extract the item
+    const findAndExtractItem = (items: (Folder | ApiRequest)[]): (Folder | ApiRequest)[] => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        if (item.id === id) {
+          itemToMove = { ...item };
+          
+          if ('items' in item) {
+            itemType = 'folder';
+            // Update parentPath for the moved folder
+            itemToMove = {
+              ...itemToMove as Folder,
+              parentPath: newFolderPath,
+            };
           } else {
-            // Continue navigating
-            currentItems = folder.items;
+            // Update folderPath for the moved request
+            itemToMove = {
+              ...itemToMove as ApiRequest,
+              folderPath: newFolderPath,
+            };
+          }
+          
+          // Remove the item from the current location
+          return [...items.slice(0, i), ...items.slice(i + 1)];
+        }
+        
+        if ('items' in item) {
+          const newItems = findAndExtractItem(item.items);
+          
+          if (newItems.length !== item.items.length) {
+            // The item was found and removed from this folder
+            return [
+              ...items.slice(0, i),
+              { ...item, items: newItems },
+              ...items.slice(i + 1),
+            ];
           }
         }
       }
+      
+      return items;
+    };
 
-      return updatedCollections;
+    setCollections(prevCollections => {
+      // First, find and extract the item
+      const updatedCollections = prevCollections.map(collection => {
+        if (collection.id === id) {
+          itemToMove = { ...collection };
+          itemType = 'folder';
+          // Update parentPath for the moved folder
+          itemToMove = {
+            ...itemToMove as Folder,
+            parentPath: newFolderPath,
+          };
+          return null; // Will be filtered out
+        }
+        
+        if ('items' in collection) {
+          const newItems = findAndExtractItem(collection.items);
+          
+          if (newItems.length !== collection.items.length) {
+            // The item was found and removed from this collection
+            return { ...collection, items: newItems };
+          }
+        }
+        
+        return collection;
+      }).filter(Boolean) as Folder[];
+      
+      if (!itemToMove) {
+        console.error(`Item with id ${id} not found for moving`);
+        return prevCollections;
+      }
+      
+      // Now, add the item to its new location
+      if (newFolderPath.length === 0) {
+        // Moving to root level
+        if (itemType === 'folder') {
+          return [...updatedCollections, itemToMove as Folder];
+        } else {
+          // Create a new collection for orphaned requests
+          const newCollection: Folder = {
+            id: uuidv4(),
+            name: 'Moved Requests',
+            items: [itemToMove as ApiRequest],
+            parentPath: [],
+          };
+          return [...updatedCollections, newCollection];
+        }
+      }
+      
+      // Moving to a nested folder
+      return updatedCollections.map(collection => {
+        if (collection.id === newFolderPath[0]) {
+          return addItemToFolder(
+            collection,
+            itemToMove as (Folder | ApiRequest),
+            newFolderPath.slice(1),
+            itemType
+          );
+        }
+        return collection;
+      });
+    });
+  }, []);
+
+  // Helper function to add an item to a nested folder
+  const addItemToFolder = (
+    folder: Folder,
+    item: Folder | ApiRequest,
+    remainingPath: string[],
+    itemType: 'folder' | 'request'
+  ): Folder => {
+    if (remainingPath.length === 0) {
+      // We're at the target folder, add the item here
+      return {
+        ...folder,
+        items: [...folder.items, item],
+      };
+    }
+
+    // We need to go deeper, find the next folder in the path
+    return {
+      ...folder,
+      items: folder.items.map(existingItem => {
+        if ('items' in existingItem && existingItem.id === remainingPath[0]) {
+          return addItemToFolder(
+            existingItem,
+            item,
+            remainingPath.slice(1),
+            itemType
+          );
+        }
+        return existingItem;
+      }),
+    };
+  };
+
+  // Duplicate a request
+  const duplicateRequest = useCallback((id: string) => {
+    let originalRequest: ApiRequest | null = null;
+    let duplicatedRequest: ApiRequest | null = null;
+
+    setCollections(prevCollections => {
+      // Recursive function to find the request
+      const findRequestInItems = (items: (Folder | ApiRequest)[]): (Folder | ApiRequest)[] => {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          
+          if (!('items' in item) && item.id === id) {
+            // Found the request to duplicate
+            originalRequest = item;
+            
+            // Create a duplicate with a new ID
+            duplicatedRequest = {
+              ...item,
+              id: uuidv4(),
+              name: `${item.name} (Copy)`,
+            };
+            
+            // Insert the duplicated request next to the original
+            return [
+              ...items.slice(0, i + 1),
+              duplicatedRequest,
+              ...items.slice(i + 1),
+            ];
+          }
+          
+          if ('items' in item) {
+            const newItems = findRequestInItems(item.items);
+            
+            if (newItems.length !== item.items.length) {
+              // The request was found and duplicated in this folder
+              return [
+                ...items.slice(0, i),
+                { ...item, items: newItems },
+                ...items.slice(i + 1),
+              ];
+            }
+          }
+        }
+        
+        return items;
+      };
+
+      // Search for the request in each collection
+      return prevCollections.map(collection => {
+        const newItems = findRequestInItems(collection.items);
+        
+        if (newItems.length !== collection.items.length) {
+          // The request was found and duplicated in this collection
+          return { ...collection, items: newItems };
+        }
+        
+        return collection;
+      });
     });
 
     return duplicatedRequest;
   }, []);
 
-  // Update a request in the collections
+  // Update an existing request
   const updateRequest = useCallback((updatedRequest: ApiRequest) => {
-    setCollections(prev => {
-      const updatedCollections = updateRequestInCollections(prev, updatedRequest);
-      return updatedCollections;
+    setCollections(prevCollections => {
+      // Recursive function to update the request
+      const updateRequestInItems = (items: (Folder | ApiRequest)[]): (Folder | ApiRequest)[] => {
+        return items.map(item => {
+          if (!('items' in item) && item.id === updatedRequest.id) {
+            // Found the request to update
+            return updatedRequest;
+          }
+          
+          if ('items' in item) {
+            // Recursively search in subfolders
+            return {
+              ...item,
+              items: updateRequestInItems(item.items),
+            };
+          }
+          
+          return item;
+        });
+      };
+
+      // Search for the request in each collection
+      return prevCollections.map(collection => ({
+        ...collection,
+        items: updateRequestInItems(collection.items),
+      }));
     });
   }, []);
 
-  // Add a new collection to the collections
+  // Add a new collection directly
   const addCollection = useCallback((collection: Folder) => {
     setCollections(prev => [...prev, collection]);
   }, []);

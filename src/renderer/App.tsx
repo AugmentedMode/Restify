@@ -11,7 +11,8 @@ import Sidebar from './components/Sidebar';
 import RequestPanel from './components/RequestPanel';
 import ResponsePanel from './components/ResponsePanel';
 import GlobalStyle from './components/GlobalStyle';
-import { ApiRequest, ApiResponse, Folder, RequestHistoryItem, Environment } from './types';
+import NotesContainer from './components/notes/NotesContainer';
+import { ApiRequest, ApiResponse, Folder, RequestHistoryItem, Environment, Note } from './types';
 import { clearAllStorageData, executeRequest, processUrl } from './utils/apiUtils';
 import { findFirstRequest, findRequestById } from './helpers/CollectionHelpers';
 import { RequestService } from './services/RequestService';
@@ -19,6 +20,13 @@ import { ImportService } from './services/ImportService';
 import useCollections from './hooks/useCollections';
 import useRequestHistory from './hooks/useRequestHistory';
 import { v4 as uuidv4 } from 'uuid';
+import { 
+  NotesService, 
+  initializeDatabase, 
+  SettingsService, 
+  EnvironmentsService,
+  ResponsesService
+} from './services/DatabaseService';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -93,20 +101,13 @@ function EmptyStateView({
   return (
     <EmptyStateContainer>
       <FaCode size={64} />
-      <h3>Welcome to API Client</h3>
+      <h3>Restify</h3>
       <p>
         Select a request from the sidebar or create a new collection to get
-        started. This client helps you build, test, and document APIs with ease.
+        started. Opensource IDE for exploring and testing APIs
       </p>
       <button type="button" onClick={onCreateCollection}>
         <FaPlus /> Create New Collection
-      </button>
-      <button 
-        type="button" 
-        onClick={handleClearStorage} 
-        style={{ marginTop: '10px', backgroundColor: '#e74c3c' }}
-      >
-        <FaTrash /> Clear All Storage Data
       </button>
     </EmptyStateContainer>
   );
@@ -134,6 +135,38 @@ function App() {
     }
   }, []);
 
+  // Initialize IndexedDB database
+  useEffect(() => {
+    const init = async () => {
+      try {
+        console.log('Initializing IndexedDB database...');
+        const result = await initializeDatabase();
+        if (result.success) {
+          console.log('IndexedDB database initialized successfully');
+          
+          // After successful database initialization, attempt to clear localStorage
+          // only after confirming data is safely in IndexedDB (done in the initializeDatabase function)
+          const migrationStatus = await SettingsService.getSetting('migration');
+          if (migrationStatus && migrationStatus.completed) {
+            // Keep these commented out until we're sure the migration is working well
+            // localStorage.removeItem('api-client-notes');
+            // localStorage.removeItem('api-client-collections');
+            // localStorage.removeItem('api-client-history');
+            // localStorage.removeItem('api-client-responses');
+            // localStorage.removeItem('api-client-environments');
+            console.log('Migration to IndexedDB complete - localStorage can be cleared if needed');
+          }
+        } else {
+          console.error('Failed to initialize IndexedDB database:', result.error);
+        }
+      } catch (error) {
+        console.error('Error initializing IndexedDB database:', error);
+      }
+    };
+    
+    init();
+  }, []);
+
   // Use our custom hooks for collections and history
   const {
     collections,
@@ -159,32 +192,41 @@ function App() {
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [currentEnvironmentId, setCurrentEnvironmentId] = useState<string | null>(null);
 
-  // Load environments from localStorage on component mount
+  // Load environments from IndexedDB on component mount
   useEffect(() => {
     try {
-      const savedEnvironments = localStorage.getItem('api-client-environments');
-      const savedCurrentEnvId = localStorage.getItem('api-client-current-environment');
+      const fetchEnvironments = async () => {
+        // First try to load from IndexedDB
+        const environmentsService = EnvironmentsService;
+        const savedEnvironments = await environmentsService.getAllEnvironments();
+        
+        if (savedEnvironments && savedEnvironments.length > 0) {
+          setEnvironments(savedEnvironments);
+          
+          // Try to load the current environment ID from localStorage
+          const savedCurrentEnvId = localStorage.getItem('api-client-current-environment');
+          if (savedCurrentEnvId) {
+            setCurrentEnvironmentId(JSON.parse(savedCurrentEnvId));
+          }
+        } else {
+          // Fallback to localStorage for migration
+          const localEnvironments = localStorage.getItem('api-client-environments');
+          if (localEnvironments) {
+            setEnvironments(JSON.parse(localEnvironments));
+          }
+          
+          const savedCurrentEnvId = localStorage.getItem('api-client-current-environment');
+          if (savedCurrentEnvId) {
+            setCurrentEnvironmentId(JSON.parse(savedCurrentEnvId));
+          }
+        }
+      };
       
-      if (savedEnvironments) {
-        setEnvironments(JSON.parse(savedEnvironments));
-      }
-      
-      if (savedCurrentEnvId) {
-        setCurrentEnvironmentId(JSON.parse(savedCurrentEnvId));
-      }
+      fetchEnvironments();
     } catch (error) {
       console.error('Failed to load environments:', error);
     }
   }, []);
-
-  // Save environments to localStorage when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('api-client-environments', JSON.stringify(environments));
-    } catch (error) {
-      console.error('Failed to save environments:', error);
-    }
-  }, [environments]);
 
   // Save current environment ID to localStorage when it changes
   useEffect(() => {
@@ -197,20 +239,44 @@ function App() {
 
   // Handle environment operations
   const addEnvironment = (environment: Environment) => {
-    setEnvironments(prev => [...prev, environment]);
+    // Save to IndexedDB
+    EnvironmentsService.saveEnvironment(environment)
+      .then(() => {
+        // Update local state
+        setEnvironments(prev => [...prev, environment]);
+      })
+      .catch(error => {
+        console.error('Failed to save environment:', error);
+      });
   };
 
   const updateEnvironment = (environment: Environment) => {
-    setEnvironments(prev => 
-      prev.map(env => env.id === environment.id ? environment : env)
-    );
+    // Save to IndexedDB
+    EnvironmentsService.saveEnvironment(environment)
+      .then(() => {
+        // Update local state
+        setEnvironments(prev => 
+          prev.map(env => env.id === environment.id ? environment : env)
+        );
+      })
+      .catch(error => {
+        console.error('Failed to update environment:', error);
+      });
   };
 
   const deleteEnvironment = (environmentId: string) => {
-    setEnvironments(prev => prev.filter(env => env.id !== environmentId));
-    if (currentEnvironmentId === environmentId) {
-      setCurrentEnvironmentId(null);
-    }
+    // Delete from IndexedDB
+    EnvironmentsService.deleteEnvironment(environmentId)
+      .then(() => {
+        // Update local state
+        setEnvironments(prev => prev.filter(env => env.id !== environmentId));
+        if (currentEnvironmentId === environmentId) {
+          setCurrentEnvironmentId(null);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to delete environment:', error);
+      });
   };
 
   const selectEnvironment = (environmentId: string | null) => {
@@ -235,24 +301,27 @@ function App() {
   // Load saved responses on startup
   useEffect(() => {
     try {
-      const savedResponses = localStorage.getItem('api-client-responses');
-      if (savedResponses) {
-        const parsedResponses = JSON.parse(savedResponses);
-        setResponseMap(parsedResponses);
-      }
+      const fetchResponses = async () => {
+        // First try to load from IndexedDB
+        const savedResponses = await ResponsesService.getAllResponses();
+        
+        if (savedResponses && Object.keys(savedResponses).length > 0) {
+          setResponseMap(savedResponses);
+        } else {
+          // Fallback to localStorage for migration
+          const localResponses = localStorage.getItem('api-client-responses');
+          if (localResponses) {
+            const parsedResponses = JSON.parse(localResponses);
+            setResponseMap(parsedResponses);
+          }
+        }
+      };
+      
+      fetchResponses();
     } catch (err) {
       console.error('Failed to load saved responses:', err);
     }
   }, []);
-
-  // Save responses when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('api-client-responses', JSON.stringify(responseMap));
-    } catch (err) {
-      console.error('Failed to save responses:', err);
-    }
-  }, [responseMap]);
 
   // Initial load and history
   useEffect(() => {
@@ -314,12 +383,193 @@ function App() {
     }
   }, [activeRequest]);
 
+  // State for notes
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [activeNote, setActiveNote] = useState<string | null>(null);
+
+  // Load notes from IndexedDB on component mount
+  useEffect(() => {
+    try {
+      const fetchNotes = async () => {
+        // First try to load from IndexedDB
+        const notesService = NotesService;
+        const savedNotes = await notesService.getAllNotes();
+        
+        if (savedNotes && savedNotes.length > 0) {
+          setNotes(savedNotes);
+          
+          // Try to load the active note ID from localStorage
+          const savedActiveNote = localStorage.getItem('api-client-active-note');
+          if (savedActiveNote) {
+            setActiveNote(JSON.parse(savedActiveNote));
+          }
+        } else {
+          // Fallback to localStorage for migration
+          const localNotes = localStorage.getItem('api-client-notes');
+          if (localNotes) {
+            setNotes(JSON.parse(localNotes));
+          }
+          
+          const savedActiveNote = localStorage.getItem('api-client-active-note');
+          if (savedActiveNote) {
+            setActiveNote(JSON.parse(savedActiveNote));
+          }
+        }
+      };
+      
+      fetchNotes();
+    } catch (error) {
+      console.error('Failed to load notes:', error);
+    }
+  }, []);
+
+  // Save active note ID to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('api-client-active-note', JSON.stringify(activeNote));
+    } catch (error) {
+      console.error('Failed to save active note ID:', error);
+    }
+  }, [activeNote]);
+
+  // Handle notes operations
+  const addNote = () => {
+    const newNote: Note = {
+      id: uuidv4(),
+      title: 'New Note',
+      content: '# New Note\n\nStart writing your markdown here...',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    
+    // Save to IndexedDB
+    NotesService.saveNote(newNote)
+      .then(() => {
+        // Update local state
+        setNotes(prev => [...prev, newNote]);
+        setActiveNote(newNote.id);
+        setActiveRequest(null); // Clear active request when switching to a note
+      })
+      .catch(error => {
+        console.error('Failed to save new note:', error);
+      });
+  };
+
+  const updateNote = (updatedNote: Note) => {
+    // Save to IndexedDB
+    NotesService.saveNote(updatedNote)
+      .then(() => {
+        // Update local state
+        setNotes(prev => 
+          prev.map(note => note.id === updatedNote.id ? updatedNote : note)
+        );
+      })
+      .catch(error => {
+        console.error('Failed to update note:', error);
+      });
+  };
+
+  const deleteNote = (noteId: string) => {
+    // Delete from IndexedDB
+    NotesService.deleteNote(noteId)
+      .then(() => {
+        // Update local state
+        setNotes(prev => prev.filter(note => note.id !== noteId));
+        if (activeNote === noteId) {
+          setActiveNote(null);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to delete note:', error);
+      });
+  };
+
+  const selectNote = (note: Note) => {
+    setActiveNote(note.id);
+    setActiveRequest(null); // Clear active request when switching to a note
+  };
+
+  const renameNote = (noteId: string, newTitle: string) => {
+    // Find the note to update
+    const noteToUpdate = notes.find(note => note.id === noteId);
+    if (!noteToUpdate) return;
+    
+    const updatedNote = { 
+      ...noteToUpdate, 
+      title: newTitle, 
+      updatedAt: Date.now() 
+    };
+    
+    // Save to IndexedDB
+    NotesService.saveNote(updatedNote)
+      .then(() => {
+        // Update local state
+        setNotes(prev => 
+          prev.map(note => note.id === noteId ? updatedNote : note)
+        );
+      })
+      .catch(error => {
+        console.error('Failed to rename note:', error);
+      });
+  };
+
+  // Adding duplicate note feature
+  const duplicateNote = (note: Note) => {
+    const duplicatedNote: Note = {
+      id: uuidv4(),
+      title: `${note.title} (Copy)`,
+      content: note.content,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      tags: note.tags ? [...note.tags] : [],
+    };
+    
+    // Save to IndexedDB
+    NotesService.saveNote(duplicatedNote)
+      .then(() => {
+        // Update local state
+        setNotes(prev => [...prev, duplicatedNote]);
+        setActiveNote(duplicatedNote.id);
+      })
+      .catch(error => {
+        console.error('Failed to duplicate note:', error);
+      });
+  };
+
+  // Adding export note feature
+  const exportNote = (note: Note) => {
+    try {
+      // Create a Blob with the note content
+      const blob = new Blob([note.content], { type: 'text/markdown' });
+      
+      // Create a link element
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      
+      // Clean up the note title for filename
+      const filename = note.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+      a.download = `${filename}.md`;
+      
+      // Trigger download
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (error) {
+      console.error('Failed to export note:', error);
+      alert('Failed to export note. Please try again.');
+    }
+  };
+
   // Handle selecting a request from sidebar
   const handleSelectRequest = useCallback(
     (request: ApiRequest) => {
-    setActiveRequest(request);
-    // Use stored response if available for this request
-    setActiveResponse(responseMap[request.id] || null);
+      setActiveRequest(request);
+      setActiveNote(null); // Clear active note when switching to a request
+      // Use stored response if available for this request
+      setActiveResponse(responseMap[request.id] || null);
     },
     [responseMap],
   );
@@ -450,11 +700,18 @@ function App() {
       
       setActiveResponse(response);
       
-      // Save the response to the responseMap for persistence
-      setResponseMap(prev => ({
-        ...prev,
-        [request.id]: response
-      }));
+      // Save the response to IndexedDB
+      try {
+        await ResponsesService.saveResponse(request.id, response);
+        
+        // Update local responseMap
+        setResponseMap(prev => ({
+          ...prev,
+          [request.id]: response
+        }));
+      } catch (error) {
+        console.error('Failed to save response to IndexedDB:', error);
+      }
       
       // Create history item from request and response
       const historyItem: RequestHistoryItem = {
@@ -478,11 +735,18 @@ function App() {
       
       setActiveResponse(errorResponse);
       
-      // Save error response to responseMap
-      setResponseMap(prev => ({
-        ...prev,
-        [request.id]: errorResponse
-      }));
+      // Save error response to IndexedDB
+      try {
+        await ResponsesService.saveResponse(request.id, errorResponse);
+        
+        // Update local responseMap
+        setResponseMap(prev => ({
+          ...prev,
+          [request.id]: errorResponse
+        }));
+      } catch (dbError) {
+        console.error('Failed to save error response to IndexedDB:', dbError);
+      }
     } finally {
       // Always set loading to false when done
       setLoading(false);
@@ -512,6 +776,75 @@ function App() {
     };
   }, [activeRequest, loading, handleSendRequest]);
 
+  // Determine what content to show in the main area
+  const renderMainContent = () => {
+    if (activeNote) {
+      return (
+        <NotesContainer
+          notes={notes}
+          activeNoteId={activeNote}
+          onAddNote={addNote}
+          onUpdateNote={updateNote}
+        />
+      );
+    } else if (activeRequest) {
+      return (
+        <RequestResponseContainer>
+          <RequestContainer>
+            <RequestPanel
+              request={activeRequest}
+              onRequestChange={handleRequestChange}
+              onSendRequest={handleRequestSend}
+              isLoading={loading}
+              lastRequestTime={lastRequestTime}
+              currentEnvironment={getCurrentEnvironment()}
+            />
+          </RequestContainer>
+          <ResponsePanel response={activeResponse} request={activeRequest} isLoading={loading} />
+        </RequestResponseContainer>
+      );
+    } else {
+      return <EmptyStateView onCreateCollection={addFolder} />;
+    }
+  };
+
+  // Create empty request template
+  const createEmptyRequest = (folderPath: string[]): ApiRequest => ({
+    id: uuidv4(),
+    name: 'New Request',
+    method: 'GET',
+    url: '',
+    params: [],
+    headers: [],
+    body: '',
+    bodyType: 'none',
+    folderPath,
+    auth: {
+      type: 'none',
+      bearer: '',
+      basic: {
+        username: '',
+        password: '',
+      },
+    },
+  });
+
+  // Function to adapt addRequest to match the old interface that Sidebar expects
+  const addRequestAdapter = (folderPath: string[]) => {
+    const newRequest = createEmptyRequest(folderPath);
+    return addRequest(newRequest, folderPath);
+  };
+
+  // Function to adapt moveItem to match the old interface that Sidebar expects
+  const moveItemAdapter = (
+    itemId: string,
+    itemType: 'folder' | 'request',
+    sourcePath: string[],
+    targetPath: string[]
+  ) => {
+    moveItem(itemId, targetPath);
+  };
+
   // Render the app
   return (
     <>
@@ -519,17 +852,17 @@ function App() {
       <AppContainer>
         <Sidebar
           collections={collections}
-          activeRequestId={activeRequest?.id ?? null}
+          activeRequestId={activeRequest?.id || null}
           onSelectRequest={handleSelectRequest}
           onAddFolder={addFolder}
-          onAddRequest={addRequest}
+          onAddRequest={addRequestAdapter}
           onRenameItem={renameItem}
           onDeleteItem={deleteItem}
-          onMoveItem={moveItem}
+          onMoveItem={moveItemAdapter}
           onDuplicateRequest={duplicateRequest}
           onImportFromCurl={handleImportFromCurl}
           onImportFromFile={handleImportFromFile}
-          requestHistory={requestHistory.slice().reverse()}
+          requestHistory={requestHistory}
           onRestoreFromHistory={handleRestoreFromHistory}
           onClearHistory={clearHistory}
           environments={environments}
@@ -538,25 +871,17 @@ function App() {
           onUpdateEnvironment={updateEnvironment}
           onDeleteEnvironment={deleteEnvironment}
           onSelectEnvironment={selectEnvironment}
+          notes={notes}
+          activeNoteId={activeNote}
+          onSelectNote={selectNote}
+          onAddNote={addNote}
+          onRenameNote={renameNote}
+          onDeleteNote={deleteNote}
+          onDuplicateNote={duplicateNote}
+          onExportNote={exportNote}
         />
         <MainContent>
-          {activeRequest ? (
-            <RequestResponseContainer>
-              <RequestContainer>
-                <RequestPanel
-                  request={activeRequest}
-                  onRequestChange={handleRequestChange}
-                  onSendRequest={handleRequestSend}
-                  isLoading={loading}
-                  lastRequestTime={lastRequestTime}
-                  currentEnvironment={getCurrentEnvironment()}
-                />
-              </RequestContainer>
-              <ResponsePanel response={activeResponse} request={activeRequest} isLoading={loading} />
-            </RequestResponseContainer>
-          ) : (
-            <EmptyStateView onCreateCollection={addFolder} />
-          )}
+          {renderMainContent()}
         </MainContent>
       </AppContainer>
     </>

@@ -640,23 +640,6 @@ const EnvironmentManager: React.FC<EnvironmentManagerProps> = ({
                 </EmptyHistoryMessage>
               ) : (
                 <div style={{ padding: '0 4px' }}>
-                  <EnvironmentSearch>
-                    <FaSearch size={12} color="rgba(255, 255, 255, 0.4)" />
-                    <SearchInput 
-                      placeholder="Search environments..." 
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    {searchTerm && (
-                      <ActionButton
-                        onClick={() => setSearchTerm('')}
-                        title="Clear search"
-                        style={{ padding: '2px' }}
-                      >
-                        <FaTrash size={10} />
-                      </ActionButton>
-                    )}
-                  </EnvironmentSearch>
                 
                   <motion.div
                     variants={listVariants}
