@@ -66,6 +66,25 @@ const BlockTypeIcon = styled.div`
   font-size: 14px;
 `;
 
+const TodoCheckbox = styled.div<{ $checked: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border: 1.5px solid ${props => props.$checked ? '#4285f4' : '#777'};
+  border-radius: 4px;
+  background-color: ${props => props.$checked ? '#4285f4' : 'transparent'};
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: #4285f4;
+  }
+`;
+
 const BlockInput = styled.div<{ $blockType: BlockType }>`
   flex: 1;
   border: none;
@@ -119,6 +138,9 @@ const BlockInput = styled.div<{ $blockType: BlockType }>`
     border-radius: 4px;
     width: 100%;
     overflow-x: auto;
+    white-space: pre;
+    tab-size: 2;
+    -moz-tab-size: 2;
   `}
   
   ${props => props.$blockType === BlockType.Callout && `
@@ -126,6 +148,14 @@ const BlockInput = styled.div<{ $blockType: BlockType }>`
     border-left: 3px solid #FF385C;
     padding: 8px 12px;
     border-radius: 0 4px 4px 0;
+  `}
+  
+  ${props => props.$blockType === BlockType.BulletList && `
+    line-height: 1.5;
+  `}
+  
+  ${props => props.$blockType === BlockType.NumberedList && `
+    line-height: 1.5;
   `}
 `;
 
@@ -187,6 +217,27 @@ const AddBlockButton = styled.button`
   ${BlockContainer}:hover & {
     opacity: 1;
   }
+`;
+
+const BulletIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  color: #aaa;
+`;
+
+const NumberIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  color: #aaa;
+  font-size: 0.9rem;
 `;
 
 interface BlockProps {
@@ -363,6 +414,53 @@ const Block: React.FC<BlockProps> = ({
         }
       }
     }
+    // Handle space key to trigger shortcuts
+    else if (e.key === ' ' && !slashMenuActive && contentRef.current) {
+      const currentText = contentRef.current.textContent || '';
+      
+      // Check for shortcuts that should be triggered when followed by space
+      if (currentText === '#') {
+        e.preventDefault();
+        applyBlockTransformation(BlockType.Heading1);
+      } else if (currentText === '##') {
+        e.preventDefault();
+        applyBlockTransformation(BlockType.Heading2);
+      } else if (currentText === '###') {
+        e.preventDefault();
+        applyBlockTransformation(BlockType.Heading3);
+      } else if (currentText === '-' || currentText === '*') {
+        e.preventDefault();
+        applyBlockTransformation(BlockType.BulletList);
+      } else if (/^\d+\.$/.test(currentText)) {
+        e.preventDefault();
+        applyBlockTransformation(BlockType.NumberedList);
+      } else if (currentText === '[]' || currentText === '[ ]') {
+        e.preventDefault();
+        applyBlockTransformation(BlockType.ToDo, false);
+      } else if (currentText === '>') {
+        e.preventDefault();
+        applyBlockTransformation(BlockType.Quote);
+      }
+      // Not a shortcut, let the space through normally
+    }
+    // Special handling for code blocks: Enter should insert a newline instead of creating a new block
+    else if (e.key === 'Enter' && !e.shiftKey && block.type === BlockType.Code) {
+      e.preventDefault();
+      
+      if (contentRef.current) {
+        // Get the current selection
+        const selection = window.getSelection();
+        const range = selection?.getRangeAt(0);
+        
+        if (range) {
+          // Insert a newline at the current position
+          document.execCommand('insertText', false, '\n');
+          
+          // Update content state with the new content including line break
+          setContent(contentRef.current.textContent || '');
+        }
+      }
+    }
     // Handle Enter to create a new block
     else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -373,7 +471,12 @@ const Block: React.FC<BlockProps> = ({
         return;
       }
       
-      onAddBlock(block.id);
+      // Create a new block of the same type for lists
+      if (block.type === BlockType.BulletList || block.type === BlockType.NumberedList || block.type === BlockType.ToDo) {
+        onAddBlock(block.id, block.type);
+      } else {
+        onAddBlock(block.id);
+      }
     } 
     // Handle Backspace on empty block to delete
     else if (e.key === 'Backspace') {
@@ -425,6 +528,70 @@ const Block: React.FC<BlockProps> = ({
     if (slashMenuActive && !newContent.includes('/')) {
       setSlashMenuActive(false);
     }
+
+    // Process direct shortcuts if not in slash menu mode
+    if (!slashMenuActive && newContent.trim().length > 0) {
+      // Check for direct shortcuts at the beginning of the line
+      const trimmedContent = newContent.trim();
+      
+      // Check for headings
+      if (/^#\s*$/.test(trimmedContent) || trimmedContent === '#') {
+        applyBlockTransformation(BlockType.Heading1);
+      } else if (/^##\s*$/.test(trimmedContent) || trimmedContent === '##') {
+        applyBlockTransformation(BlockType.Heading2);
+      } else if (/^###\s*$/.test(trimmedContent) || trimmedContent === '###') {
+        applyBlockTransformation(BlockType.Heading3);
+      } 
+      // Check for bullet list
+      else if (/^-\s*$/.test(trimmedContent) || trimmedContent === '-' || /^\*\s*$/.test(trimmedContent) || trimmedContent === '*') {
+        applyBlockTransformation(BlockType.BulletList);
+      } 
+      // Check for numbered list
+      else if (/^\d+\.\s*$/.test(trimmedContent) || /^\d+\.$/.test(trimmedContent)) {
+        applyBlockTransformation(BlockType.NumberedList);
+      } 
+      // Check for todo list - allow various formats with or without spaces
+      else if (/^\[\s*\]\s*$/.test(trimmedContent) || /^\[\]\s*$/.test(trimmedContent)) {
+        applyBlockTransformation(BlockType.ToDo, false);
+      } 
+      // Check for quote
+      else if (/^>\s*$/.test(trimmedContent) || trimmedContent === '>') {
+        applyBlockTransformation(BlockType.Quote);
+      } 
+      // Check for code block
+      else if (trimmedContent === '```') {
+        applyBlockTransformation(BlockType.Code, undefined, 'plaintext');
+      } 
+      // Check for divider
+      else if (trimmedContent === '---') {
+        applyBlockTransformation(BlockType.Divider);
+      }
+    }
+  };
+  
+  // Helper function to apply block transformation
+  const applyBlockTransformation = (newType: BlockType, checked?: boolean, language?: string) => {
+    onUpdate({
+      ...block,
+      type: newType,
+      content: '',
+      ...(checked !== undefined ? { checked } : {}),
+      ...(language !== undefined ? { language } : {})
+    });
+    
+    if (contentRef.current) {
+      contentRef.current.textContent = '';
+    }
+  };
+
+  // Handle toggling todo item
+  const handleTodoToggle = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent block selection
+    
+    onUpdate({
+      ...block,
+      checked: !block.checked
+    });
   };
 
   // Set initial content on mount
@@ -443,6 +610,24 @@ const Block: React.FC<BlockProps> = ({
       data-block-id={block.id}
     >
       <BlockContent $blockType={block.type}>
+        {block.type === BlockType.ToDo && (
+          <TodoCheckbox 
+            $checked={!!block.checked} 
+            onClick={handleTodoToggle}
+          >
+            {block.checked && <FaCheck size={12} />}
+          </TodoCheckbox>
+        )}
+        {block.type === BlockType.BulletList && (
+          <BulletIndicator>
+            <span>•</span>
+          </BulletIndicator>
+        )}
+        {block.type === BlockType.NumberedList && (
+          <NumberIndicator>
+            <span>1.</span>
+          </NumberIndicator>
+        )}
         <BlockInput
           ref={contentRef}
           $blockType={block.type}

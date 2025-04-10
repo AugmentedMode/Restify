@@ -165,7 +165,11 @@ export const serializeBlocksToContent = (blocks: BlockData[]): string => {
       case BlockType.Quote:
         return `> ${block.content}`;
       case BlockType.Code:
-        return `\`\`\`${block.language || ''}\n${block.content}\n\`\`\``;
+        // Ensure code block preserves line breaks
+        const codeContent = block.content || '';
+        // Only add trailing newline if the content doesn't already end with one
+        const trailingNewline = codeContent.endsWith('\n') ? '' : '\n';
+        return `\`\`\`${block.language || ''}\n${codeContent}${trailingNewline}\`\`\``;
       case BlockType.Divider:
         return '---';
       case BlockType.Callout:
