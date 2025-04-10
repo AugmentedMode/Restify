@@ -1061,126 +1061,8 @@ function Sidebar({
                 onToggleExpanded={() => toggleSectionExpanded('environments')}
               />
 
-              <CollapsibleSection expanded={expandedSections.history}>
-                <SectionHeader onClick={() => toggleSectionExpanded('history')}>
-                  <CollectionHeader>
-                    <CollectionIcon>
-                      <FaHistory />
-                    </CollectionIcon>
-                    <CollectionTitle>History</CollectionTitle>
-                  </CollectionHeader>
-                  <ActionButtons>
-                    {requestHistory.length > 0 && (
-                      <ActionButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onClearHistory();
-                        }}
-                        title="Clear History"
-                        className="action-button"
-                      >
-                        <FaEraser />
-                      </ActionButton>
-                    )}
-                    <motion.div
-                      animate={
-                        expandedSections.history ? 'expanded' : 'collapsed'
-                      }
-                      variants={iconVariants}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <FaChevronDown size={12} />
-                    </motion.div>
-                  </ActionButtons>
-                </SectionHeader>
-                <AnimatePresence>
-                  {expandedSections.history && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      style={{ overflow: 'hidden' }}
-                    >
-                      <HistoryItemsContainer>
-                        {requestHistory.length === 0 ? (
-                          <EmptyHistoryMessage>
-                            No request history yet.
-                          </EmptyHistoryMessage>
-                        ) : (
-                          <motion.div
-                            variants={listVariants}
-                            initial="hidden"
-                            animate="visible"
-                          >
-                            {requestHistory
-                              .slice()
-                              .sort((a, b) => b.timestamp - a.timestamp)
-                              .slice(0, 10)
-                              .map((historyItem) => (
-                                <motion.div
-                                  key={historyItem.id}
-                                  variants={itemVariants}
-                                  transition={{ duration: 0.2 }}
-                                  whileHover={{ x: 4 }}
-                                >
-                                  <HistoryItem
-                                    onClick={() =>
-                                      onRestoreFromHistory(historyItem)
-                                    }
-                                  >
-                                    <div
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                      }}
-                                    >
-                                      <div
-                                        style={{
-                                          color: getMethodColor(
-                                            historyItem.request.method,
-                                          ),
-                                          fontWeight: 600,
-                                          marginRight: 8,
-                                          fontSize: '0.75rem',
-                                        }}
-                                      >
-                                        {historyItem.request.method}
-                                      </div>
-                                      <div
-                                        style={{
-                                          maxWidth: 150,
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap',
-                                        }}
-                                      >
-                                        {historyItem.request.name ||
-                                          historyItem.request.url}
-                                      </div>
-                                    </div>
-                                    <div
-                                      style={{
-                                        fontSize: '0.7rem',
-                                        opacity: 0.7,
-                                        marginTop: 4,
-                                      }}
-                                    >
-                                      {formatTimestamp(historyItem.timestamp)}
-                                    </div>
-                                  </HistoryItem>
-                                </motion.div>
-                              ))}
-                          </motion.div>
-                        )}
-                      </HistoryItemsContainer>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </CollapsibleSection>
-
-              {/* Notes Section */}
-              <CollapsibleSection expanded={expandedSections.notes}>
+                {/* Notes Section */}
+                <CollapsibleSection expanded={expandedSections.notes}>
                 <SectionHeader onClick={() => toggleSectionExpanded('notes')}>
                   <CollectionHeader>
                     <CollectionIcon>
@@ -1298,6 +1180,124 @@ function Sidebar({
                           ))}
                         </motion.div>
                       )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CollapsibleSection>
+
+              <CollapsibleSection expanded={expandedSections.history}>
+                <SectionHeader onClick={() => toggleSectionExpanded('history')}>
+                  <CollectionHeader>
+                    <CollectionIcon>
+                      <FaHistory />
+                    </CollectionIcon>
+                    <CollectionTitle>History</CollectionTitle>
+                  </CollectionHeader>
+                  <ActionButtons>
+                    {requestHistory.length > 0 && (
+                      <ActionButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onClearHistory();
+                        }}
+                        title="Clear History"
+                        className="action-button"
+                      >
+                        <FaEraser />
+                      </ActionButton>
+                    )}
+                    <motion.div
+                      animate={
+                        expandedSections.history ? 'expanded' : 'collapsed'
+                      }
+                      variants={iconVariants}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <FaChevronDown size={12} />
+                    </motion.div>
+                  </ActionButtons>
+                </SectionHeader>
+                <AnimatePresence>
+                  {expandedSections.history && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <HistoryItemsContainer>
+                        {requestHistory.length === 0 ? (
+                          <EmptyHistoryMessage>
+                            No request history yet.
+                          </EmptyHistoryMessage>
+                        ) : (
+                          <motion.div
+                            variants={listVariants}
+                            initial="hidden"
+                            animate="visible"
+                          >
+                            {requestHistory
+                              .slice()
+                              .sort((a, b) => b.timestamp - a.timestamp)
+                              .slice(0, 10)
+                              .map((historyItem) => (
+                                <motion.div
+                                  key={historyItem.id}
+                                  variants={itemVariants}
+                                  transition={{ duration: 0.2 }}
+                                  whileHover={{ x: 4 }}
+                                >
+                                  <HistoryItem
+                                    onClick={() =>
+                                      onRestoreFromHistory(historyItem)
+                                    }
+                                  >
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          color: getMethodColor(
+                                            historyItem.request.method,
+                                          ),
+                                          fontWeight: 600,
+                                          marginRight: 8,
+                                          fontSize: '0.75rem',
+                                        }}
+                                      >
+                                        {historyItem.request.method}
+                                      </div>
+                                      <div
+                                        style={{
+                                          maxWidth: 150,
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap',
+                                        }}
+                                      >
+                                        {historyItem.request.name ||
+                                          historyItem.request.url}
+                                      </div>
+                                    </div>
+                                    <div
+                                      style={{
+                                        fontSize: '0.7rem',
+                                        opacity: 0.7,
+                                        marginTop: 4,
+                                      }}
+                                    >
+                                      {formatTimestamp(historyItem.timestamp)}
+                                    </div>
+                                  </HistoryItem>
+                                </motion.div>
+                              ))}
+                          </motion.div>
+                        )}
+                      </HistoryItemsContainer>
                     </motion.div>
                   )}
                 </AnimatePresence>
