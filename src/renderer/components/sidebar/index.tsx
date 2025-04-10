@@ -8,7 +8,11 @@ import {
   FaFolderPlus,
   FaPlus,
 } from 'react-icons/fa';
-import { Sidebar as SidebarContainer, SidebarContent, ResizeHandle } from '../../styles/StyledComponents';
+import { 
+  Sidebar as SidebarContainer, 
+  SidebarContent, 
+  ResizeHandle,
+} from '../../styles/StyledComponents';
 
 // Components
 import SidebarHeader from './components/SidebarHeader';
@@ -16,6 +20,7 @@ import SidebarFooter from './components/SidebarFooter';
 import SidebarSearch from './components/SidebarSearch';
 import CreatePanel from './components/CreatePanel';
 import NavTooltip from './components/NavTooltip';
+import ContextMenu from './components/ContextMenu';
 import CollectionsSection from './sections/CollectionsSection';
 import HistorySection from './sections/HistorySection';
 import NotesSection from './sections/NotesSection';
@@ -188,6 +193,78 @@ function Sidebar({
     }
   };
 
+  // Handle context menu actions
+  const handleContextMenuAction = (
+    action: string, 
+    item: any, 
+    itemType: 'collection' | 'folder' | 'request' | 'note', 
+    path: string[]
+  ) => {
+    switch (action) {
+      case 'rename':
+        setRenameModal({
+          visible: true,
+          item,
+          itemType: itemType === 'note' ? 'request' : itemType, // Handle note type
+          path,
+        });
+        break;
+      case 'delete':
+        setDeleteModal({
+          visible: true,
+          item,
+          itemType: itemType === 'note' ? 'request' : itemType, // Handle note type
+          path,
+        });
+        break;
+      case 'move':
+        if (itemType !== 'note') {
+          setMoveModal({
+            visible: true,
+            item,
+            itemType: itemType === 'collection' ? 'folder' : (itemType as 'folder' | 'request'),
+            path,
+          });
+        }
+        break;
+      case 'duplicate':
+        if (itemType === 'request') {
+          onDuplicateRequest(item.id, path);
+        } else if ('title' in item) { // Check for note property
+          onDuplicateNote && onDuplicateNote(item);
+        }
+        break;
+      case 'add-request':
+        onAddRequest([...path, item.id]);
+        break;
+      case 'note-options':
+        setNoteOptionsModal(item);
+        break;
+      default:
+        break;
+    }
+    closeContextMenu();
+  };
+
+  // Render context menu based on type
+  const renderContextMenu = () => {
+    if (!contextMenu.visible) return null;
+    
+    return (
+      <ContextMenu
+        item={contextMenu.item}
+        itemType={contextMenu.itemType as 'collection' | 'folder' | 'request' | 'note'}
+        position={{ x: contextMenu.x, y: contextMenu.y }}
+        onAction={(action: string) => handleContextMenuAction(
+          action, 
+          contextMenu.item, 
+          contextMenu.itemType as 'collection' | 'folder' | 'request' | 'note', 
+          contextMenu.path
+        )}
+      />
+    );
+  };
+
   // Render collapsed sidebar navigation
   const renderCollapsedNav = () => (
     <div
@@ -354,6 +431,7 @@ function Sidebar({
                 onAddFolder={onAddFolder}
                 onAddRequest={onAddRequest}
                 handleContextMenu={handleContextMenu}
+                onContextMenuAction={handleContextMenuAction}
                 filter={filter}
               />
 
@@ -492,6 +570,9 @@ function Sidebar({
             }}
           />
         )}
+
+        {/* Context Menu */}
+        {renderContextMenu()}
       </SidebarContainer>
     </motion.div>
   );

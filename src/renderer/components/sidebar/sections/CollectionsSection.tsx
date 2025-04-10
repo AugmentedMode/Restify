@@ -39,6 +39,12 @@ interface CollectionsSectionProps {
     itemType: 'collection' | 'folder' | 'request',
     path: string[],
   ) => void;
+  onContextMenuAction?: (
+    action: string, 
+    item: any, 
+    itemType: 'collection' | 'folder' | 'request', 
+    path: string[]
+  ) => void;
   filter: string;
 }
 
@@ -54,6 +60,7 @@ const CollectionsSection: React.FC<CollectionsSectionProps> = ({
   onAddFolder,
   onAddRequest,
   handleContextMenu,
+  onContextMenuAction,
   filter,
 }) => {
   // Filter collections based on search input
