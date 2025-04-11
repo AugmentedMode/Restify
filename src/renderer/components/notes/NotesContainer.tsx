@@ -182,11 +182,9 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
   }
 
   // Ensure we have valid content for the editor
-  const noteContent = activeNote.content || '# New Note\n\nStart writing your markdown here...';
+  const noteContent = activeNote.content || '';
   const noteTitle = activeNote.title || 'Untitled Note';
   
-  console.log("Rendering BlockEditor with content:", noteContent);
-
   return (
     <Container>
       <NoteHeader 
