@@ -265,27 +265,41 @@ const Block: React.FC<BlockProps> = ({
   const [slashMenuActive, setSlashMenuActive] = useState(false);
   const [slashMenuText, setSlashMenuText] = useState('');
   const slashCommandSelectionRef = useRef<number | null>(null);
+  const previousContentRef = useRef(content);
+  const isUpdatingFromParent = useRef(false);
   
-  // Update parent when content changes
+  // Update parent when content changes, but prevent infinite loop
   useEffect(() => {
-    if (!isInitialMount.current) {
+    // Skip the first render and any updates from parent
+    if (isInitialMount.current || isUpdatingFromParent.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // Only update parent if content actually changed
+    if (content !== previousContentRef.current) {
+      previousContentRef.current = content;
       onUpdate({
         ...block,
         content
       });
-    } else {
-      isInitialMount.current = false;
     }
   }, [content, block, onUpdate]);
   
   // Watch for changes to block content and update state
   useEffect(() => {
-    // If block content changed externally (like when a slash command is selected),
-    // update the local content and reset the slash menu state
-    if (block.content !== content && !isInitialMount.current) {
+    // Only update local state if block content changed from outside
+    if (block.content !== content && block.content !== previousContentRef.current) {
+      isUpdatingFromParent.current = true;
+      previousContentRef.current = block.content;
       setContent(block.content);
       setSlashMenuActive(false);
       setSlashMenuText('');
+      
+      // Reset the updating flag after state has been applied
+      setTimeout(() => {
+        isUpdatingFromParent.current = false;
+      }, 0);
     }
   }, [block.content, content]);
   
@@ -529,6 +543,12 @@ const Block: React.FC<BlockProps> = ({
   // Handle content changes
   const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
     const newContent = e.currentTarget.textContent || '';
+    
+    // Skip update if content hasn't changed (prevents unnecessary re-renders)
+    if (newContent === content) {
+      return;
+    }
+    
     setContent(newContent);
     
     // If the content no longer contains the slash, exit slash menu mode
@@ -541,43 +561,54 @@ const Block: React.FC<BlockProps> = ({
       // Check for direct shortcuts at the beginning of the line
       const trimmedContent = newContent.trim();
       
-      // Check for headings
-      if (/^#\s*$/.test(trimmedContent) || trimmedContent === '#') {
-        applyBlockTransformation(BlockType.Heading1);
-      } else if (/^##\s*$/.test(trimmedContent) || trimmedContent === '##') {
-        applyBlockTransformation(BlockType.Heading2);
-      } else if (/^###\s*$/.test(trimmedContent) || trimmedContent === '###') {
-        applyBlockTransformation(BlockType.Heading3);
-      } 
-      // Check for bullet list
-      else if (/^-\s*$/.test(trimmedContent) || trimmedContent === '-' || /^\*\s*$/.test(trimmedContent) || trimmedContent === '*') {
-        applyBlockTransformation(BlockType.BulletList);
-      } 
-      // Check for numbered list
-      else if (/^\d+\.\s*$/.test(trimmedContent) || /^\d+\.$/.test(trimmedContent)) {
-        applyBlockTransformation(BlockType.NumberedList);
-      } 
-      // Check for todo list - allow various formats with or without spaces
-      else if (/^\[\s*\]\s*$/.test(trimmedContent) || /^\[\]\s*$/.test(trimmedContent)) {
-        applyBlockTransformation(BlockType.ToDo, false);
-      } 
-      // Check for quote
-      else if (/^>\s*$/.test(trimmedContent) || trimmedContent === '>') {
-        applyBlockTransformation(BlockType.Quote);
-      } 
-      // Check for code block
-      else if (trimmedContent === '```') {
-        applyBlockTransformation(BlockType.Code, undefined, 'plaintext');
-      } 
-      // Check for divider
-      else if (trimmedContent === '---') {
-        applyBlockTransformation(BlockType.Divider);
+      // Only check for shortcuts if the content is JUST the shortcut text
+      // This prevents accidentally triggering transformations while typing
+      if (trimmedContent.length <= 3) {
+        // Check for headings
+        if (/^#\s*$/.test(trimmedContent) || trimmedContent === '#') {
+          applyBlockTransformation(BlockType.Heading1);
+        } else if (/^##\s*$/.test(trimmedContent) || trimmedContent === '##') {
+          applyBlockTransformation(BlockType.Heading2);
+        } else if (/^###\s*$/.test(trimmedContent) || trimmedContent === '###') {
+          applyBlockTransformation(BlockType.Heading3);
+        } 
+        // Check for bullet list
+        else if (/^-\s*$/.test(trimmedContent) || trimmedContent === '-' || /^\*\s*$/.test(trimmedContent) || trimmedContent === '*') {
+          applyBlockTransformation(BlockType.BulletList);
+        } 
+        // Check for numbered list
+        else if (/^\d+\.\s*$/.test(trimmedContent) || /^\d+\.$/.test(trimmedContent)) {
+          applyBlockTransformation(BlockType.NumberedList);
+        } 
+        // Check for todo list - allow various formats with or without spaces
+        else if (/^\[\s*\]\s*$/.test(trimmedContent) || /^\[\]\s*$/.test(trimmedContent)) {
+          applyBlockTransformation(BlockType.ToDo, false);
+        } 
+        // Check for quote
+        else if (/^>\s*$/.test(trimmedContent) || trimmedContent === '>') {
+          applyBlockTransformation(BlockType.Quote);
+        } 
+        // Check for code block
+        else if (trimmedContent === '```') {
+          applyBlockTransformation(BlockType.Code, undefined, 'plaintext');
+        } 
+        // Check for divider
+        else if (trimmedContent === '---') {
+          applyBlockTransformation(BlockType.Divider);
+        }
       }
     }
   };
   
   // Helper function to apply block transformation
   const applyBlockTransformation = (newType: BlockType, checked?: boolean, language?: string) => {
+    // Prevent update loops by marking this as an update from parent
+    isUpdatingFromParent.current = true;
+    
+    // Set previousContent to empty to avoid duplicate updates
+    previousContentRef.current = '';
+    
+    // Update the block through the parent
     onUpdate({
       ...block,
       type: newType,
@@ -586,9 +617,18 @@ const Block: React.FC<BlockProps> = ({
       ...(language !== undefined ? { language } : {})
     });
     
+    // Update local state
+    setContent('');
+    
+    // Clear the content in the DOM
     if (contentRef.current) {
       contentRef.current.textContent = '';
     }
+    
+    // Reset the update flag after a short delay
+    setTimeout(() => {
+      isUpdatingFromParent.current = false;
+    }, 0);
   };
 
   // Handle toggling todo item

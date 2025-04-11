@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import styled from 'styled-components';
 import { v4 as uuidv4 } from 'uuid';
 import Block from './Block';
@@ -43,42 +43,105 @@ interface BlockEditorProps {
   initialTitle: string;
   onContentChange: (content: string) => void;
   onTitleChange: (title: string) => void;
+  noteId?: string; // Add noteId prop to detect note changes
 }
 
 const BlockEditor: React.FC<BlockEditorProps> = ({
   initialContent,
   initialTitle,
   onContentChange,
-  onTitleChange
+  onTitleChange,
+  noteId
 }) => {
-  // Parse the initial markdown content into blocks
-  const [editorState, setEditorState] = useState<EditorState>(() => {
-    // Default to at least one empty paragraph block if no content
-    const blocks = initialContent 
+  // Flag to prevent update loops
+  const isUpdatingFromProps = useRef(false);
+  
+  // Track current values to prevent duplicate updates
+  const lastEmittedContent = useRef(initialContent);
+  const lastEmittedTitle = useRef(initialTitle);
+  
+  // Current note ID
+  const currentNoteIdRef = useRef(noteId);
+  
+  // Memoize the blocks parsing to avoid unnecessary re-parsing
+  const initialBlocks = useMemo(() => {
+    return initialContent 
       ? parseContentToBlocks(initialContent)
       : [{ id: uuidv4(), type: BlockType.Paragraph, content: '', level: 0 }];
-    
-    return {
-      blocks,
-      selectedBlockId: blocks[0].id,
-      menuOpen: false,
-      menuPosition: { x: 0, y: 0 },
-      menuAnchorBlockId: null,
-      menuFilterText: ''
-    };
+  }, [initialContent]);
+  
+  // Initialize editor state from the memoized blocks
+  const [editorState, setEditorState] = useState<EditorState>({
+    blocks: initialBlocks,
+    selectedBlockId: initialBlocks[0].id,
+    menuOpen: false,
+    menuPosition: { x: 0, y: 0 },
+    menuAnchorBlockId: null,
+    menuFilterText: ''
   });
   
   const [title, setTitle] = useState(initialTitle);
   
-  // Save changes when blocks are updated
+  // Reinitialize the editor ONLY when the note ID changes
   useEffect(() => {
+    // If note ID is different, completely reinitialize the editor
+    if (noteId !== currentNoteIdRef.current) {
+      currentNoteIdRef.current = noteId;
+      isUpdatingFromProps.current = true;
+      
+      // Update last emitted values to match what we're initializing with
+      lastEmittedContent.current = initialContent;
+      lastEmittedTitle.current = initialTitle;
+      
+      // Reset the editor with new content blocks
+      setEditorState({
+        blocks: initialBlocks,
+        selectedBlockId: initialBlocks[0].id,
+        menuOpen: false,
+        menuPosition: { x: 0, y: 0 },
+        menuAnchorBlockId: null,
+        menuFilterText: ''
+      });
+      
+      // Update title
+      setTitle(initialTitle);
+      
+      // Clear the updating flag after a short delay
+      setTimeout(() => {
+        isUpdatingFromProps.current = false;
+      }, 0);
+    }
+  }, [noteId, initialContent, initialTitle, initialBlocks]);
+  
+  // Send content changes to parent, but only when they're from user and actually changed
+  useEffect(() => {
+    // Skip updates that are from props or during initialization
+    if (isUpdatingFromProps.current) {
+      return;
+    }
+    
+    // Get current content from blocks
     const content = serializeBlocksToContent(editorState.blocks);
-    onContentChange(content);
+    
+    // Only emit if content actually changed from what we last emitted
+    if (content !== lastEmittedContent.current) {
+      lastEmittedContent.current = content;
+      onContentChange(content);
+    }
   }, [editorState.blocks, onContentChange]);
   
-  // Update title
+  // Send title changes to parent, but only when they're from user and actually changed
   useEffect(() => {
-    onTitleChange(title);
+    // Skip updates that are from props or during initialization
+    if (isUpdatingFromProps.current) {
+      return;
+    }
+    
+    // Only emit if title actually changed from what we last emitted
+    if (title !== lastEmittedTitle.current) {
+      lastEmittedTitle.current = title;
+      onTitleChange(title);
+    }
   }, [title, onTitleChange]);
   
   // Handle block update

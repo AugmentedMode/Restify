@@ -118,6 +118,7 @@ const NotesSection: React.FC<NotesSectionProps> = ({
             >
               <RequestItemContainer
                 active={activeNoteId === note.id}
+                data-active={activeNoteId === note.id}
                 onClick={() => onSelectNote(note)}
                 onContextMenu={(e) => {
                   e.preventDefault();

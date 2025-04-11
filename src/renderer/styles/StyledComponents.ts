@@ -346,6 +346,10 @@ export const RequestItemContainer = styled.div<{ active?: boolean }>`
   background-color: ${(props) => props.active ? colors.background.elevated : 'transparent'};
   transition: background-color 0.2s;
   
+  &[data-active="true"], &[data-active=""] {
+    background-color: ${colors.background.elevated};
+  }
+  
   &:hover {
     background-color: ${colors.background.elevated};
   }
@@ -577,6 +581,11 @@ export const ResponseTab = styled.div<{ active: boolean }>`
     active ? colors.text.primary : colors.text.tertiary};
   border-bottom: 2px solid
     ${({ active }) => (active ? colors.accent.primary : 'transparent')};
+
+  &[data-active="true"] {
+    color: ${colors.text.primary};
+    border-bottom: 2px solid ${colors.accent.primary};
+  }
 
   &:hover {
     color: ${colors.text.primary};
@@ -1122,6 +1131,10 @@ export const CreatePanelItem = styled.button`
 
 export const CollapsibleSection = styled.div<{ expanded?: boolean }>`
   margin-bottom: 10px;
+  
+  &[data-expanded="true"] {
+    /* Any styles specific to expanded state can go here */
+  }
 `;
 
 export const SectionHeader = styled.div`

@@ -136,6 +136,7 @@ const SecretsSection: React.FC<SecretsSectionProps> = ({
             >
               <ProfileItemContainer
                 active={activeProfileId === profile.id}
+                data-active={profile.id === activeProfileId}
                 onClick={() => onSelectProfile(profile)}
               >
                 {profile.isEncrypted ? <FaLock size={12} /> : <FaKey size={12} />}

@@ -27,7 +27,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   headerIcon,
 }) => {
   return (
-    <Section expanded={expanded} style={{ overflowX: 'hidden' }}>
+    <Section expanded={expanded} data-expanded={expanded} style={{ overflowX: 'hidden' }}>
       <SectionHeader onClick={onToggle}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           {headerIcon && <div style={{ marginRight: 8 }}>{headerIcon}</div>}

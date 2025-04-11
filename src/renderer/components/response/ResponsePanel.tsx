@@ -1379,28 +1379,30 @@ function ResponsePanel({
       <ResponseTabs>
         <ResponseTab
           active={activeTab === 'body'}
+          data-active={activeTab === 'body'}
           onClick={() => setActiveTab('body')}
         >
-          Preview
+          Body
         </ResponseTab>
         <ResponseTab
           active={activeTab === 'headers'}
+          data-active={activeTab === 'headers'}
           onClick={() => setActiveTab('headers')}
         >
-          Headers ({response ? Object.keys(response.headers).length : 0})
+          Headers
         </ResponseTab>
         <ResponseTab
           active={activeTab === 'cookies'}
+          data-active={activeTab === 'cookies'}
           onClick={() => setActiveTab('cookies')}
         >
           Cookies
         </ResponseTab>
         {/* <ResponseTab
           active={activeTab === 'security'}
+          data-active={activeTab === 'security'}
           onClick={() => setActiveTab('security')}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          <FaShieldAlt size={14} />
           Security
         </ResponseTab> */}
         {response && !isLoading && (

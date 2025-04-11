@@ -507,9 +507,8 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
             <SettingDescription>Show notes section in sidebar</SettingDescription>
           </div>
           <ToggleButton 
-            isActive={false}
-            onClick={() => {}}
-            style={{ opacity: 0.5, cursor: 'not-allowed' }}
+            isActive={settings.general.showNotes}
+            onClick={() => toggleSetting('general', 'showNotes')}
           />
         </SettingRow>
         <SettingRow>
@@ -611,7 +610,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
                     showHistory: true,
                     showSecretsManager: true,
                     showBoards: true,
-                    showNotes: false,
+                    showNotes: true,
                     defaultResponseView: 'pretty',
                   },
                   api: {
