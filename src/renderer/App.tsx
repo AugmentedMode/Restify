@@ -30,6 +30,7 @@ import {
 import { modalDataStore } from './utils/modalDataStore';
 import { initializeEncryption } from './utils/encryptionUtils';
 import ImportFileModal from './components/modals/ImportFileModal';
+import AddCollectionModal from './components/modals/AddCollectionModal';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -320,6 +321,8 @@ function App() {
   
   // State for import file modal
   const [showImportFileModal, setShowImportFileModal] = useState(false);
+  // Add state for collection modal
+  const [showAddCollectionModal, setShowAddCollectionModal] = useState(false);
   
   // Store responses by request ID for persistence
   const [responseMap, setResponseMap] = useState<Record<string, ApiResponse>>(
@@ -329,6 +332,11 @@ function App() {
   // Create a handler for the import file button
   const handleOpenImportFileModal = useCallback(() => {
     setShowImportFileModal(true);
+  }, []);
+
+  // Create a handler for the create collection button
+  const handleOpenAddCollectionModal = useCallback(() => {
+    setShowAddCollectionModal(true);
   }, []);
 
   // Load saved responses on startup
@@ -812,7 +820,7 @@ function App() {
   // Update the renderMainContent function to use the wrapper
   const renderMainContent = () => {
     if (!activeRequest) {
-      return <EmptyStateView onCreateCollection={addFolder} onImportFromFile={handleOpenImportFileModal} />;
+      return <EmptyStateView onCreateCollection={handleOpenAddCollectionModal} onImportFromFile={handleOpenImportFileModal} />;
     }
 
     if (activeNote) {
@@ -896,6 +904,16 @@ function App() {
     }
   };
 
+  // Handler for collection creation from modal
+  const handleAddCollection = (collection: Folder) => {
+    // Save the collection data in our store
+    modalDataStore.setLastCreatedCollection(collection);
+    
+    // Call the parent's function
+    addFolder();
+    setShowAddCollectionModal(false);
+  };
+
   // Adapter for adding a request to handle paths
   const addRequestAdapter = (folderPath: string[]) => {
     // Check if we have request data from the modal
@@ -968,6 +986,13 @@ function App() {
           isOpen={showImportFileModal}
           onClose={() => setShowImportFileModal(false)}
           onImport={handleImportFromFile}
+        />
+        
+        {/* Add collection modal */}
+        <AddCollectionModal
+          isOpen={showAddCollectionModal}
+          onClose={() => setShowAddCollectionModal(false)}
+          onAddCollection={handleAddCollection}
         />
       </AppContainer>
     </>
