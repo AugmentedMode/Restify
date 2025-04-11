@@ -365,6 +365,59 @@ export const MainContent = styled.div`
   animation: ${fadeIn} 0.3s ease;
 `;
 
+// Home page styles
+export const FeatureCard = styled.div`
+  background-color: ${colors.background.secondary};
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid ${colors.border.light};
+  
+  h3 {
+    display: flex;
+    align-items: center;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: ${colors.text.primary};
+  }
+  
+  p {
+    color: ${colors.text.secondary};
+    margin-bottom: 15px;
+    font-size: 14px;
+  }
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    border-color: ${colors.border.medium};
+  }
+  
+  button.primary-button {
+    ${primaryButtonStyle}
+    height: 36px;
+  }
+  
+  button.secondary-button {
+    ${secondaryButtonStyle}
+    height: 36px;
+  }
+  
+  button.text-button {
+    ${buttonStyle}
+    background: transparent;
+    color: ${colors.text.secondary};
+    padding: 6px 12px;
+    
+    &:hover {
+      color: ${colors.text.primary};
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  }
+`;
+
 export const RequestResponseContainer = styled.div`
   display: flex;
   height: 100%;

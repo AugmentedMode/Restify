@@ -2,6 +2,10 @@
  * Service for interacting with GitHub API
  */
 import { encryptValue, decryptValue } from '../utils/encryptionUtils';
+import { GitHubPRService } from './DatabaseService';
+
+// Cache refresh time (15 minutes in milliseconds)
+const CACHE_TTL = 15 * 60 * 1000;
 
 export class GitHubService {
   private octokit: any = null;
@@ -147,6 +151,9 @@ export class GitHubService {
     localStorage.removeItem(GitHubService.LEGACY_TOKEN_KEY);
     this.token = null;
     this.octokit = null;
+    
+    // Also clear cached PR data
+    GitHubPRService.clearAllPRs();
   }
 
   /**
@@ -162,10 +169,23 @@ export class GitHubService {
 
   /**
    * Get open pull requests created by the authenticated user
+   * @param useCache Whether to try using cached data first (default: true)
    * @returns Array of open pull requests
    */
-  public async getMyOpenPullRequests() {
+  public async getMyOpenPullRequests(useCache: boolean = true) {
     this.ensureInitialized();
+    
+    // Try to get from cache if requested
+    if (useCache) {
+      const lastUpdated = await GitHubPRService.getLastUpdatedTimestamp('created');
+      const cachedPRs = await GitHubPRService.getMyPRs();
+      
+      // If we have cached data and it's fresh enough, use it
+      if (lastUpdated && cachedPRs.length > 0 && Date.now() - lastUpdated < CACHE_TTL) {
+        console.log('[GitHub] Using cached PRs created by user');
+        return cachedPRs;
+      }
+    }
     
     // Get authenticated user first
     const user = await this.getCurrentUser();
@@ -178,15 +198,31 @@ export class GitHubService {
       per_page: 100
     });
 
+    // Cache the result for future use
+    await GitHubPRService.saveMyPRs(data.items);
+    
     return data.items;
   }
 
   /**
    * Get open pull requests where the authenticated user is requested as a reviewer
+   * @param useCache Whether to try using cached data first (default: true)
    * @returns Array of pull requests needing review
    */
-  public async getPullRequestsForReview() {
+  public async getPullRequestsForReview(useCache: boolean = true) {
     this.ensureInitialized();
+    
+    // Try to get from cache if requested
+    if (useCache) {
+      const lastUpdated = await GitHubPRService.getLastUpdatedTimestamp('review');
+      const cachedPRs = await GitHubPRService.getPRsForReview();
+      
+      // If we have cached data and it's fresh enough, use it
+      if (lastUpdated && cachedPRs.length > 0 && Date.now() - lastUpdated < CACHE_TTL) {
+        console.log('[GitHub] Using cached PRs for review');
+        return cachedPRs;
+      }
+    }
     
     // Get authenticated user first
     const user = await this.getCurrentUser();
@@ -199,7 +235,29 @@ export class GitHubService {
       per_page: 100
     });
 
+    // Cache the result for future use
+    await GitHubPRService.savePRsForReview(data.items);
+
     return data.items;
+  }
+
+  /**
+   * Force refresh all cached PR data
+   */
+  public async refreshAllPRs() {
+    if (!this.isInitialized()) {
+      return;
+    }
+    
+    try {
+      await Promise.all([
+        this.getMyOpenPullRequests(false),
+        this.getPullRequestsForReview(false)
+      ]);
+      console.log('[GitHub] Successfully refreshed all PR data');
+    } catch (error) {
+      console.error('[GitHub] Error refreshing PR data:', error);
+    }
   }
 
   /**

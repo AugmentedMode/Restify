@@ -38,6 +38,7 @@ import { SecretsService } from './services/SecretsService';
 import SettingsManager from './components/settings/SettingsManager';
 import { SettingsProvider } from './utils/SettingsContext';
 import GitHubPanel from './components/github/GitHubPanel';
+import Home from './components/Home';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [];
@@ -908,7 +909,13 @@ function AppContent() {
     window.dispatchEvent(new Event('popstate'));
   }, []);
 
-  // Update the renderMainContent function to handle settings route
+  // Navigate to Secrets
+  const navigateToSecrets = useCallback(() => {
+    window.history.pushState({}, '', '/secrets');
+    window.dispatchEvent(new Event('popstate'));
+  }, []);
+
+  // Update the renderMainContent function to use Home component
   const renderMainContent = () => {
     // Route to the kanban page if needed
     if (currentRoute === '/kanban') {
@@ -990,7 +997,22 @@ function AppContent() {
     
     // If no active note, then check for active request
     if (!activeRequest) {
-      return <EmptyStateView onCreateCollection={handleOpenAddCollectionModal} onImportFromFile={handleOpenImportFileModal} />;
+      return (
+        <Home 
+          onCreateCollection={handleOpenAddCollectionModal}
+          onImportFromFile={handleOpenImportFileModal}
+          onNavigateToSettings={navigateToSettings}
+          onNavigateToSecrets={navigateToSecrets}
+          onNavigateToKanban={() => {
+            window.history.pushState({}, '', '/kanban');
+            window.dispatchEvent(new Event('popstate'));
+          }}
+          onNavigateToGitHub={() => {
+            window.history.pushState({}, '', '/github');
+            window.dispatchEvent(new Event('popstate'));
+          }}
+        />
+      );
     }
 
     // This means we have an active request
@@ -1104,12 +1126,6 @@ function AppContent() {
   ) => {
     moveItem(itemId, targetPath);
   };
-
-  // Navigate to Secrets Manager
-  const navigateToSecrets = useCallback(() => {
-    window.history.pushState({}, '', '/secrets');
-    window.dispatchEvent(new Event('popstate'));
-  }, []);
 
   // Secrets Manager Handlers
   const handleSelectSecretsProfile = useCallback((profile: SecretsProfile) => {

@@ -12,9 +12,15 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
   isSidebarCollapsed,
   toggleCreatePanel,
 }) => {
+  // Function to navigate to home screen
+  const navigateToHome = () => {
+    window.history.pushState({}, '', '/');
+    window.dispatchEvent(new Event('popstate'));
+  };
+
   return (
     <Header>
-      <Logo>
+      <Logo onClick={navigateToHome} style={{ cursor: 'pointer' }}>
         {isSidebarCollapsed ? (
           <FaGlobe color="#FF385C" size={24} />
         ) : (

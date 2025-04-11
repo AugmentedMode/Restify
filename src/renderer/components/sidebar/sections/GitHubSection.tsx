@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FaGithub } from 'react-icons/fa';
+import { CollectionTitle } from '../../../styles/StyledComponents';
 
 // Styled components
 const Section = styled.div`
@@ -43,7 +44,7 @@ export const GitHubSection: React.FC<GitHubSectionProps> = ({
       <SectionHeader onClick={onNavigate}>
         <SectionTitle>
           <FaGithub />
-          <span>GitHub Pull Requests</span>
+          <CollectionTitle>GitHub Pull Requests</CollectionTitle>
         </SectionTitle>
       </SectionHeader>
     </Section>

@@ -917,32 +917,53 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   };
   
   const fetchAllPullRequests = async () => {
-    if (!githubService.isInitialized()) {
-      setError('GitHub service not initialized. Please add your token.');
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    
     try {
-      // Fetch both types of PRs in parallel
+      setLoading(true);
+      setError(null);
+      
+      console.log('[GitHub] Fetching pull requests...');
+      
+      // Run these requests in parallel for better performance
       const [myPRs, reviewPRs] = await Promise.all([
-        githubService.getMyOpenPullRequests(),
-        githubService.getPullRequestsForReview()
+        githubService.getMyOpenPullRequests(), // This now uses cache by default
+        githubService.getPullRequestsForReview() // This now uses cache by default
       ]);
+      
+      console.log(`[GitHub] Found ${myPRs.length} created PRs and ${reviewPRs.length} review requests`);
+      
       setPullRequests(myPRs);
       setReviewRequests(reviewPRs);
-    } catch (error: any) {
-      console.error('[GitHub] Error fetching pull requests:', error);
-      if (error.message?.includes('Bad credentials')) {
-        setError('Invalid GitHub token. Please check your token and try again.');
-        setInitialized(false);
-      } else {
-        setError(`Error fetching PRs: ${error.message || 'Unknown error'}`);
-      }
-      setPullRequests([]);
-      setReviewRequests([]);
+    } catch (error) {
+      console.error('[GitHub] Error fetching PRs:', error);
+      setError('Failed to fetch pull requests. Please check your token and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const refreshAllPullRequests = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('[GitHub] Force refreshing pull requests...');
+      
+      // Force refresh by passing false to useCache parameter
+      await githubService.refreshAllPRs();
+      
+      // After refresh, load the latest data
+      const [myPRs, reviewPRs] = await Promise.all([
+        githubService.getMyOpenPullRequests(), 
+        githubService.getPullRequestsForReview()
+      ]);
+      
+      console.log(`[GitHub] Refreshed ${myPRs.length} created PRs and ${reviewPRs.length} review requests`);
+      
+      setPullRequests(myPRs);
+      setReviewRequests(reviewPRs);
+    } catch (error) {
+      console.error('[GitHub] Error refreshing PRs:', error);
+      setError('Failed to refresh pull requests. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -1730,22 +1751,15 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
             GitHub Pull Requests
           </Title>
         </HeaderLeft>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {initialized && !loading && (
-            <>
-              <RefreshButton onClick={fetchAllPullRequests}>
-                <FaSync />
-              </RefreshButton>
-              <RefreshButton 
-                onClick={() => setShowTokenManagement(!showTokenManagement)} 
-                title={showTokenManagement ? "Hide token management" : "Manage token"}
-                style={showTokenManagement ? { color: '#FF385C', backgroundColor: 'rgba(255, 56, 92, 0.1)' } : {}}
-              >
-                <FaCog />
-              </RefreshButton>
-            </>
-          )}
-        </div>
+        {initialized && (
+          <RefreshButton 
+            onClick={refreshAllPullRequests} 
+            title="Refresh pull requests"
+            disabled={loading}
+          >
+            <FaSync />
+          </RefreshButton>
+        )}
       </Header>
       <Content>
         {showTokenManagement && initialized && renderTokenManagement()}

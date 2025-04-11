@@ -6,6 +6,14 @@ interface ResponseWithId extends ApiResponse {
   id: string;
 }
 
+// Define interface for GitHub PR
+interface GitHubPR {
+  id: string;
+  data: any;
+  type: 'created' | 'review';
+  timestamp: number;
+}
+
 // Define interface for settings entry
 interface SettingsEntry {
   id: string;
@@ -21,18 +29,20 @@ class RestifyDatabase extends Dexie {
   responses: Dexie.Table<ResponseWithId, string>;
   environments: Dexie.Table<Environment, string>;
   settings: Dexie.Table<SettingsEntry, string>;
+  githubPRs: Dexie.Table<GitHubPR, string>;
 
   constructor() {
     super('RestifyDatabase');
     
     // Define schema with explicit indices to avoid circular references
-    this.version(1).stores({
+    this.version(2).stores({
       notes: '&id, title, createdAt, updatedAt, *tags',
       collections: '&id, name',
       requestHistory: '&id, timestamp, name',
       responses: '&id',
       environments: '&id, name',
-      settings: '&id'
+      settings: '&id',
+      githubPRs: '&id, type, timestamp'
     });
     
     // Define types for tables
@@ -42,6 +52,7 @@ class RestifyDatabase extends Dexie {
     this.responses = this.table('responses');
     this.environments = this.table('environments');
     this.settings = this.table('settings');
+    this.githubPRs = this.table('githubPRs');
   }
 
   // Migrate data from localStorage if needed
@@ -274,6 +285,78 @@ export const SettingsService = {
   async saveSetting(key: string, value: any): Promise<string> {
     const entry: SettingsEntry = { id: key, value };
     return await db.settings.put(entry);
+  }
+};
+
+// GitHub PR Services
+export const GitHubPRService = {
+  async saveMyPRs(prs: any[]): Promise<void> {
+    const timestamp = Date.now();
+    
+    // First clear existing "created" PRs that we'll replace
+    await db.githubPRs.where('type').equals('created').delete();
+    
+    // Then add the new PRs
+    const prsToSave = prs.map(pr => ({
+      id: `created_${pr.id}`,
+      data: pr,
+      type: 'created' as const,
+      timestamp
+    }));
+    
+    if (prsToSave.length > 0) {
+      await db.githubPRs.bulkPut(prsToSave);
+    }
+  },
+  
+  async savePRsForReview(prs: any[]): Promise<void> {
+    const timestamp = Date.now();
+    
+    // First clear existing "review" PRs that we'll replace
+    await db.githubPRs.where('type').equals('review').delete();
+    
+    // Then add the new PRs
+    const prsToSave = prs.map(pr => ({
+      id: `review_${pr.id}`,
+      data: pr,
+      type: 'review' as const,
+      timestamp
+    }));
+    
+    if (prsToSave.length > 0) {
+      await db.githubPRs.bulkPut(prsToSave);
+    }
+  },
+  
+  async getMyPRs(): Promise<any[]> {
+    const prs = await db.githubPRs
+      .where('type')
+      .equals('created')
+      .toArray();
+    
+    return prs.map(pr => pr.data);
+  },
+  
+  async getPRsForReview(): Promise<any[]> {
+    const prs = await db.githubPRs
+      .where('type')
+      .equals('review')
+      .toArray();
+    
+    return prs.map(pr => pr.data);
+  },
+  
+  async getLastUpdatedTimestamp(type: 'created' | 'review'): Promise<number | null> {
+    const pr = await db.githubPRs
+      .where('type')
+      .equals(type)
+      .first();
+    
+    return pr ? pr.timestamp : null;
+  },
+  
+  async clearAllPRs(): Promise<void> {
+    await db.githubPRs.clear();
   }
 };
 
