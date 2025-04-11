@@ -927,39 +927,41 @@ function ResponsePanel({
                       placeholder="Variable name"
                       style={{ flex: 1 }}
                     />
-                    <Input
-                      type={variable.isSecret && !visibleSecrets[index] ? 'password' : 'text'}
-                      value={variable.value}
-                      onChange={(e) =>
-                        handleVariableChange(index, 'value', e.target.value)
-                      }
-                      placeholder="Value"
-                      style={{ 
-                        flex: 1,
-                        paddingRight: variable.isSecret ? '30px' : '12px' 
-                      }}
-                    />
-                    {variable.isSecret && (
-                      <button
-                        type="button"
-                        onClick={() => toggleSecretVisibility(index)}
-                        style={{
-                          position: 'absolute',
-                          right: '90px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'none',
-                          border: 'none',
-                          color: '#999',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          zIndex: 5
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <Input
+                        type={variable.isSecret && !visibleSecrets[index] ? 'password' : 'text'}
+                        value={variable.value}
+                        onChange={(e) =>
+                          handleVariableChange(index, 'value', e.target.value)
+                        }
+                        placeholder="Value"
+                        style={{ 
+                          width: '100%',
+                          paddingRight: variable.isSecret ? '30px' : '12px' 
                         }}
-                        title={visibleSecrets[index] ? "Hide value" : "Show value"}
-                      >
-                        {visibleSecrets[index] ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
-                      </button>
-                    )}
+                      />
+                      {variable.isSecret && (
+                        <button
+                          type="button"
+                          onClick={() => toggleSecretVisibility(index)}
+                          style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            color: '#999',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            zIndex: 5
+                          }}
+                          title={visibleSecrets[index] ? "Hide value" : "Show value"}
+                        >
+                          {visibleSecrets[index] ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                        </button>
+                      )}
+                    </div>
                     <div style={{ display: 'flex', gap: '4px', width: '80px', justifyContent: 'center' }}>
                       <button
                         type="button"
@@ -972,7 +974,9 @@ function ResponsePanel({
                           padding: '4px',
                           borderRadius: '4px',
                         }}
-                        title={variable.isSecret ? "Make non-secret" : "Make secret"}
+                        title={variable.isSecret 
+                          ? "This variable is marked as secret - values are encrypted and masked by default for security" 
+                          : "Click to mark as secret - secret variables are encrypted and masked by default to protect sensitive data like API keys and passwords"}
                       >
                         {variable.isSecret ? <FaLock size={14} /> : <FaLockOpen size={14} />}
                       </button>
@@ -1012,28 +1016,6 @@ function ResponsePanel({
                 + Add Variable
               </button>
             </FormGroup>
-            <div style={{ marginTop: '16px' }}>
-              <div style={{ 
-                padding: '12px', 
-                backgroundColor: 'rgba(255, 56, 92, 0.1)', 
-                borderRadius: '4px',
-                fontSize: '13px',
-                color: '#e0e0e0',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '8px',
-              }}>
-                <FaLock size={16} style={{ marginTop: '2px', color: '#FF385C' }} />
-                <div>
-                  <strong>Secret Variables</strong>
-                  <p style={{ margin: '4px 0 0', opacity: 0.8 }}>
-                    Variables marked as secret will be masked by default. This helps protect sensitive data like API keys 
-                    and passwords when sharing your screen. In this demo, secrets are prefixed with "encrypted:" but a 
-                    full implementation would use proper encryption.
-                  </p>
-                </div>
-              </div>
-            </div>
           </ModalBody>
           <ModalFooter>
             <CancelButton onClick={closeEnvModal}>Cancel</CancelButton>
