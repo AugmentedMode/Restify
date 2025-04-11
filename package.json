@@ -199,7 +199,6 @@
       "node_modules",
       "package.json"
     ],
-    "afterSign": "scripts/build/.notarize-env.js",
     "mac": {
       "target": [
         "dmg",

@@ -52,10 +52,6 @@ const CreatePanel: React.FC<CreatePanelProps> = ({
         <FaFolderPlus size={16} />
         <span>Collection</span>
       </CreatePanelItem>
-      <CreatePanelItem onClick={onAddRequest}>
-        <FaPlus size={16} />
-        <span>Request</span>
-      </CreatePanelItem>
       <CreatePanelHeader style={{ marginTop: 4 }}>
         Import
       </CreatePanelHeader>
