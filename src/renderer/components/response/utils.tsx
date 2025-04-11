@@ -320,34 +320,49 @@ export const formatJSON = (
 
           if (value !== null && typeof value === 'object') {
             // Key with nested object/array
-            result.push(
-              createLineWithNumber(
-                <span style={{ marginLeft: getIndent(depth + 1) }}>
-                  <JSONValue type="key">&quot;{key}&quot;</JSONValue>:{' '}
-                  {Array.isArray(value) ? '[' : '{'}
-                </span>
-              )
-            );
+            // Special case for empty objects/arrays - put on a single line
+            if ((Array.isArray(value) && value.length === 0) || 
+                (!Array.isArray(value) && Object.keys(value).length === 0)) {
+              result.push(
+                createLineWithNumber(
+                  <span style={{ marginLeft: getIndent(depth + 1) }}>
+                    <JSONValue type="key">&quot;{key}&quot;</JSONValue>:{' '}
+                    {Array.isArray(value) ? '[]' : '{}'}
+                    {i < keysToRender.length - 1 ? ',' : ''}
+                  </span>
+                )
+              );
+            } else {
+              // Normal case for non-empty objects/arrays
+              result.push(
+                createLineWithNumber(
+                  <span style={{ marginLeft: getIndent(depth + 1) }}>
+                    <JSONValue type="key">&quot;{key}&quot;</JSONValue>:{' '}
+                    {Array.isArray(value) ? '[' : '{'}
+                  </span>
+                )
+              );
 
-            // Process nested content with increased indentation
-            const nestedContent = formatComplex(value, depth + 2);
-            // Skip first and last lines as we handle them separately
-            nestedContent.forEach((line, index) => {
-              if (index > 0 && index < nestedContent.length - 1) {
-                result.push(line);
-              }
-            });
+              // Process nested content with increased indentation
+              const nestedContent = formatComplex(value, depth + 2);
+              // Skip first and last lines as we handle them separately
+              nestedContent.forEach((line, index) => {
+                if (index > 0 && index < nestedContent.length - 1) {
+                  result.push(line);
+                }
+              });
 
-            // Add closing bracket with comma if needed
-            const closingBracket = Array.isArray(value) ? ']' : '}';
-            result.push(
-              createLineWithNumber(
-                <span style={{ marginLeft: getIndent(depth + 1) }}>
-                  {closingBracket}
-                  {i < keysToRender.length - 1 ? ',' : ''}
-                </span>
-              )
-            );
+              // Add closing bracket with comma if needed
+              const closingBracket = Array.isArray(value) ? ']' : '}';
+              result.push(
+                createLineWithNumber(
+                  <span style={{ marginLeft: getIndent(depth + 1) }}>
+                    {closingBracket}
+                    {i < keysToRender.length - 1 ? ',' : ''}
+                  </span>
+                )
+              );
+            }
           } else {
             // Simple key-value pair
             result.push(
