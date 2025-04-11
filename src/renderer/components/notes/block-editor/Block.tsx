@@ -392,6 +392,58 @@ const Block: React.FC<BlockProps> = ({
       return;
     }
     
+    // Handle up arrow key to navigate to previous block
+    if (e.key === 'ArrowUp' && !e.shiftKey && !e.metaKey && !e.altKey) {
+      // Only navigate if cursor is at the start of the content
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
+      
+      if (range && range.startOffset === 0 && range.collapsed) {
+        e.preventDefault();
+        
+        // Find the current block index in the DOM
+        const blockElements = Array.from(document.querySelectorAll('[data-block-id]'));
+        const currentBlockIndex = blockElements.findIndex(el => el.getAttribute('data-block-id') === block.id);
+        
+        // If there's a previous block, select it
+        if (currentBlockIndex > 0) {
+          const prevBlockId = blockElements[currentBlockIndex - 1].getAttribute('data-block-id');
+          if (prevBlockId) {
+            onSelect(prevBlockId);
+          }
+        }
+      }
+    }
+    
+    // Handle down arrow key to navigate to next block
+    if (e.key === 'ArrowDown' && !e.shiftKey && !e.metaKey && !e.altKey) {
+      // Only navigate if cursor is at the end of the content
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
+      const contentEl = contentRef.current;
+      
+      if (range && contentEl) {
+        const contentLength = contentEl.textContent?.length || 0;
+        
+        // Check if cursor is at the end of content
+        if (range.startOffset === contentLength && range.collapsed) {
+          e.preventDefault();
+          
+          // Find the current block index in the DOM
+          const blockElements = Array.from(document.querySelectorAll('[data-block-id]'));
+          const currentBlockIndex = blockElements.findIndex(el => el.getAttribute('data-block-id') === block.id);
+          
+          // If there's a next block, select it
+          if (currentBlockIndex < blockElements.length - 1) {
+            const nextBlockId = blockElements[currentBlockIndex + 1].getAttribute('data-block-id');
+            if (nextBlockId) {
+              onSelect(nextBlockId);
+            }
+          }
+        }
+      }
+    }
+    
     // Handle /, which opens the block menu
     if (e.key === '/' && !slashMenuActive) {
       e.preventDefault();

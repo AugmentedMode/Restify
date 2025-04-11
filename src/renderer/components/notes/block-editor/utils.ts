@@ -16,112 +16,117 @@ export const parseContentToBlocks = (markdown: string): BlockData[] => {
     ];
   }
 
-  const lines = markdown.split('\n');
+  // Split by double newlines to find block boundaries, then process each block
+  const rawBlocks = markdown.split(/\n\n+/);
   const blocks: BlockData[] = [];
   
-  // Simple parsing logic - can be enhanced for more complex markdown
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  // Process each raw block
+  for (let i = 0; i < rawBlocks.length; i++) {
+    const blockContent = rawBlocks[i].trim();
     
-    // Skip empty lines between blocks
-    if (!line.trim() && i > 0 && i < lines.length - 1) {
-      continue;
-    }
+    if (!blockContent) continue;
+    
+    // Process the block content - check first line
+    const lines = blockContent.split('\n');
+    const firstLine = lines[0].trim();
     
     // Heading 1
-    if (line.startsWith('# ')) {
+    if (firstLine.startsWith('# ')) {
       blocks.push({
         id: uuidv4(),
         type: BlockType.Heading1,
-        content: line.substring(2).trim(),
+        content: firstLine.substring(2).trim(),
         level: 1
       });
     }
     // Heading 2
-    else if (line.startsWith('## ')) {
+    else if (firstLine.startsWith('## ')) {
       blocks.push({
         id: uuidv4(),
         type: BlockType.Heading2,
-        content: line.substring(3).trim(),
+        content: firstLine.substring(3).trim(),
         level: 2
       });
     }
     // Heading 3
-    else if (line.startsWith('### ')) {
+    else if (firstLine.startsWith('### ')) {
       blocks.push({
         id: uuidv4(),
         type: BlockType.Heading3,
-        content: line.substring(4).trim(),
+        content: firstLine.substring(4).trim(),
         level: 3
       });
     }
+    // Todo items (checked)
+    else if (firstLine.startsWith('- [x]') || firstLine.startsWith('* [x]')) {
+      blocks.push({
+        id: uuidv4(),
+        type: BlockType.ToDo,
+        content: firstLine.substring(5).trim(),
+        checked: true
+      });
+    }
+    // Todo items (unchecked) - must check this before regular bullet list
+    else if (firstLine.startsWith('- [ ]') || firstLine.startsWith('* [ ]')) {
+      blocks.push({
+        id: uuidv4(),
+        type: BlockType.ToDo,
+        content: firstLine.substring(5).trim(),
+        checked: false
+      });
+    }
     // Bullet list
-    else if (line.startsWith('- ') || line.startsWith('* ')) {
+    else if (firstLine.startsWith('- ') || firstLine.startsWith('* ')) {
       blocks.push({
         id: uuidv4(),
         type: BlockType.BulletList,
-        content: line.substring(2).trim(),
+        content: firstLine.substring(2).trim(),
         level: 0
       });
     }
     // Numbered list
-    else if (/^\d+\.\s/.test(line)) {
+    else if (/^\d+\.\s/.test(firstLine)) {
       blocks.push({
         id: uuidv4(),
         type: BlockType.NumberedList,
-        content: line.replace(/^\d+\.\s/, '').trim(),
+        content: firstLine.replace(/^\d+\.\s/, '').trim(),
         level: 0
       });
     }
-    // To-do list
-    else if (line.startsWith('- [ ] ') || line.startsWith('* [ ] ')) {
-      blocks.push({
-        id: uuidv4(),
-        type: BlockType.ToDo,
-        content: line.substring(6).trim(),
-        checked: false
-      });
-    }
-    else if (line.startsWith('- [x] ') || line.startsWith('* [x] ')) {
-      blocks.push({
-        id: uuidv4(),
-        type: BlockType.ToDo,
-        content: line.substring(6).trim(),
-        checked: true
-      });
-    }
     // Quote
-    else if (line.startsWith('> ')) {
+    else if (firstLine.startsWith('> ')) {
       blocks.push({
         id: uuidv4(),
         type: BlockType.Quote,
-        content: line.substring(2).trim()
+        content: firstLine.substring(2).trim()
       });
     }
     // Code block
-    else if (line.startsWith('```')) {
-      const language = line.substring(3).trim();
-      let codeContent = '';
-      let j = i + 1;
+    else if (firstLine.startsWith('```')) {
+      const language = firstLine.substring(3).trim();
       
-      // Collect all lines until the end of the code block
-      while (j < lines.length && !lines[j].startsWith('```')) {
-        codeContent += lines[j] + '\n';
-        j++;
+      // Join the rest of the lines except for the closing ```
+      const codeLines = lines.slice(1);
+      let codeContent = '';
+      let foundClosing = false;
+      
+      for (let j = 0; j < codeLines.length; j++) {
+        if (codeLines[j].trim() === '```') {
+          foundClosing = true;
+          break;
+        }
+        codeContent += codeLines[j] + (j < codeLines.length - 1 ? '\n' : '');
       }
       
       blocks.push({
         id: uuidv4(),
         type: BlockType.Code,
-        content: codeContent.trim(),
+        content: codeContent,
         language: language || 'plaintext'
       });
-      
-      // Skip to the end of the code block
-      i = j;
     }
     // Divider
-    else if (line.trim() === '---' || line.trim() === '***' || line.trim() === '___') {
+    else if (firstLine === '---' || firstLine === '***' || firstLine === '___') {
       blocks.push({
         id: uuidv4(),
         type: BlockType.Divider,
@@ -130,13 +135,24 @@ export const parseContentToBlocks = (markdown: string): BlockData[] => {
     }
     // Default to paragraph
     else {
+      // Process multiline paragraphs
       blocks.push({
         id: uuidv4(),
         type: BlockType.Paragraph,
-        content: line.trim(),
+        content: blockContent,
         level: 0
       });
     }
+  }
+  
+  // If no blocks were created, add a default paragraph
+  if (blocks.length === 0) {
+    blocks.push({
+      id: uuidv4(),
+      type: BlockType.Paragraph,
+      content: '',
+      level: 0
+    });
   }
   
   return blocks;
