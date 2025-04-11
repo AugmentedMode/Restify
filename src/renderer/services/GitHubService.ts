@@ -261,6 +261,74 @@ export class GitHubService {
   }
 
   /**
+   * Get recent commits made by the authenticated user
+   * @param days Number of days to look back (default: 7)
+   * @returns Array of recent commits
+   */
+  public async getRecentCommits(days: number = 7) {
+    this.ensureInitialized();
+    
+    try {
+      // Get authenticated user first
+      const user = await this.getCurrentUser();
+      
+      // Calculate the date from days ago
+      const daysAgo = new Date();
+      daysAgo.setDate(daysAgo.getDate() - days);
+      const dateString = daysAgo.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      
+      // Search for commits authored by the authenticated user since the specified date
+      const { data } = await this.octokit.search.commits({
+        q: `author:${user.login} author-date:>=${dateString}`,
+        sort: 'author-date',
+        order: 'desc',
+        per_page: 100
+      });
+      
+      console.log(`[GitHub] Found ${data.items.length} commits in the last ${days} days`);
+      return data.items;
+    } catch (error) {
+      console.error('[GitHub] Error fetching recent commits:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get commit statistics for repositories the user has access to
+   * @returns Object with commit stats
+   */
+  public async getCommitStats() {
+    this.ensureInitialized();
+    
+    try {
+      // Get recent commits for different time periods
+      const last24Hours = await this.getRecentCommits(1);
+      const lastWeek = await this.getRecentCommits(7);
+      const lastMonth = await this.getRecentCommits(30);
+      
+      // Get repositories with commits
+      const repositories = new Set(lastMonth.map((commit: any) => 
+        commit.repository?.name || commit.repository?.full_name || 'unknown'
+      ));
+      
+      return {
+        lastDay: last24Hours.length,
+        lastWeek: lastWeek.length,
+        lastMonth: lastMonth.length,
+        repositories: Array.from(repositories).length
+      };
+    } catch (error) {
+      console.error('[GitHub] Error fetching commit statistics:', error);
+      return {
+        lastDay: 0,
+        lastWeek: 0,
+        lastMonth: 0,
+        repositories: 0
+      };
+    }
+  }
+
+  /**
    * Ensure the service is initialized before making API calls
    */
   private ensureInitialized() {

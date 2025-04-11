@@ -382,6 +382,12 @@ function AppContent() {
   const [secretsProfiles, setSecretsProfiles] = useState<SecretsProfile[]>([]);
   const [activeSecretsProfile, setActiveSecretsProfile] = useState<string | null>(null);
 
+  // Function to navigate to home
+  const navigateToHome = useCallback(() => {
+    window.history.pushState({}, '', '/home');
+    window.dispatchEvent(new Event('popstate'));
+  }, []);
+
   // Load secrets profiles from local storage
   useEffect(() => {
     const loadedProfiles = SecretsService.loadProfiles();
@@ -917,6 +923,26 @@ function AppContent() {
 
   // Update the renderMainContent function to use Home component
   const renderMainContent = () => {
+    // Home route that overrides active request/note
+    if (currentRoute === '/home') {
+      return (
+        <Home 
+          onCreateCollection={handleOpenAddCollectionModal}
+          onImportFromFile={handleOpenImportFileModal}
+          onNavigateToSettings={navigateToSettings}
+          onNavigateToSecrets={navigateToSecrets}
+          onNavigateToKanban={() => {
+            window.history.pushState({}, '', '/kanban');
+            window.dispatchEvent(new Event('popstate'));
+          }}
+          onNavigateToGitHub={() => {
+            window.history.pushState({}, '', '/github');
+            window.dispatchEvent(new Event('popstate'));
+          }}
+        />
+      );
+    }
+
     // Route to the kanban page if needed
     if (currentRoute === '/kanban') {
       return <TodoKanban />;

@@ -14,7 +14,7 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
 }) => {
   // Function to navigate to home screen
   const navigateToHome = () => {
-    window.history.pushState({}, '', '/');
+    window.history.pushState({}, '', '/home');
     window.dispatchEvent(new Event('popstate'));
   };
 
