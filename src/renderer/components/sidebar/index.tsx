@@ -592,14 +592,7 @@ function Sidebar({
                     />
                   )}
 
-                  {settings.general.showBoards && (
-                    <KanbanSection
-                      expanded={expandedSections.kanban}
-                      toggleSection={() => toggleSection('kanban')}
-                      onAddTodo={navigateToKanban}
-                      filter={filter}
-                    />
-                  )}
+        
 
                   {settings.general.showSecretsManager && (
                     <SecretsSection
@@ -611,6 +604,15 @@ function Sidebar({
                       onAddProfile={onAddSecretsProfile}
                       onImportSecrets={onImportSecrets}
                       onExportSecrets={onExportSecrets}
+                      filter={filter}
+                    />
+                  )}
+
+                  {settings.general.showBoards && (
+                    <KanbanSection
+                      expanded={expandedSections.kanban}
+                      toggleSection={() => toggleSection('kanban')}
+                      onAddTodo={navigateToKanban}
                       filter={filter}
                     />
                   )}

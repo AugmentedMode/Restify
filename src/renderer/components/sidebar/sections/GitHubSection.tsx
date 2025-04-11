@@ -44,7 +44,7 @@ export const GitHubSection: React.FC<GitHubSectionProps> = ({
       <SectionHeader onClick={onNavigate}>
         <SectionTitle>
           <FaGithub />
-          <CollectionTitle>GitHub Pull Requests</CollectionTitle>
+          <CollectionTitle>Pull Requests</CollectionTitle>
         </SectionTitle>
       </SectionHeader>
     </Section>

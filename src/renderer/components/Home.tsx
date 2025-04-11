@@ -241,6 +241,32 @@ const ContributionCell = styled.div<{ intensity: number }>`
   min-height: 8px;
 `;
 
+const ContributionLegend = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 8px;
+  gap: 4px;
+  font-size: 10px;
+  color: #999;
+`;
+
+const LegendCells = styled.div`
+  display: flex;
+  gap: 2px;
+`;
+
+const LegendCell = styled.div<{ intensity: number }>`
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background-color: ${props => {
+    const base = 0.1;
+    const intensity = base + (props.intensity * 0.18);
+    return `rgba(76, 175, 80, ${intensity})`;
+  }};
+`;
+
 const CommitStats = styled.div`
   display: flex;
   justify-content: space-between;
@@ -617,6 +643,11 @@ const Home: React.FC<HomeProps> = ({
           // Fetch commit stats
           const commitStats = await githubService.getCommitStats();
           
+          // Sort PRs by updated_at (most recent first)
+          const sortedPRs = [...myPRs].sort((a, b) => 
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
+          
           setGithubStats({
             prs: {
               open: myPRs.length,
@@ -624,7 +655,7 @@ const Home: React.FC<HomeProps> = ({
               reviews: reviewPRs.length
             },
             commits: commitStats,
-            recentPRs: myPRs.slice(0, 3),
+            recentPRs: sortedPRs.slice(0, 3),
             initialized: true
           });
         }
@@ -800,6 +831,17 @@ const Home: React.FC<HomeProps> = ({
                   ))}
                 </ContributionGrid>
               </ContributionContainer>
+              <ContributionLegend>
+                <span>Less</span>
+                <LegendCells>
+                  <LegendCell intensity={0} />
+                  <LegendCell intensity={1} />
+                  <LegendCell intensity={2} />
+                  <LegendCell intensity={3} />
+                  <LegendCell intensity={4} />
+                </LegendCells>
+                <span>More</span>
+              </ContributionLegend>
             </>
           )}
         </MetricsCard>
@@ -810,6 +852,29 @@ const Home: React.FC<HomeProps> = ({
         <MetricsCard>
           <h3><FaBolt /> Quick Access</h3>
           <div>
+          <QuickAccessItem>
+              <div className="content">
+                <FaBookmark />
+                <span>API Collections</span>
+              </div>
+              <div className="icon">
+                <FaExternalLinkAlt size={12} />
+              </div>
+            </QuickAccessItem>
+
+            {onNavigateToGitHub && (
+              <QuickAccessItem onClick={onNavigateToGitHub}>
+                <div className="content">
+                  <FaGithub />
+                  <span>Pull Requests</span>
+                </div>
+                <div className="icon">
+                  <FaExternalLinkAlt size={12} />
+                </div>
+              </QuickAccessItem>
+            )}
+
+
             {onNavigateToSecrets && (
               <QuickAccessItem onClick={onNavigateToSecrets}>
                 <div className="content">
@@ -821,38 +886,30 @@ const Home: React.FC<HomeProps> = ({
                 </div>
               </QuickAccessItem>
             )}
-            
-            {onNavigateToGitHub && (
-              <QuickAccessItem onClick={onNavigateToGitHub}>
+
+            {/* kanban board */}
+            {onNavigateToKanban && (
+              <QuickAccessItem onClick={onNavigateToKanban}>
                 <div className="content">
-                  <FaGithub />
-                  <span>GitHub Integration</span>
+                  <FaColumns />
+                  <span>Kanban Board</span>
                 </div>
                 <div className="icon">
                   <FaExternalLinkAlt size={12} />
                 </div>
               </QuickAccessItem>
             )}
-            
-            <QuickAccessItem>
-              <div className="content">
-                <FaBookmark />
-                <span>API Collections</span>
-              </div>
-              <div className="icon">
-                <FaExternalLinkAlt size={12} />
-              </div>
-            </QuickAccessItem>
-            
-            <QuickAccessItem>
-              <div className="content">
-                <FaStickyNote />
-                <span>API Documentation</span>
-              </div>
-              <div className="icon">
-                <FaExternalLinkAlt size={12} />
-              </div>
-            </QuickAccessItem>
+            {/* notes */}
+              <QuickAccessItem>
+                <div className="content">
+                  <FaStickyNote />
+                  <span>Notes</span>
+                </div>
+                <div className="icon">
+                  <FaExternalLinkAlt size={12} />
+                </div>
+              </QuickAccessItem>            
+
           </div>
         </MetricsCard>
         
@@ -900,7 +957,7 @@ const Home: React.FC<HomeProps> = ({
         {/* Kanban Board Overview */}
         <MetricsCard>
           <CardHeader>
-            <h3><FaColumns /> Kanban Board</h3>
+            <h3><FaColumns />Todo</h3>
             {onNavigateToKanban && (
               <ActionButton onClick={onNavigateToKanban}>
                 Open Board
