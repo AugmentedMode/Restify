@@ -8,6 +8,14 @@ import {
   FaFolderPlus,
   FaPlus,
   FaColumns,
+  FaChevronDown,
+  FaChevronLeft,
+  FaChevronRight,
+  FaCode,
+  FaDatabase,
+  FaPalette,
+  FaSitemap,
+  FaTimes,
 } from 'react-icons/fa';
 import { 
   Sidebar as SidebarContainer, 
@@ -28,6 +36,7 @@ import HistorySection from './sections/HistorySection';
 import NotesSection from './sections/NotesSection';
 import KanbanSection from './sections/KanbanSection';
 import EnvironmentManager from '../EnvironmentManager';
+import SecretsSection from './sections/SecretsSection';
 
 // Hooks
 import { useSidebarResize } from './hooks/useSidebarResize';
@@ -47,7 +56,7 @@ import AddRequestModal from '../modals/AddRequestModal';
 import AddCollectionModal from '../modals/AddCollectionModal';
 
 // Types
-import { ApiRequest, Folder, HttpMethod, RequestHistoryItem, Environment, Note } from '../../types';
+import { ApiRequest, Folder, HttpMethod, RequestHistoryItem, Environment, Note, SecretsProfile } from '../../types';
 
 // Animation variants
 const sidebarVariants = {
@@ -59,45 +68,37 @@ interface SidebarProps {
   collections: Folder[];
   activeRequestId: string | null;
   onSelectRequest: (request: ApiRequest) => void;
-  onAddFolder: () => void;
-  onAddRequest: (folderPath: string[]) => void;
-  onRenameItem: (
-    itemId: string,
-    newName: string,
-    itemType: 'collection' | 'folder' | 'request',
-    path: string[],
-  ) => void;
-  onDeleteItem: (
-    itemId: string,
-    itemType: 'collection' | 'folder' | 'request',
-    path: string[],
-  ) => void;
-  onMoveItem: (
-    itemId: string,
-    itemType: 'folder' | 'request',
-    sourcePath: string[],
-    targetPath: string[],
-  ) => void;
-  onDuplicateRequest: (requestId: string, path: string[]) => void;
-  onImportFromCurl?: (curlCommand: string) => void;
-  onImportFromFile?: (fileContent: string, fileName: string) => void;
-  requestHistory?: RequestHistoryItem[];
-  onRestoreFromHistory?: (historyItem: RequestHistoryItem) => void;
-  onClearHistory?: () => void;
-  environments?: Environment[];
-  currentEnvironmentId?: string | null;
-  onAddEnvironment?: (environment: Environment) => void;
-  onUpdateEnvironment?: (environment: Environment) => void;
-  onDeleteEnvironment?: (environmentId: string) => void;
-  onSelectEnvironment?: (environmentId: string | null) => void;
-  notes?: Note[];
-  activeNoteId?: string | null;
-  onSelectNote?: (note: Note) => void;
-  onAddNote?: () => void;
-  onRenameNote?: (noteId: string, newName: string) => void;
-  onDeleteNote?: (noteId: string) => void;
-  onDuplicateNote?: (note: Note) => void;
-  onExportNote?: (note: Note) => void;
+  onAddFolder: (path: string) => void;
+  onAddRequest: (parentPath: string[]) => void;
+  onRenameItem: (id: string, name: string, isFolder: boolean) => void;
+  onDeleteItem: (id: string, isFolder: boolean) => void;
+  onMoveItem: (itemId: string, targetPath: string[], isFolder: boolean) => void;
+  onDuplicateRequest: (requestId: string) => void;
+  onImportFromCurl: () => void;
+  onImportFromFile: () => void;
+  requestHistory: RequestHistoryItem[];
+  onRestoreFromHistory: (requestId: string) => void;
+  onClearHistory: () => void;
+  environments: Environment[];
+  currentEnvironmentId: string | null;
+  onAddEnvironment: (env: Environment) => void;
+  onUpdateEnvironment: (env: Environment) => void;
+  onDeleteEnvironment: (id: string) => void;
+  onSelectEnvironment: (id: string | null) => void;
+  notes: Note[];
+  activeNoteId: string | null;
+  onSelectNote: (note: Note) => void;
+  onAddNote: () => void;
+  onRenameNote: (id: string, title: string) => void;
+  onDeleteNote: (id: string) => void;
+  onDuplicateNote: (id: string) => void;
+  onExportNote: (id: string) => void;
+  secretsProfiles?: SecretsProfile[];
+  activeSecretsProfileId?: string | null;
+  onSelectSecretsProfile?: (profile: SecretsProfile) => void;
+  onAddSecretsProfile?: () => void;
+  onImportSecrets?: () => void;
+  onExportSecrets?: (profileId: string) => void;
 }
 
 function Sidebar({
@@ -129,6 +130,12 @@ function Sidebar({
   onDeleteNote = () => {},
   onDuplicateNote = () => {},
   onExportNote = () => {},
+  secretsProfiles = [],
+  activeSecretsProfileId = null,
+  onSelectSecretsProfile = () => {},
+  onAddSecretsProfile = () => {},
+  onImportSecrets = () => {},
+  onExportSecrets = () => {},
 }: SidebarProps) {
   // Use hooks for state management
   const { sidebarWidth, isResizing, handleResizeStart } = useSidebarResize(300);
@@ -186,7 +193,7 @@ function Sidebar({
   // Handle delete
   const handleDelete = () => {
     if (deleteModal.item && deleteModal.itemType) {
-      onDeleteItem(deleteModal.item.id, deleteModal.itemType, deleteModal.path);
+      onDeleteItem(deleteModal.item.id, deleteModal.itemType);
       setDeleteModal({ ...deleteModal, visible: false });
     }
   };
@@ -196,9 +203,8 @@ function Sidebar({
     if (moveModal.item && moveModal.itemType) {
       onMoveItem(
         moveModal.item.id,
-        moveModal.itemType,
-        moveModal.path,
         targetPath,
+        moveModal.itemType,
       );
       setMoveModal({ ...moveModal, visible: false });
     }
@@ -220,7 +226,7 @@ function Sidebar({
     modalDataStore.setLastCreatedCollection(collection);
     
     // Call the parent's function
-    onAddFolder();
+    onAddFolder(collection.id);
     hideAddCollectionModal();
   };
 
@@ -260,9 +266,9 @@ function Sidebar({
         break;
       case 'duplicate':
         if (itemType === 'request') {
-          onDuplicateRequest(item.id, path);
+          onDuplicateRequest(item.id);
         } else if ('title' in item) { // Check for note property
-          onDuplicateNote && onDuplicateNote(item);
+          onDuplicateNote && onDuplicateNote(item.id);
         }
         break;
       case 'add-request':
@@ -504,6 +510,18 @@ function Sidebar({
                 filter={filter}
               />
 
+              <SecretsSection
+                secretsProfiles={secretsProfiles}
+                activeProfileId={activeSecretsProfileId}
+                expanded={expandedSections.secrets}
+                toggleSection={() => toggleSection('secrets')}
+                onSelectProfile={onSelectSecretsProfile}
+                onAddProfile={onAddSecretsProfile}
+                onImportSecrets={onImportSecrets}
+                onExportSecrets={onExportSecrets}
+                filter={filter}
+              />
+
               {/* <EnvironmentManager 
                 environments={environments}
                 currentEnvironmentId={currentEnvironmentId}
@@ -622,11 +640,11 @@ function Sidebar({
               setNoteOptionsModal(null);
             }}
             onDuplicate={(note) => {
-              onDuplicateNote && onDuplicateNote(note);
+              onDuplicateNote && onDuplicateNote(note.id);
               setNoteOptionsModal(null);
             }}
             onExport={(note) => {
-              onExportNote && onExportNote(note);
+              onExportNote && onExportNote(note.id);
               setNoteOptionsModal(null);
             }}
           />

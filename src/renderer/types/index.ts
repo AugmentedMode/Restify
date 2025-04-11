@@ -67,6 +67,23 @@ export interface Environment {
   variables: { [key: string]: string };
 }
 
+export interface Secret {
+  id: string;
+  key: string;
+  value: string;
+  isMasked: boolean;
+}
+
+export interface SecretsProfile {
+  id: string;
+  name: string;
+  secrets: Secret[];
+  isEncrypted: boolean;
+  description?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface ApiResponse {
   status: number;
   statusText: string;
@@ -92,6 +109,8 @@ export interface AppState {
   requestHistory: string[];
   notes: Note[];
   activeNote: string | null;
+  secretsProfiles: SecretsProfile[];
+  activeSecretsProfile: string | null;
 }
 
 export interface Note {

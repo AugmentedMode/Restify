@@ -12,7 +12,7 @@ import RequestPanel from './components/RequestPanel';
 import ResponsePanel from './components/ResponsePanel';
 import GlobalStyle from './components/GlobalStyle';
 import NotesContainer from './components/notes/NotesContainer';
-import { ApiRequest, ApiResponse, Folder, RequestHistoryItem, Environment, Note } from './types';
+import { ApiRequest, ApiResponse, Folder, RequestHistoryItem, Environment, Note, SecretsProfile, Secret } from './types';
 import { clearAllStorageData, executeRequest, processUrl } from './utils/apiUtils';
 import { findFirstRequest, findRequestById } from './helpers/CollectionHelpers';
 import { RequestService } from './services/RequestService';
@@ -32,6 +32,8 @@ import { initializeEncryption } from './utils/encryptionUtils';
 import ImportFileModal from './components/modals/ImportFileModal';
 import AddCollectionModal from './components/modals/AddCollectionModal';
 import TodoKanban from './components/Todo';
+import SecretsManager from './components/secrets/SecretsManager';
+import { SecretsService } from './services/SecretsService';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -332,6 +334,23 @@ function App() {
 
   // State for router
   const [currentRoute, setCurrentRoute] = useState<string>(window.location.pathname);
+
+  // Add state for secrets profiles
+  const [secretsProfiles, setSecretsProfiles] = useState<SecretsProfile[]>([]);
+  const [activeSecretsProfile, setActiveSecretsProfile] = useState<string | null>(null);
+
+  // Load secrets profiles from local storage
+  useEffect(() => {
+    const loadedProfiles = SecretsService.loadProfiles();
+    setSecretsProfiles(loadedProfiles);
+  }, []);
+  
+  // Save secrets profiles to local storage when they change
+  useEffect(() => {
+    if (secretsProfiles.length > 0) {
+      SecretsService.saveProfiles(secretsProfiles);
+    }
+  }, [secretsProfiles]);
 
   // Create a handler for the import file button
   const handleOpenImportFileModal = useCallback(() => {
@@ -850,6 +869,30 @@ function App() {
       return <TodoKanban />;
     }
     
+    // Route to the secrets manager
+    if (currentRoute === '/secrets') {
+      const profile = secretsProfiles.find(p => p.id === activeSecretsProfile);
+      return (
+        <SecretsManager
+          activeProfile={profile || null}
+          profiles={secretsProfiles}
+          onAddSecret={handleAddSecret}
+          onUpdateSecret={handleUpdateSecret}
+          onDeleteSecret={handleDeleteSecret}
+          onUpdateProfile={handleUpdateSecretsProfile}
+          onDeleteProfile={handleDeleteSecretsProfile}
+          onExportSecrets={handleExportSecrets}
+          onImportSecrets={handleImportSecrets}
+          onEncryptProfile={handleEncryptProfile}
+          onDecryptProfile={handleDecryptProfile}
+          onReturn={() => {
+            window.history.pushState({}, '', '/');
+            window.dispatchEvent(new Event('popstate'));
+          }}
+        />
+      );
+    }
+    
     if (!activeRequest) {
       return <EmptyStateView onCreateCollection={handleOpenAddCollectionModal} onImportFromFile={handleOpenImportFileModal} />;
     }
@@ -973,6 +1016,141 @@ function App() {
     moveItem(itemId, targetPath);
   };
 
+  // Navigate to Secrets Manager
+  const navigateToSecrets = useCallback(() => {
+    window.history.pushState({}, '', '/secrets');
+    window.dispatchEvent(new Event('popstate'));
+  }, []);
+
+  // Secrets Manager Handlers
+  const handleSelectSecretsProfile = useCallback((profile: SecretsProfile) => {
+    setActiveSecretsProfile(profile.id);
+    navigateToSecrets();
+  }, [navigateToSecrets]);
+
+  const handleAddSecretsProfile = useCallback(() => {
+    const newProfile: SecretsProfile = {
+      id: uuidv4(),
+      name: 'New Profile',
+      secrets: [],
+      isEncrypted: false,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    
+    setSecretsProfiles(prev => [...prev, newProfile]);
+    setActiveSecretsProfile(newProfile.id);
+    navigateToSecrets();
+  }, [navigateToSecrets]);
+
+  const handleAddSecret = useCallback((profileId: string, secret: Secret) => {
+    setSecretsProfiles(prev => prev.map(profile => 
+      profile.id === profileId
+        ? { 
+            ...profile, 
+            secrets: [...profile.secrets, secret],
+            updatedAt: Date.now()
+          }
+        : profile
+    ));
+  }, []);
+
+  const handleUpdateSecret = useCallback((profileId: string, secret: Secret) => {
+    setSecretsProfiles(prev => prev.map(profile => 
+      profile.id === profileId
+        ? { 
+            ...profile, 
+            secrets: profile.secrets.map(s => s.id === secret.id ? secret : s),
+            updatedAt: Date.now()
+          }
+        : profile
+    ));
+  }, []);
+
+  const handleDeleteSecret = useCallback((profileId: string, secretId: string) => {
+    setSecretsProfiles(prev => prev.map(profile => 
+      profile.id === profileId
+        ? { 
+            ...profile, 
+            secrets: profile.secrets.filter(s => s.id !== secretId),
+            updatedAt: Date.now()
+          }
+        : profile
+    ));
+  }, []);
+
+  const handleUpdateSecretsProfile = useCallback((updatedProfile: SecretsProfile) => {
+    setSecretsProfiles(prev => prev.map(profile => 
+      profile.id === updatedProfile.id ? updatedProfile : profile
+    ));
+  }, []);
+
+  const handleDeleteSecretsProfile = useCallback((profileId: string) => {
+    setSecretsProfiles(prev => prev.filter(profile => profile.id !== profileId));
+    if (activeSecretsProfile === profileId) {
+      setActiveSecretsProfile(null);
+      window.history.pushState({}, '', '/');
+      window.dispatchEvent(new Event('popstate'));
+    }
+  }, [activeSecretsProfile]);
+
+  const handleExportSecrets = useCallback((profileId: string) => {
+    const profile = secretsProfiles.find(p => p.id === profileId);
+    if (!profile) return;
+
+    // Create .env format content using the service
+    const envContent = SecretsService.exportAsEnv(profile);
+
+    // Create a blob and trigger download
+    const blob = new Blob([envContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${profile.name.toLowerCase().replace(/\s+/g, '-')}.env`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [secretsProfiles]);
+
+  const handleImportSecrets = useCallback(() => {
+    // This would typically open a file selector dialog
+    // For now just create a new profile with some sample secrets
+    const newProfile: SecretsProfile = {
+      id: uuidv4(),
+      name: 'Imported Profile',
+      secrets: [
+        { id: uuidv4(), key: 'API_KEY', value: 'sample_api_key_1234', isMasked: true },
+        { id: uuidv4(), key: 'API_SECRET', value: 'sample_secret_5678', isMasked: true },
+        { id: uuidv4(), key: 'DATABASE_URL', value: 'postgres://user:password@localhost:5432/db', isMasked: true },
+      ],
+      isEncrypted: false,
+      description: 'Imported from .env file',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    
+    setSecretsProfiles(prev => [...prev, newProfile]);
+    setActiveSecretsProfile(newProfile.id);
+    navigateToSecrets();
+  }, [navigateToSecrets]);
+
+  const handleEncryptProfile = useCallback((profileId: string, password: string) => {
+    setSecretsProfiles(prev => prev.map(profile => 
+      profile.id === profileId
+        ? SecretsService.encryptProfile(profile, password)
+        : profile
+    ));
+  }, []);
+
+  const handleDecryptProfile = useCallback((profileId: string, password: string) => {
+    setSecretsProfiles(prev => prev.map(profile => 
+      profile.id === profileId
+        ? SecretsService.decryptProfile(profile, password)
+        : profile
+    ));
+  }, []);
+
   // Render the app
   return (
     <>
@@ -1007,6 +1185,12 @@ function App() {
           onDeleteNote={deleteNote}
           onDuplicateNote={duplicateNote}
           onExportNote={exportNote}
+          secretsProfiles={secretsProfiles}
+          activeSecretsProfileId={activeSecretsProfile}
+          onSelectSecretsProfile={handleSelectSecretsProfile}
+          onAddSecretsProfile={handleAddSecretsProfile}
+          onImportSecrets={handleImportSecrets}
+          onExportSecrets={handleExportSecrets}
         />
         <MainContent>
           {renderMainContent()}
