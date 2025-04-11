@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { v4 as uuidv4 } from 'uuid';
 import { Note } from '../../types';
@@ -56,11 +56,33 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [optionsModalNote, setOptionsModalNote] = useState<Note | null>(null);
   
-  // Find the active note
-  const activeNote = notes.find(note => note.id === activeNoteId) || null;
+  // Add effect to log when props change to help debug
+  useEffect(() => {
+    console.log('NotesContainer activeNoteId:', activeNoteId);
+    console.log('Notes count:', notes.length);
+    if (activeNoteId) {
+      const foundNote = notes.find(note => note.id === activeNoteId);
+      console.log('Found active note:', foundNote ? 'yes' : 'no');
+      if (foundNote) {
+        console.log('Active note title:', foundNote.title);
+        console.log('Active note content preview:', foundNote.content.substring(0, 50));
+      }
+    }
+  }, [activeNoteId, notes]);
+  
+  // Find the active note - ensure proper string comparison and provide fallback content
+  const activeNote = activeNoteId 
+    ? notes.find(note => String(note.id) === String(activeNoteId))
+    : null;
+  
+  // Use an effect to log when the active note changes
+  useEffect(() => {
+    console.log('Active note updated:', activeNote ? activeNote.id : 'none');
+  }, [activeNote]);
   
   // Handle content changes - this will save automatically
   const handleContentChange = useCallback((updatedContent: string) => {
+    console.log('Content changed, length:', updatedContent.length);
     if (activeNote) {
       onUpdateNote({
         ...activeNote,
@@ -72,6 +94,7 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
   
   // Handle title change
   const handleTitleChange = useCallback((newTitle: string) => {
+    console.log('Title changed:', newTitle);
     if (activeNote) {
       onUpdateNote({
         ...activeNote,
@@ -104,6 +127,7 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
 
   // If no active note, show a placeholder or welcome screen
   if (!activeNote) {
+    console.log('No active note to display');
     return (
       <Container>
         <NoteHeader 
@@ -136,6 +160,12 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
     );
   }
 
+  // Ensure we have valid content for the editor
+  const noteContent = activeNote.content || '# New Note\n\nStart writing your markdown here...';
+  const noteTitle = activeNote.title || 'Untitled Note';
+  
+  console.log('Rendering note with title:', noteTitle);
+
   return (
     <Container>
       <NoteHeader 
@@ -151,10 +181,10 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
       <Content>
         <EditorContainer>
           <BlockEditor
-            initialContent={activeNote.content}
+            initialContent={noteContent}
             onContentChange={handleContentChange}
             onTitleChange={handleTitleChange}
-            initialTitle={activeNote.title}
+            initialTitle={noteTitle}
           />
         </EditorContainer>
       </Content>

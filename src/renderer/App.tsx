@@ -920,15 +920,30 @@ function AppContent() {
       );
     }
     
-    if (!activeRequest) {
-      return <EmptyStateView onCreateCollection={handleOpenAddCollectionModal} onImportFromFile={handleOpenImportFileModal} />;
-    }
-
+    // Check for active note first
     if (activeNote) {
+      console.log("Rendering note with ID:", activeNote);
       const note = notes.find(n => n.id === activeNote);
       if (note) {
-        return <NotesContainer notes={notes} activeNoteId={activeNote} onAddNote={addNote} onUpdateNote={updateNote} />;
+        console.log("Found note to render:", note.title);
+        return <NotesContainer 
+          notes={notes} 
+          activeNoteId={activeNote} 
+          onAddNote={addNote} 
+          onUpdateNote={updateNote}
+          onRenameNote={renameNote}
+          onDeleteNote={deleteNote}
+          onDuplicateNote={duplicateNote}
+          onExportNote={exportNote}
+        />;
+      } else {
+        console.log("Note with ID", activeNote, "not found in notes array");
       }
+    }
+    
+    // If no active note, then check for active request
+    if (!activeRequest) {
+      return <EmptyStateView onCreateCollection={handleOpenAddCollectionModal} onImportFromFile={handleOpenImportFileModal} />;
     }
 
     // This means we have an active request
