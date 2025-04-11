@@ -98,16 +98,6 @@ const SecretsSection: React.FC<SecretsSectionProps> = ({
       <ActionButton
         onClick={(e) => {
           e.stopPropagation();
-          onAddProfile();
-        }}
-        title="Add Profile"
-        className="action-button"
-      >
-        <FaPlus />
-      </ActionButton>
-      <ActionButton
-        onClick={(e) => {
-          e.stopPropagation();
           onImportSecrets();
         }}
         title="Import Secrets"
