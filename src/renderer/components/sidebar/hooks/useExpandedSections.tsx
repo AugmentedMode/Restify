@@ -14,9 +14,9 @@ export const useExpandedSections = (initialState: Partial<ExpandedSections> = {}
     collections: true,
     history: false,
     environments: false,
-    notes: true,
-    kanban: true,
-    secrets: true,
+    notes: false,
+    kanban: false,
+    secrets: false,
     ...initialState,
   });
 
