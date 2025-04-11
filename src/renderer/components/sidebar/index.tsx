@@ -7,6 +7,7 @@ import {
   FaStickyNote,
   FaFolderPlus,
   FaPlus,
+  FaColumns,
 } from 'react-icons/fa';
 import { 
   Sidebar as SidebarContainer, 
@@ -25,6 +26,7 @@ import ContextMenu from './components/ContextMenu';
 import CollectionsSection from './sections/CollectionsSection';
 import HistorySection from './sections/HistorySection';
 import NotesSection from './sections/NotesSection';
+import KanbanSection from './sections/KanbanSection';
 import EnvironmentManager from '../EnvironmentManager';
 
 // Hooks
@@ -324,6 +326,25 @@ function Sidebar({
         </div>
       </NavTooltip>
 
+      <NavTooltip title="Kanban Board" isCollapsed={isSidebarCollapsed}>
+        <div
+          style={{
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            backgroundColor: expandedSections.kanban
+              ? 'rgba(255, 56, 92, 0.1)'
+              : 'transparent',
+            color: expandedSections.kanban ? '#FF385C' : 'inherit',
+            transition: 'all 0.2s',
+          }}
+          onClick={() => toggleSection('kanban')}
+          className="nav-item"
+        >
+          <FaColumns size={20} />
+        </div>
+      </NavTooltip>
+
       <NavTooltip title="Environments" isCollapsed={isSidebarCollapsed}>
         <div
           style={{
@@ -419,6 +440,17 @@ function Sidebar({
     </div>
   );
 
+  // Navigation function for Kanban
+  const navigateToKanban = () => {
+    // Navigate to the kanban route
+    if (window.location.pathname !== '/kanban') {
+      window.history.pushState({}, '', '/kanban');
+      
+      // Dispatch a custom event to notify the App component
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
   return (
     <motion.div
       variants={sidebarVariants}
@@ -462,6 +494,13 @@ function Sidebar({
                 onAddRequest={onAddRequest}
                 handleContextMenu={handleContextMenu}
                 onContextMenuAction={handleContextMenuAction}
+                filter={filter}
+              />
+
+              <KanbanSection
+                expanded={expandedSections.kanban}
+                toggleSection={() => toggleSection('kanban')}
+                onAddTodo={navigateToKanban}
                 filter={filter}
               />
 

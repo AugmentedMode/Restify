@@ -31,6 +31,7 @@ import { modalDataStore } from './utils/modalDataStore';
 import { initializeEncryption } from './utils/encryptionUtils';
 import ImportFileModal from './components/modals/ImportFileModal';
 import AddCollectionModal from './components/modals/AddCollectionModal';
+import TodoKanban from './components/Todo';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -329,6 +330,9 @@ function App() {
     {},
   );
 
+  // State for router
+  const [currentRoute, setCurrentRoute] = useState<string>(window.location.pathname);
+
   // Create a handler for the import file button
   const handleOpenImportFileModal = useCallback(() => {
     setShowImportFileModal(true);
@@ -609,10 +613,15 @@ function App() {
     (request: ApiRequest) => {
       setActiveRequest(request);
       setActiveNote(null); // Clear active note when switching to a request
+      // Reset the current route to root when selecting a request
+      if (currentRoute !== '/') {
+        window.history.pushState({}, '', '/');
+        setCurrentRoute('/');
+      }
       // Use stored response if available for this request
       setActiveResponse(responseMap[request.id] || null);
     },
-    [responseMap],
+    [responseMap, currentRoute],
   );
 
   // Handle request changes
@@ -629,8 +638,13 @@ function App() {
     (historyItem: RequestHistoryItem) => {
       setActiveRequest(historyItem.request);
       setActiveResponse(historyItem.response);
+      // Reset the current route to root when restoring a request
+      if (currentRoute !== '/') {
+        window.history.pushState({}, '', '/');
+        setCurrentRoute('/');
+      }
     },
-    [],
+    [currentRoute],
   );
 
   // Handle import from cURL
@@ -817,8 +831,25 @@ function App() {
     };
   }, [activeRequest, loading, handleSendRequest]);
 
+  // Listen for route changes
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setCurrentRoute(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handleRouteChange);
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
+  }, []);
+
   // Update the renderMainContent function to use the wrapper
   const renderMainContent = () => {
+    // Route to the kanban page if needed
+    if (currentRoute === '/kanban') {
+      return <TodoKanban />;
+    }
+    
     if (!activeRequest) {
       return <EmptyStateView onCreateCollection={handleOpenAddCollectionModal} onImportFromFile={handleOpenImportFileModal} />;
     }

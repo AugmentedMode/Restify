@@ -5,6 +5,7 @@ interface ExpandedSections {
   history: boolean;
   environments: boolean;
   notes: boolean;
+  kanban: boolean;
 }
 
 export const useExpandedSections = (initialState: Partial<ExpandedSections> = {}) => {
@@ -13,6 +14,7 @@ export const useExpandedSections = (initialState: Partial<ExpandedSections> = {}
     history: false,
     environments: false,
     notes: true,
+    kanban: true,
     ...initialState,
   });
 
