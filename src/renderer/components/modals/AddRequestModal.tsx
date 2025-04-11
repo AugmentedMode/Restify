@@ -238,10 +238,6 @@ const AddRequestModal: React.FC<AddRequestModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!requestName.trim() || !requestUrl.trim()) {
-      return; // Basic validation
-    }
-
     // Create new request
     const newRequest: ApiRequest = {
       id: uuidv4(),
@@ -312,7 +308,6 @@ const AddRequestModal: React.FC<AddRequestModalProps> = ({
                 value={requestUrl}
                 onChange={(e) => setRequestUrl(e.target.value)}
                 placeholder="https://api.example.com/endpoint"
-                required
               />
             </UrlInput>
           </FormGroup>

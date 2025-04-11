@@ -7,8 +7,16 @@ import {
   FaMagic,
   FaFileCode,
   FaShieldAlt,
+  FaGlobeAmericas,
+  FaChevronDown,
+  FaEdit,
+  FaTrash,
+  FaEye,
+  FaEyeSlash,
+  FaLock,
+  FaLockOpen,
 } from 'react-icons/fa';
-import { ApiResponse, ApiRequest } from '../../types';
+import { ApiResponse, ApiRequest, Environment } from '../../types';
 import {
   ResponseContainer,
   ResponseHeader,
@@ -32,14 +40,245 @@ import {
   VIRTUALIZED_CHUNK_SIZE,
 } from './constants';
 import SecurityAuditPanel from './components/SecurityAuditPanel';
+import styled from 'styled-components';
+
+// Styled components for the environment selector
+const EnvSelectorContainer = styled.div`
+  margin-left: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const EnvSelectorButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 6px 10px;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+`;
+
+const EnvDropdown = styled.div<{ isOpen: boolean }>`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 230px;
+  background-color: #1e1e1e;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: ${(props) => (props.isOpen ? 'block' : 'none')};
+  margin-top: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+`;
+
+const EnvDropdownItem = styled.div<{ active?: boolean }>`
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: ${(props) => (props.active ? 'rgba(255, 56, 92, 0.15)' : 'transparent')};
+  color: ${(props) => (props.active ? '#FF385C' : 'inherit')};
+  
+  &:hover {
+    background-color: ${(props) => (props.active ? 'rgba(255, 56, 92, 0.2)' : 'rgba(255, 255, 255, 0.05)')};
+  }
+  
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+`;
+
+const EnvDropdownHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
+`;
+
+const EnvDropdownActions = styled.div`
+  display: flex;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
+  gap: 8px;
+`;
+
+const EnvActionButton = styled.button`
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 6px 10px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  flex: 1;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+`;
+
+// Modal components
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  width: 550px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  color: #f5f5f5;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #333;
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+`;
+
+const ModalBody = styled.div`
+  padding: 20px;
+`;
+
+const ModalFooter = styled.div`
+  padding: 16px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #333;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 16px;
+`;
+
+const Label = styled.label`
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #bbb;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #2a2a2a;
+  color: #f5f5f5;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  
+  &:focus {
+    outline: none;
+    border-color: #FF385C;
+  }
+`;
+
+const VariableRow = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+`;
+
+const VariablesContainer = styled.div`
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding-right: 4px;
+`;
+
+const CancelButton = styled.button`
+  background-color: transparent;
+  border: 1px solid #555;
+  color: #f5f5f5;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+`;
+
+const SaveButton = styled.button`
+  background-color: #FF385C;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: #e6324f;
+  }
+`;
 
 interface ResponsePanelProps {
   response: ApiResponse | null;
   request?: ApiRequest | null;
   isLoading?: boolean;
+  environments?: Environment[];
+  currentEnvironmentId?: string | null;
+  onAddEnvironment?: (environment: Environment) => void;
+  onUpdateEnvironment?: (environment: Environment) => void;
+  onDeleteEnvironment?: (environmentId: string) => void;
+  onSelectEnvironment?: (environmentId: string | null) => void;
 }
 
-function ResponsePanel({ response, request, isLoading = false }: ResponsePanelProps) {
+function ResponsePanel({
+  response,
+  request,
+  isLoading = false,
+  environments = [],
+  currentEnvironmentId = null,
+  onAddEnvironment = () => {},
+  onUpdateEnvironment = () => {},
+  onDeleteEnvironment = () => {},
+  onSelectEnvironment = () => {},
+}: ResponsePanelProps) {
   const [activeTab, setActiveTab] = useState('body');
   const [copied, setCopied] = useState(false);
   const [showFullResponse, setShowFullResponse] = useState(false);
@@ -59,6 +298,169 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
   const containerRef = useRef<HTMLDivElement>(null);
   const [totalLines, setTotalLines] = useState(0);
   const [processedLines, setProcessedLines] = useState<React.ReactNode[]>([]);
+  
+  // Environment state
+  const [showEnvDropdown, setShowEnvDropdown] = useState(false);
+  const [showEnvModal, setShowEnvModal] = useState(false);
+  const [editingEnvironment, setEditingEnvironment] = useState<Environment | null>(null);
+  const [environmentName, setEnvironmentName] = useState('');
+  const [variables, setVariables] = useState<{ key: string; value: string; isSecret: boolean }[]>([{ key: '', value: '', isSecret: false }]);
+  const envDropdownRef = useRef<HTMLDivElement>(null);
+  // State for tracking which secret values are temporarily visible
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<number, boolean>>({});
+  
+  // Toggle secret visibility
+  const toggleSecretVisibility = (index: number) => {
+    setVisibleSecrets(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        showEnvDropdown &&
+        envDropdownRef.current &&
+        !envDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowEnvDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEnvDropdown]);
+
+  // Environment modal handlers
+  const openEnvModal = (environment?: Environment | 'global') => {
+    if (environment === 'global') {
+      // Special case for global environment
+      setEditingEnvironment({ id: 'global', name: 'Global Environment', variables: {} });
+      setEnvironmentName('Global Environment');
+      
+      // Get global variables if available
+      const globalVars = environments.find(env => env.id === 'global')?.variables || {};
+      const vars = Object.entries(globalVars).map(([key, value]) => {
+        // Check if the value is in encrypted format (starts with "encrypted:")
+        const isSecret = typeof value === 'string' && value.startsWith('encrypted:');
+        const actualValue = isSecret ? value.substring(10) : value;
+        
+        return {
+          key,
+          value: actualValue,
+          isSecret,
+        };
+      });
+      
+      setVariables(vars.length > 0 ? vars : [{ key: '', value: '', isSecret: false }]);
+    } else if (environment) {
+      setEditingEnvironment(environment);
+      setEnvironmentName(environment.name);
+      
+      const vars = Object.entries(environment.variables).map(([key, value]) => {
+        // Check if the value is in encrypted format (starts with "encrypted:")
+        const isSecret = typeof value === 'string' && value.startsWith('encrypted:');
+        const actualValue = isSecret ? value.substring(10) : value;
+        
+        return {
+          key,
+          value: actualValue,
+          isSecret,
+        };
+      });
+      
+      setVariables(vars.length > 0 ? vars : [{ key: '', value: '', isSecret: false }]);
+    } else {
+      setEditingEnvironment(null);
+      setEnvironmentName('');
+      setVariables([{ key: '', value: '', isSecret: false }]);
+    }
+    
+    setShowEnvModal(true);
+    setShowEnvDropdown(false);
+  };
+
+  const closeEnvModal = () => {
+    setShowEnvModal(false);
+    setEditingEnvironment(null);
+    setEnvironmentName('');
+    setVariables([{ key: '', value: '', isSecret: false }]);
+  };
+
+  const handleSaveEnvironment = () => {
+    if (!environmentName.trim()) {
+      return;
+    }
+
+    const variablesObject: Record<string, string> = {};
+    variables.forEach(({ key, value, isSecret }) => {
+      if (key.trim()) {
+        // For secret variables, we'll prefix with "encrypted:" 
+        // In a real implementation, this would actually encrypt the value
+        const storedValue = isSecret ? `encrypted:${value}` : value;
+        variablesObject[key.trim()] = storedValue;
+      }
+    });
+
+    // Special handling for global environment
+    if (editingEnvironment && editingEnvironment.id === 'global') {
+      // Find if there's already a global environment in the list
+      const existingGlobal = environments.find(env => env.id === 'global');
+      
+      const globalEnv: Environment = {
+        id: 'global',
+        name: 'Global Environment',
+        variables: variablesObject,
+      };
+      
+      if (existingGlobal) {
+        onUpdateEnvironment(globalEnv);
+      } else {
+        onAddEnvironment(globalEnv);
+      }
+      
+      closeEnvModal();
+      return;
+    }
+
+    const environment: Environment = {
+      id: editingEnvironment ? editingEnvironment.id : crypto.randomUUID(),
+      name: environmentName.trim(),
+      variables: variablesObject,
+    };
+
+    if (editingEnvironment) {
+      onUpdateEnvironment(environment);
+    } else {
+      onAddEnvironment(environment);
+    }
+
+    closeEnvModal();
+  };
+
+  const handleAddVariable = () => {
+    setVariables([...variables, { key: '', value: '', isSecret: false }]);
+  };
+
+  const handleRemoveVariable = (index: number) => {
+    const newVariables = [...variables];
+    newVariables.splice(index, 1);
+    setVariables(newVariables.length > 0 ? newVariables : [{ key: '', value: '', isSecret: false }]);
+  };
+
+  const handleVariableChange = (index: number, field: 'key' | 'value' | 'isSecret', value: string | boolean) => {
+    const newVariables = [...variables];
+    if (field === 'isSecret' && typeof value === 'boolean') {
+      newVariables[index].isSecret = value;
+    } else if ((field === 'key' || field === 'value') && typeof value === 'string') {
+      newVariables[index][field] = value;
+    }
+    setVariables(newVariables);
+  };
 
   // Handle copying to clipboard
   const handleCopy = async (text: string) => {
@@ -310,6 +712,309 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
     } catch (err) {
       console.error('Failed to generate TypeScript types:', err);
     }
+  };
+
+  // Find the current environment
+  const currentEnvironment = environments.find(env => env.id === currentEnvironmentId);
+
+  // Render environment selector
+  const renderEnvironmentSelector = () => {
+    return (
+      <EnvSelectorContainer ref={envDropdownRef}>
+        <EnvSelectorButton onClick={() => setShowEnvDropdown(!showEnvDropdown)}>
+          <FaGlobeAmericas size={14} />
+          {currentEnvironment ? currentEnvironment.name : 'Global Environment'}
+          <FaChevronDown size={10} />
+        </EnvSelectorButton>
+        
+        <EnvDropdown isOpen={showEnvDropdown}>
+          <EnvDropdownHeader>
+            <span>Environments</span>
+          </EnvDropdownHeader>
+          
+          <EnvDropdownItem 
+            active={currentEnvironmentId === null}
+            onClick={() => {
+              onSelectEnvironment(null);
+              setShowEnvDropdown(false);
+            }}
+          >
+            <FaGlobeAmericas size={14} />
+            Global Environment
+            <div style={{ marginLeft: 'auto' }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEnvModal('global');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '4px',
+                  cursor: 'pointer',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                title="Edit global environment"
+              >
+                <FaEdit size={14} />
+              </button>
+            </div>
+          </EnvDropdownItem>
+          
+          {environments.map(env => (
+            <EnvDropdownItem
+              key={env.id}
+              active={currentEnvironmentId === env.id}
+              onClick={() => {
+                onSelectEnvironment(env.id);
+                setShowEnvDropdown(false);
+              }}
+            >
+              <FaGlobeAmericas size={14} />
+              {env.name}
+              <span style={{ 
+                fontSize: '10px', 
+                color: 'rgba(255, 255, 255, 0.5)', 
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                padding: '1px 6px',
+                borderRadius: '10px',
+                marginLeft: 'auto',
+                marginRight: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                {Object.keys(env.variables).length} {Object.keys(env.variables).length === 1 ? 'var' : 'vars'}
+                {Object.values(env.variables).filter(v => typeof v === 'string' && v.startsWith('encrypted:')).length > 0 && (
+                  <>
+                    <span style={{ opacity: 0.5 }}>•</span>
+                    <FaLock size={8} color="#FF385C" />
+                    {Object.values(env.variables).filter(v => typeof v === 'string' && v.startsWith('encrypted:')).length}
+                  </>
+                )}
+              </span>
+              <div style={{ display: 'flex', gap: '2px' }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEnvModal(env);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  title="Edit environment"
+                >
+                  <FaEdit size={14} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Are you sure you want to delete the "${env.name}" environment?`)) {
+                      onDeleteEnvironment(env.id);
+                    }
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    color: 'rgba(255, 56, 92, 0.7)',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  title="Delete environment"
+                >
+                  <FaTrash size={14} />
+                </button>
+              </div>
+            </EnvDropdownItem>
+          ))}
+          
+          <EnvDropdownActions>
+            <EnvActionButton onClick={() => openEnvModal()}>
+              Create Environment
+            </EnvActionButton>
+          </EnvDropdownActions>
+        </EnvDropdown>
+      </EnvSelectorContainer>
+    );
+  };
+
+  // Render environment modal
+  const renderEnvironmentModal = () => {
+    if (!showEnvModal) return null;
+    
+    return (
+      <Modal onClick={closeEnvModal}>
+        <ModalContent onClick={(e) => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>
+              {editingEnvironment ? `Edit "${editingEnvironment.name}"` : 'New Environment'}
+            </ModalTitle>
+          </ModalHeader>
+          <ModalBody>
+            <FormGroup>
+              <Label htmlFor="env-name">Environment Name</Label>
+              <Input
+                id="env-name"
+                type="text"
+                value={environmentName}
+                onChange={(e) => setEnvironmentName(e.target.value)}
+                placeholder="e.g., Development, Production, etc."
+                autoFocus
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Variables</Label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <div style={{ flex: 1 }}>Name</div>
+                <div style={{ flex: 1 }}>Value</div>
+                <div style={{ width: '80px', textAlign: 'center' }}>Actions</div>
+              </div>
+              <VariablesContainer>
+                {variables.map((variable, index) => (
+                  <VariableRow key={index}>
+                    <Input
+                      type="text"
+                      value={variable.key}
+                      onChange={(e) =>
+                        handleVariableChange(index, 'key', e.target.value)
+                      }
+                      placeholder="Variable name"
+                      style={{ flex: 1 }}
+                    />
+                    <Input
+                      type={variable.isSecret && !visibleSecrets[index] ? 'password' : 'text'}
+                      value={variable.value}
+                      onChange={(e) =>
+                        handleVariableChange(index, 'value', e.target.value)
+                      }
+                      placeholder="Value"
+                      style={{ 
+                        flex: 1,
+                        paddingRight: variable.isSecret ? '30px' : '12px' 
+                      }}
+                    />
+                    {variable.isSecret && (
+                      <button
+                        type="button"
+                        onClick={() => toggleSecretVisibility(index)}
+                        style={{
+                          position: 'absolute',
+                          right: '90px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: '#999',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          zIndex: 5
+                        }}
+                        title={visibleSecrets[index] ? "Hide value" : "Show value"}
+                      >
+                        {visibleSecrets[index] ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                      </button>
+                    )}
+                    <div style={{ display: 'flex', gap: '4px', width: '80px', justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => toggleSecretStatus(index)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: variable.isSecret ? '#FF385C' : '#999',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          borderRadius: '4px',
+                        }}
+                        title={variable.isSecret ? "Make non-secret" : "Make secret"}
+                      >
+                        {variable.isSecret ? <FaLock size={14} /> : <FaLockOpen size={14} />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVariable(index)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#999',
+                          cursor: 'pointer',
+                          padding: '4px',
+                        }}
+                        title="Remove variable"
+                      >
+                        <FaTrash size={14} />
+                      </button>
+                    </div>
+                  </VariableRow>
+                ))}
+              </VariablesContainer>
+              <button
+                type="button"
+                onClick={handleAddVariable}
+                style={{
+                  background: 'none',
+                  border: '1px dashed #555',
+                  color: '#bbb',
+                  borderRadius: '4px',
+                  padding: '8px 12px',
+                  marginTop: '8px',
+                  width: '100%',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                }}
+              >
+                + Add Variable
+              </button>
+            </FormGroup>
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ 
+                padding: '12px', 
+                backgroundColor: 'rgba(255, 56, 92, 0.1)', 
+                borderRadius: '4px',
+                fontSize: '13px',
+                color: '#e0e0e0',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+              }}>
+                <FaLock size={16} style={{ marginTop: '2px', color: '#FF385C' }} />
+                <div>
+                  <strong>Secret Variables</strong>
+                  <p style={{ margin: '4px 0 0', opacity: 0.8 }}>
+                    Variables marked as secret will be masked by default. This helps protect sensitive data like API keys 
+                    and passwords when sharing your screen. In this demo, secrets are prefixed with "encrypted:" but a 
+                    full implementation would use proper encryption.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <CancelButton onClick={closeEnvModal}>Cancel</CancelButton>
+            <SaveButton onClick={handleSaveEnvironment}>
+              {editingEnvironment ? 'Update' : 'Create'} Environment
+            </SaveButton>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    );
   };
 
   // Render headers tab content
@@ -610,6 +1315,13 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
     return 'Unknown';
   };
 
+  // Add a function to toggle the secret status
+  const toggleSecretStatus = (index: number) => {
+    const newVariables = [...variables];
+    newVariables[index].isSecret = !newVariables[index].isSecret;
+    setVariables(newVariables);
+  };
+
   return (
     <ResponseContainer>
       <TypeScriptModal 
@@ -617,6 +1329,7 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
         onClose={() => setShowTypesModal(false)} 
         typeScript={generatedTypes} 
       />
+      {renderEnvironmentModal()}
       <ResponseHeader>
         {isLoading ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -640,6 +1353,7 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
         ) : (
           <StatusPill success={false}>No Response</StatusPill>
         )}
+        {renderEnvironmentSelector()}
       </ResponseHeader>
 
       <ResponseTabs>
@@ -661,14 +1375,14 @@ function ResponsePanel({ response, request, isLoading = false }: ResponsePanelPr
         >
           Cookies
         </ResponseTab>
-        <ResponseTab
+        {/* <ResponseTab
           active={activeTab === 'security'}
           onClick={() => setActiveTab('security')}
           style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <FaShieldAlt size={14} />
           Security
-        </ResponseTab>
+        </ResponseTab> */}
         {response && !isLoading && (
           <div
             style={{

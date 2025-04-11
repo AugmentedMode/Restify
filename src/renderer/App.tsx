@@ -779,34 +779,43 @@ function App() {
 
   // Determine what content to show in the main area
   const renderMainContent = () => {
-    if (activeNote) {
-      return (
-        <NotesContainer
-          notes={notes}
-          activeNoteId={activeNote}
-          onAddNote={addNote}
-          onUpdateNote={updateNote}
-        />
-      );
-    } else if (activeRequest) {
-      return (
-        <RequestResponseContainer>
-          <RequestContainer>
-            <RequestPanel
-              request={activeRequest}
-              onRequestChange={handleRequestChange}
-              onSendRequest={handleRequestSend}
-              isLoading={loading}
-              lastRequestTime={lastRequestTime}
-              currentEnvironment={getCurrentEnvironment()}
-            />
-          </RequestContainer>
-          <ResponsePanel response={activeResponse} request={activeRequest} isLoading={loading} />
-        </RequestResponseContainer>
-      );
-    } else {
+    if (!activeRequest) {
       return <EmptyStateView onCreateCollection={addFolder} />;
     }
+
+    if (activeNote) {
+      const note = notes.find(n => n.id === activeNote);
+      if (note) {
+        return <NotesContainer notes={notes} activeNoteId={activeNote} onAddNote={addNote} onUpdateNote={updateNote} />;
+      }
+    }
+
+    // This means we have an active request
+    return (
+      <RequestResponseContainer>
+        <RequestContainer>
+          <RequestPanel
+            request={activeRequest}
+            onRequestChange={handleRequestChange}
+            onSendRequest={handleRequestSend}
+            isLoading={loading}
+            lastRequestTime={lastRequestTime}
+            currentEnvironment={getCurrentEnvironment()}
+          />
+        </RequestContainer>
+        <ResponsePanel
+          response={activeResponse}
+          request={activeRequest}
+          isLoading={loading}
+          environments={environments}
+          currentEnvironmentId={currentEnvironmentId}
+          onAddEnvironment={addEnvironment}
+          onUpdateEnvironment={updateEnvironment}
+          onDeleteEnvironment={deleteEnvironment}
+          onSelectEnvironment={selectEnvironment}
+        />
+      </RequestResponseContainer>
+    );
   };
 
   // Create empty request template

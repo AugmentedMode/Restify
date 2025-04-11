@@ -10,7 +10,12 @@ export const processUrl = (url: string, environment?: Environment): string => {
   
   // Replace all {{variableName}} with the variable value
   Object.entries(environment.variables).forEach(([key, value]) => {
-    processedUrl = processedUrl.replace(new RegExp(`{{${key}}}`, 'g'), value);
+    // If the value is encrypted (starts with 'encrypted:'), remove the prefix
+    const actualValue = typeof value === 'string' && value.startsWith('encrypted:') 
+      ? value.substring(10) // Remove 'encrypted:' prefix
+      : value;
+      
+    processedUrl = processedUrl.replace(new RegExp(`{{${key}}}`, 'g'), actualValue);
   });
   
   return processedUrl;

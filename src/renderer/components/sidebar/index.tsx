@@ -476,7 +476,7 @@ function Sidebar({
                 onToggleExpanded={() => toggleSection('environments')}
               />
 
-              <NotesSection
+              {/* <NotesSection
                 notes={notes}
                 activeNoteId={activeNoteId}
                 expanded={expandedSections.notes}
@@ -485,7 +485,7 @@ function Sidebar({
                 onAddNote={onAddNote}
                 onOpenNoteOptions={setNoteOptionsModal}
                 filter={filter}
-              />
+              /> */}
 
               <HistorySection
                 requestHistory={requestHistory}
