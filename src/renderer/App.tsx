@@ -37,6 +37,7 @@ import SecretsManager from './components/secrets/SecretsManager';
 import { SecretsService } from './services/SecretsService';
 import SettingsManager from './components/settings/SettingsManager';
 import { SettingsProvider } from './utils/SettingsContext';
+import GitHubPanel from './components/github/GitHubPanel';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [];
@@ -942,6 +943,18 @@ function AppContent() {
     if (currentRoute === '/settings') {
       return (
         <SettingsManager
+          onReturn={() => {
+            window.history.pushState({}, '', '/');
+            window.dispatchEvent(new Event('popstate'));
+          }}
+        />
+      );
+    }
+    
+    // Route to GitHub PRs
+    if (currentRoute === '/github') {
+      return (
+        <GitHubPanel
           onReturn={() => {
             window.history.pushState({}, '', '/');
             window.dispatchEvent(new Event('popstate'));

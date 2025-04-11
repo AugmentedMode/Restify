@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   FaBookmark,
@@ -185,6 +185,19 @@ function Sidebar({
   const [filter, setFilter] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState<string>(window.location.pathname);
+
+  // Listen for route changes to update the current route state
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setCurrentRoute(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handleRouteChange);
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
+  }, []);
 
   // Toggle sidebar collapsed state
   const toggleSidebar = () => {
@@ -442,13 +455,13 @@ function Sidebar({
               cursor: 'pointer',
               padding: '8px',
               borderRadius: '8px',
-              backgroundColor: expandedSections.github
+              backgroundColor: currentRoute === '/github'
                 ? 'rgba(255, 56, 92, 0.1)'
                 : 'transparent',
-              color: expandedSections.github ? '#FF385C' : 'inherit',
+              color: currentRoute === '/github' ? '#FF385C' : 'inherit',
               transition: 'all 0.2s',
             }}
-            onClick={() => toggleSection('github')}
+            onClick={navigateToGitHub}
             className="nav-item"
           >
             <FaGithub size={20} />
@@ -499,6 +512,17 @@ function Sidebar({
     // Navigate to the kanban route
     if (window.location.pathname !== '/kanban') {
       window.history.pushState({}, '', '/kanban');
+      
+      // Dispatch a custom event to notify the App component
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
+  // Add a function to navigate to GitHub PRs
+  const navigateToGitHub = () => {
+    // Navigate to the github route
+    if (window.location.pathname !== '/github') {
+      window.history.pushState({}, '', '/github');
       
       // Dispatch a custom event to notify the App component
       window.dispatchEvent(new Event('popstate'));
@@ -587,8 +611,7 @@ function Sidebar({
 
                   {settings.general.showGitHub && (
                     <GitHubSection
-                      expanded={expandedSections.github}
-                      toggleSection={() => toggleSection('github')}
+                      onNavigate={navigateToGitHub}
                     />
                   )}
 
