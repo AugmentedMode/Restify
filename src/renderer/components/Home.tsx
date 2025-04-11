@@ -204,21 +204,64 @@ const GitHubStatsItem = styled(StatItem)`
   }
 `;
 
-const CommitGraph = styled.div`
-  height: 40px;
+const ContributionContainer = styled.div`
   margin-top: 12px;
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
 `;
 
-const CommitBar = styled.div<{ height: number }>`
-  flex: 1;
-  height: ${props => props.height}%;
-  background-color: #FF385C;
-  min-height: 4px;
+const DayHeaders = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: 4px;
+`;
+
+const DayHeader = styled.div`
+  font-size: 10px;
+  color: #999;
+  text-align: center;
+`;
+
+const ContributionGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 3px;
+  margin-top: 4px;
+`;
+
+const ContributionCell = styled.div<{ intensity: number }>`
+  width: 100%;
+  aspect-ratio: 1;
   border-radius: 2px;
-  opacity: ${props => 0.5 + (props.height / 100) * 0.5};
+  background-color: ${props => {
+    const base = 0.1;
+    const intensity = base + (props.intensity * 0.18);
+    return `rgba(76, 175, 80, ${intensity})`;
+  }};
+  min-height: 8px;
+`;
+
+const CommitStats = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  margin-bottom: 12px;
+`;
+
+const CommitStatItem = styled.div`
+  text-align: center;
+  
+  .count {
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+  }
+  
+  .label {
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+  }
 `;
 
 const RequestHistory = styled.div`
@@ -352,19 +395,19 @@ const ViewMore = styled.div`
 
 const KanbanBoard = styled.div`
   display: flex;
-  gap: 20px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: 12px;
 `;
 
 const KanbanColumn = styled.div`
   background-color: #1a1a1a;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 6px;
+  padding: 10px;
   flex: 1;
   
   .column-header {
-    font-size: 16px;
-    margin-bottom: 16px;
+    font-size: 14px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -373,10 +416,57 @@ const KanbanColumn = styled.div`
     .count {
       background-color: #333333;
       border-radius: 10px;
-      padding: 2px 8px;
-      font-size: 12px;
+      padding: 2px 6px;
+      font-size: 10px;
       color: #ccc;
     }
+  }
+`;
+
+// Add Kanban task item styling
+const KanbanTask = styled.div<{ priority: 'high' | 'medium' | 'low' }>`
+  background-color: #222222;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #fff;
+  border-left: 3px solid ${props => 
+    props.priority === 'high' ? '#F44336' : 
+    props.priority === 'medium' ? '#FF9800' : 
+    '#4CAF50'
+  };
+  
+  .task-title {
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .task-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: #999;
+  }
+  
+  .task-priority {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 9px;
+    background-color: ${props => 
+      props.priority === 'high' ? 'rgba(244, 67, 54, 0.2)' : 
+      props.priority === 'medium' ? 'rgba(255, 152, 0, 0.2)' : 
+      'rgba(76, 175, 80, 0.2)'
+    };
+    color: ${props => 
+      props.priority === 'high' ? '#F44336' : 
+      props.priority === 'medium' ? '#FF9800' : 
+      '#4CAF50'
+    };
   }
 `;
 
@@ -503,6 +593,14 @@ const Home: React.FC<HomeProps> = ({
     initialized: false
   });
   
+  // Sample in-progress tasks sorted by priority
+  const inProgressTasks = [
+    { id: 1, title: 'Optimize API response time', priority: 'high', assignee: 'Jane', dueDate: '1 day' },
+    { id: 2, title: 'Fix auth token refresh', priority: 'high', assignee: 'Mike', dueDate: '2 days' },
+    { id: 3, title: 'Add pagination to results', priority: 'medium', assignee: 'Alex', dueDate: '3 days' },
+    { id: 4, title: 'Update documentation', priority: 'low', assignee: 'Sam', dueDate: '5 days' }
+  ];
+  
   // Fetch data on component mount
   useEffect(() => {
     // Set request count from history
@@ -569,11 +667,11 @@ const Home: React.FC<HomeProps> = ({
     return 'just now';
   };
   
-  // Generate random commit data for visualization
-  const getCommitGraph = () => {
+  // Generate random contribution data for visualization
+  const getContributionData = () => {
     const data = [];
-    for (let i = 0; i < 7; i++) {
-      data.push(Math.floor(Math.random() * 90) + 10); // Random value between 10-100
+    for (let i = 0; i < 28; i++) {
+      data.push(Math.floor(Math.random() * 5)); // Random value between 0-4
     }
     return data;
   };
@@ -606,80 +704,9 @@ const Home: React.FC<HomeProps> = ({
       </DashboardHeader>
       
       <DashboardGrid>
-        {/* API Metrics */}
-        <MetricsCard>
-          <h3><FaChartBar /> API Metrics</h3>
-          <StatsGrid>
-            <StatItem>
-              <div className="label">Collections</div>
-              <div className="value">{collectionCount}</div>
-            </StatItem>
-            <StatItem>
-              <div className="label">Requests</div>
-              <div className="value">{requestCount}</div>
-            </StatItem>
-            <StatItem>
-              <div className="label">Success Rate</div>
-              <div className="value">92%</div>
-            </StatItem>
-            <StatItem>
-              <div className="label">Avg Response</div>
-              <div className="value">126ms</div>
-            </StatItem>
-          </StatsGrid>
-        </MetricsCard>
-        
-        {/* GitHub Stats */}
-        <MetricsCard>
-          <CardHeader>
-            <h3><FaGithub /> GitHub Activity</h3>
-            {onNavigateToGitHub && (
-              <ActionButton onClick={onNavigateToGitHub} style={{ padding: '4px 8px' }}>
-                View All
-              </ActionButton>
-            )}
-          </CardHeader>
-          
-          {!githubStats.initialized ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <FaGithub size={32} color="#777" />
-              <p style={{ marginTop: '12px', color: '#999' }}>Connect to GitHub to see your activity</p>
-              {onNavigateToGitHub && (
-                <ActionButton onClick={onNavigateToGitHub} style={{ margin: '16px auto 0', display: 'inline-flex' }}>
-                  Connect
-                </ActionButton>
-              )}
-            </div>
-          ) : (
-            <>
-              <StatsGrid>
-                <GitHubStatsItem>
-                  <div className="label">Pull Requests</div>
-                  <div className="value">{githubStats.prs.open}</div>
-                  <div className="badge">
-                    <FaExchangeAlt />
-                  </div>
-                </GitHubStatsItem>
-                <GitHubStatsItem>
-                  <div className="label">Commits (7d)</div>
-                  <div className="value">{githubStats.commits.lastWeek}</div>
-                  <div className="badge">
-                    <FaCodeCommit />
-                  </div>
-                </GitHubStatsItem>
-              </StatsGrid>
-              
-              <CommitGraph>
-                {getCommitGraph().map((value, idx) => (
-                  <CommitBar key={idx} height={value} />
-                ))}
-              </CommitGraph>
-            </>
-          )}
-        </MetricsCard>
-        
-        {/* Recent Activity */}
-        <MetricsCard>
+
+         {/* Recent Activity */}
+         <MetricsCard>
           <h3><FaHistory /> Recent Activity</h3>
           <RequestHistory>
             {loading ? (
@@ -713,11 +740,12 @@ const Home: React.FC<HomeProps> = ({
             View all history <FaArrowRight size={12} />
           </ViewMore>
         </MetricsCard>
+
         
-        {/* Pull Requests */}
-        <MediumCard>
+        {/* GitHub Stats */}
+        <MetricsCard>
           <CardHeader>
-            <h3><FaExchangeAlt /> Pull Requests</h3>
+            <h3><FaGithub /> GitHub Activity</h3>
             {onNavigateToGitHub && (
               <ActionButton onClick={onNavigateToGitHub} style={{ padding: '4px 8px' }}>
                 View All
@@ -727,32 +755,57 @@ const Home: React.FC<HomeProps> = ({
           
           {!githubStats.initialized ? (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <p style={{ color: '#999' }}>Connect to GitHub to see your pull requests</p>
-            </div>
-          ) : githubStats.recentPRs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <p style={{ color: '#999' }}>No open pull requests</p>
+              <FaGithub size={32} color="#777" />
+              <p style={{ marginTop: '12px', color: '#999' }}>Connect to GitHub to see your activity</p>
+              {onNavigateToGitHub && (
+                <ActionButton onClick={onNavigateToGitHub} style={{ margin: '16px auto 0', display: 'inline-flex' }}>
+                  Connect
+                </ActionButton>
+              )}
             </div>
           ) : (
-            <div>
-              {githubStats.recentPRs.map((pr: any) => (
-                <PRItem key={pr.id}>
-                  <div className="title">{pr.title}</div>
-                  <div className="meta">
-                    <div className="repo">
-                      <FaCodeBranch size={12} />
-                      {pr.repository_url?.split('/').slice(-1)[0] || 'unknown'}
-                    </div>
-                    <div className="time">
-                      {formatRelativeTime(pr.updated_at)}
-                    </div>
-                  </div>
-                </PRItem>
-              ))}
-            </div>
+            <>
+              <CommitStats>
+                <CommitStatItem>
+                  <div className="count">{githubStats.commits.lastDay}</div>
+                  <div className="label">Today</div>
+                </CommitStatItem>
+                <CommitStatItem>
+                  <div className="count">{githubStats.commits.lastWeek}</div>
+                  <div className="label">This Week</div>
+                </CommitStatItem>
+                <CommitStatItem>
+                  <div className="count">{githubStats.commits.lastMonth}</div>
+                  <div className="label">This Month</div>
+                </CommitStatItem>
+              </CommitStats>
+              
+              <div style={{ marginBottom: '8px', fontSize: '13px', color: '#999' }}>
+                Last 28 Days
+              </div>
+              
+              <ContributionContainer>
+                <DayHeaders>
+                  <DayHeader>M</DayHeader>
+                  <DayHeader>T</DayHeader>
+                  <DayHeader>W</DayHeader>
+                  <DayHeader>T</DayHeader>
+                  <DayHeader>F</DayHeader>
+                  <DayHeader>S</DayHeader>
+                  <DayHeader>S</DayHeader>
+                </DayHeaders>
+                <ContributionGrid>
+                  {getContributionData().map((intensity, idx) => (
+                    <ContributionCell key={idx} intensity={intensity} />
+                  ))}
+                </ContributionGrid>
+              </ContributionContainer>
+            </>
           )}
-        </MediumCard>
+        </MetricsCard>
         
+       
+         
         {/* Quick Access */}
         <MetricsCard>
           <h3><FaBolt /> Quick Access</h3>
@@ -803,8 +856,49 @@ const Home: React.FC<HomeProps> = ({
           </div>
         </MetricsCard>
         
+
+        {/* Pull Requests */}
+        <MediumCard>
+          <CardHeader>
+            <h3><FaExchangeAlt /> Pull Requests</h3>
+            {onNavigateToGitHub && (
+              <ActionButton onClick={onNavigateToGitHub} style={{ padding: '4px 8px' }}>
+                View All
+              </ActionButton>
+            )}
+          </CardHeader>
+          
+          {!githubStats.initialized ? (
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <p style={{ color: '#999' }}>Connect to GitHub to see your pull requests</p>
+            </div>
+          ) : githubStats.recentPRs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <p style={{ color: '#999' }}>No open pull requests</p>
+            </div>
+          ) : (
+            <div>
+              {githubStats.recentPRs.map((pr: any) => (
+                <PRItem key={pr.id}>
+                  <div className="title">{pr.title}</div>
+                  <div className="meta">
+                    <div className="repo">
+                      <FaCodeBranch size={12} />
+                      {pr.repository_url?.split('/').slice(-1)[0] || 'unknown'}
+                    </div>
+                    <div className="time">
+                      {formatRelativeTime(pr.updated_at)}
+                    </div>
+                  </div>
+                </PRItem>
+              ))}
+            </div>
+          )}
+        </MediumCard>
+       
+        
         {/* Kanban Board Overview */}
-        <WideCard>
+        <MetricsCard>
           <CardHeader>
             <h3><FaColumns /> Kanban Board</h3>
             {onNavigateToKanban && (
@@ -814,26 +908,27 @@ const Home: React.FC<HomeProps> = ({
             )}
           </CardHeader>
           
-          <KanbanBoard>
-            <KanbanColumn>
-              <div className="column-header">
-                To Do <span className="count">0</span>
-              </div>
-            </KanbanColumn>
-            
-            <KanbanColumn>
-              <div className="column-header">
-                In Progress <span className="count">0</span>
-              </div>
-            </KanbanColumn>
-            
-            <KanbanColumn>
-              <div className="column-header">
-                Done <span className="count">0</span>
-              </div>
-            </KanbanColumn>
-          </KanbanBoard>
-        </WideCard>
+          <div style={{ marginBottom: '10px', fontSize: '13px', color: '#999' }}>
+            In Progress • Sorted by Urgency
+          </div>
+          
+          <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+            {inProgressTasks.map(task => (
+              <KanbanTask key={task.id} priority={task.priority as 'high' | 'medium' | 'low'}>
+                <div className="task-title">
+                  {task.title}
+                  <span className={`task-priority`}>
+                    {task.priority.toUpperCase()}
+                  </span>
+                </div>
+                <div className="task-meta">
+                  <span>Assigned to: {task.assignee}</span>
+                  <span>Due: {task.dueDate}</span>
+                </div>
+              </KanbanTask>
+            ))}
+          </div>
+        </MetricsCard>
       </DashboardGrid>
     </DashboardContainer>
   );
