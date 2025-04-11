@@ -37,7 +37,7 @@ const Container = styled.div`
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background-color: #1e1e1e;
+  background-color: #121212;
   color: #e0e0e0;
 `;
 
@@ -47,7 +47,7 @@ const Header = styled.div`
   align-items: center;
   padding: 16px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: #252525;
+  background-color: #1a1a1a;
 `;
 
 const HeaderLeft = styled.div`
@@ -137,7 +137,7 @@ const TokenContainer = styled.div`
   max-width: 550px;
   margin: 40px auto;
   padding: 28px;
-  background-color: #252525;
+  background-color: #1a1a1a;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -146,7 +146,7 @@ const TokenContainer = styled.div`
 const TokenInput = styled.input`
   width: 100%;
   padding: 12px;
-  background-color: #333;
+  background-color: #222222;
   border: 1px solid #444;
   color: white;
   border-radius: 4px;
@@ -175,7 +175,7 @@ const SaveButton = styled.button`
 `;
 
 const SecureBadge = styled.div`
-  background-color: #2a2a2a;
+  background-color: #222222;
   color: #29a745;
   font-size: 0.8rem;
   padding: 6px 10px;
@@ -221,7 +221,7 @@ const PRList = styled.div`
 `;
 
 const PRItem = styled.div`
-  background-color: #252525;
+  background-color: #1a1a1a;
   border-radius: 8px;
   padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -295,7 +295,7 @@ const LoadingSpinner = styled.div`
 const ManagementContainer = styled.div`
   margin-bottom: 24px;
   padding: 20px;
-  background-color: #252525;
+  background-color: #1a1a1a;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -321,7 +321,7 @@ const ManagementHeader = styled.div`
 const TokenField = styled.div`
   display: flex;
   align-items: center;
-  background-color: #1e1e1e;
+  background-color: #222222;
   border: 1px solid #444;
   border-radius: 4px;
   padding: 8px 12px;
@@ -394,7 +394,7 @@ const ContainerHeader = styled.h3`
 `;
 
 const TokenHelp = styled.div`
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(34, 34, 34, 0.6);
   border-radius: 8px;
   padding: 16px;
   margin: 16px 0;
@@ -576,7 +576,7 @@ const FilterContainer = styled.div`
   gap: 12px;
   margin-bottom: 16px;
   align-items: center;
-  background-color: #252525;
+  background-color: #1a1a1a;
   padding: 12px;
   border-radius: 8px;
 `;
@@ -595,13 +595,13 @@ const FilterLabel = styled.label`
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  background-color: #333;
+  background-color: #222222;
   border-radius: 6px;
   border: 1px solid #444;
 `;
 
 const FilterSelect = styled.select`
-  background-color: #333;
+  background-color: #222222;
   color: #fff;
   border: 1px solid #444;
   border-radius: 4px;
@@ -622,7 +622,7 @@ const SearchInput = styled.div`
   
   input {
     width: 100%;
-    background-color: #333;
+    background-color: #222222;
     color: #fff;
     border: 1px solid #444;
     border-radius: 4px;

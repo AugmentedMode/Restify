@@ -26,7 +26,7 @@ const Container = styled.div`
   width: 100%;
   padding: 20px;
   gap: 16px;
-  background-color: #1e1e1e;
+  background-color: #121212;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   color: #f5f5f5;
 `;
@@ -54,7 +54,7 @@ const ActionButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(to right, rgba(36, 36, 36, 0.9), rgba(40, 40, 40, 0.9));
+  background: linear-gradient(to right, rgba(30, 30, 30, 0.9), rgba(34, 34, 34, 0.9));
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 6px;
   padding: 8px 12px;
@@ -66,7 +66,7 @@ const ActionButton = styled.button`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   
   &:hover {
-    background: linear-gradient(to right, rgba(46, 46, 46, 0.9), rgba(50, 50, 50, 0.9));
+    background: linear-gradient(to right, rgba(40, 40, 40, 0.9), rgba(44, 44, 44, 0.9));
     border-color: rgba(255, 255, 255, 0.25);
     transform: translateY(-1px);
     box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
@@ -103,7 +103,7 @@ const SecretListTable = styled.div`
   flex-direction: column;
   gap: 8px;
   border-radius: 8px;
-  background-color: rgba(30, 30, 30, 0.6);
+  background-color: rgba(26, 26, 26, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
 `;
@@ -113,7 +113,7 @@ const TableHeader = styled.div`
   grid-template-columns: 1fr 1fr 80px;
   gap: 8px;
   padding: 12px 16px;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(20, 20, 20, 0.5);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-weight: 500;
   font-size: 14px;
@@ -146,7 +146,7 @@ const SecretKeyCell = styled.div`
 
 const SecretValueCell = styled.div`
   padding: 6px 10px;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(20, 20, 20, 0.4);
   border-radius: 4px;
   font-family: monospace;
   overflow: hidden;
@@ -189,7 +189,7 @@ const AddSecretForm = styled.div`
 const Input = styled.input`
   flex: 1;
   padding: 8px 12px;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: #222222;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   color: #f5f5f5;
@@ -210,7 +210,7 @@ const DescriptionArea = styled.div`
   margin-top: 8px;
   margin-bottom: 24px;
   padding: 16px;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: #1a1a1a;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.7);
@@ -539,7 +539,7 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
         }}>
           <div style={{
             width: '400px',
-            backgroundColor: '#2a2a2a',
+            backgroundColor: '#1a1a1a',
             borderRadius: '8px',
             padding: '20px',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',

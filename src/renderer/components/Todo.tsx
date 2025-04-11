@@ -26,7 +26,7 @@ const KanbanContainer = styled.div`
   width: 100%;
   padding: 20px;
   gap: 16px;
-  background-color: #1e1e1e;
+  background-color: #121212;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   color: #f5f5f5;
 `;
@@ -93,7 +93,7 @@ const ReturnButton = styled.button`
 
 const Column = styled.div`
   flex: 1;
-  background-color: #2a2a2a;
+  background-color: #1a1a1a;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 16px;
@@ -172,7 +172,7 @@ const TaskList = styled.div`
 `;
 
 const Task = styled.div<{ status: string; priority?: string; isEpic?: boolean }>`
-  background-color: #1e1e1e;
+  background-color: #222222;
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 10px;
@@ -392,7 +392,7 @@ const NewTaskInput = styled.input`
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   margin-top: 12px;
-  background-color: #2a2a2a;
+  background-color: #222222;
   font-size: 0.85rem;
   color: #f5f5f5;
   
@@ -412,7 +412,7 @@ const EpicSelector = styled.div`
   top: calc(100% + 4px);
   left: 0;
   z-index: 10;
-  background-color: #2a2a2a;
+  background-color: #1a1a1a;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -528,7 +528,7 @@ const ArchiveButton = styled(ActionButton)`
 // Add ArchivedColumn component
 const ArchivedColumn = styled.div`
   width: 100%;
-  background-color: #1e1e1e;
+  background-color: #1a1a1a;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   padding: 16px;
@@ -587,7 +587,7 @@ const ColumnFooter = styled.div`
   margin-top: auto;
   position: sticky;
   bottom: 0;
-  background-color: #2a2a2a;
+  background-color: #1a1a1a;
   padding-top: 8px;
 `;
 
