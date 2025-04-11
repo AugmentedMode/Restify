@@ -471,8 +471,15 @@ const Block: React.FC<BlockProps> = ({
         return;
       }
       
+      // If content is empty and block is a list or todo, convert to paragraph
+      if (content === '' && (block.type === BlockType.BulletList || block.type === BlockType.NumberedList || block.type === BlockType.ToDo)) {
+        onUpdate({
+          ...block,
+          type: BlockType.Paragraph
+        });
+      } 
       // Create a new block of the same type for lists
-      if (block.type === BlockType.BulletList || block.type === BlockType.NumberedList || block.type === BlockType.ToDo) {
+      else if (block.type === BlockType.BulletList || block.type === BlockType.NumberedList || block.type === BlockType.ToDo) {
         onAddBlock(block.id, block.type);
       } else {
         onAddBlock(block.id);
