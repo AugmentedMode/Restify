@@ -356,9 +356,7 @@ function AppContent() {
   
   // Save secrets profiles to local storage when they change
   useEffect(() => {
-    if (secretsProfiles.length > 0) {
-      SecretsService.saveProfiles(secretsProfiles);
-    }
+    SecretsService.saveProfiles(secretsProfiles);
   }, [secretsProfiles]);
 
   // Create a handler for the import file button
