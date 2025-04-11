@@ -36,6 +36,9 @@ interface Todo {
   id: string;
   text: string;
   status: 'todo' | 'in-progress' | 'done';
+  priority?: 'low' | 'medium' | 'high';
+  epic?: string;
+  createdAt: number;
 }
 
 const KanbanSection: React.FC<KanbanSectionProps> = ({
@@ -49,6 +52,9 @@ const KanbanSection: React.FC<KanbanSectionProps> = ({
     'in-progress': 0,
     done: 0
   });
+  
+  const [epicCounts, setEpicCounts] = useState<Record<string, number>>({});
+  const [showEpics, setShowEpics] = useState(false);
 
   // Load todos from localStorage and count them
   useEffect(() => {
@@ -64,11 +70,19 @@ const KanbanSection: React.FC<KanbanSectionProps> = ({
           done: 0
         };
         
+        // Count by epic
+        const epics: Record<string, number> = {};
+        
         todos.forEach(todo => {
           counts[todo.status]++;
+          
+          if (todo.epic) {
+            epics[todo.epic] = (epics[todo.epic] || 0) + 1;
+          }
         });
         
         setTodoCounts(counts);
+        setEpicCounts(epics);
       }
     };
     
@@ -117,7 +131,7 @@ const KanbanSection: React.FC<KanbanSectionProps> = ({
     </ActionButtons>
   );
 
-  // Function to navigate to the Kanban board
+  // Navigation function to go to Kanban board
   const navigateToKanban = () => {
     // Navigate to the kanban route
     if (window.location.pathname !== '/kanban') {
@@ -126,6 +140,20 @@ const KanbanSection: React.FC<KanbanSectionProps> = ({
       // Dispatch a custom event to notify the App component
       window.dispatchEvent(new Event('popstate'));
     }
+  };
+
+  // Get epic background and text colors
+  const getEpicColors = (epic: string) => {
+    const colorMap: Record<string, { bg: string, text: string }> = {
+      'Frontend': { bg: 'rgba(79, 70, 229, 0.1)', text: 'rgb(79, 70, 229)' },
+      'Backend': { bg: 'rgba(16, 185, 129, 0.1)', text: 'rgb(16, 185, 129)' },
+      'Documentation': { bg: 'rgba(245, 158, 11, 0.1)', text: 'rgb(245, 158, 11)' },
+      'Infrastructure': { bg: 'rgba(6, 182, 212, 0.1)', text: 'rgb(6, 182, 212)' },
+      'Design': { bg: 'rgba(236, 72, 153, 0.1)', text: 'rgb(236, 72, 153)' },
+      'Testing': { bg: 'rgba(124, 58, 237, 0.1)', text: 'rgb(124, 58, 237)' },
+    };
+    
+    return colorMap[epic] || { bg: 'rgba(100, 100, 240, 0.1)', text: 'rgb(100, 100, 240)' };
   };
 
   return (
@@ -148,23 +176,29 @@ const KanbanSection: React.FC<KanbanSectionProps> = ({
             style={{ 
               cursor: 'pointer',
               padding: '8px',
-              marginBottom: '5px',
-              borderRadius: '4px',
+              marginBottom: '12px',
+              borderRadius: '8px',
               backgroundColor: 'var(--bg-light)',
-              fontSize: '0.85rem'
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}
             onClick={navigateToKanban}
           >
-            Open Kanban Board
+            <FaColumns size={12} />
+            Todo List
           </motion.div>
           
           <div style={{ 
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
-            fontSize: '0.85rem'
+            fontSize: '0.85rem',
           }}>
-     
+         
           </div>
         </motion.div>
       </div>
