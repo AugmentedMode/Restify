@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { FaCopy, FaLock, FaCheckCircle } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import { FaCopy, FaLock, FaCheckCircle, FaLink } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ProcessedUrlDisplayProps } from './types';
 
 // Copy button component with animation
@@ -19,21 +19,22 @@ const CopyButton = ({ url }: { url: string }) => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       style={{
-        backgroundColor: copied ? 'rgba(73,204,144,0.1)' : 'rgba(255,56,92,0.08)',
+        backgroundColor: copied ? 'rgba(76, 175, 80, 0.15)' : 'rgba(115, 103, 240, 0.15)',
         border: '1px solid',
-        borderColor: copied ? 'rgba(73,204,144,0.2)' : 'rgba(255,56,92,0.15)',
-        color: copied ? 'rgba(73,204,144,0.9)' : 'rgba(255,56,92,0.9)',
-        borderRadius: '4px',
-        padding: '4px 6px',
+        borderColor: copied ? 'rgba(76, 175, 80, 0.3)' : 'rgba(115, 103, 240, 0.3)',
+        color: copied ? '#4CAF50' : '#7367f0',
+        borderRadius: '6px',
+        padding: '5px 8px',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
-        gap: '4px',
-        fontSize: '11px',
+        gap: '5px',
+        fontSize: '12px',
+        fontWeight: '500',
         transition: 'all 0.2s ease-in-out',
       }}
     >
-      {copied ? <FaCheckCircle size={10} /> : <FaCopy size={10} />}
+      {copied ? <FaCheckCircle size={11} /> : <FaCopy size={11} />}
       {copied ? 'Copied!' : 'Copy'}
     </motion.button>
   );
@@ -78,17 +79,17 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
                 <motion.span 
                   key={`base-${index}`}
                   style={{ 
-                    color: '#FF385C',
+                    color: '#7367f0',
                     fontWeight: 'bold',
                     position: 'relative',
                     textDecoration: 'underline',
-                    textDecorationColor: 'rgba(255,56,92,0.3)',
+                    textDecorationColor: 'rgba(115, 103, 240, 0.3)',
                     textDecorationStyle: 'dotted',
                     textUnderlineOffset: '3px'
                   }}
                   whileHover={{ 
                     scale: 1.02,
-                    color: '#FF5A7C'
+                    color: '#8e85f2'
                   }}
                 >
                   {part}
@@ -132,20 +133,21 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -5 }}
+      initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 25 }}
       style={{ 
-        margin: '4px 0 12px 0',
+        margin: '6px 0 16px 0',
         position: 'relative',
       }}
     >
       <div style={{ 
-        padding: '14px',
-        borderRadius: '8px',
-        background: 'linear-gradient(145deg, rgba(14,14,16,0.8) 0%, rgba(22,22,26,0.8) 100%)',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.05) inset',
+        padding: '16px',
+        borderRadius: '12px',
+        background: 'rgba(25, 25, 30, 0.7)',
         backdropFilter: 'blur(10px)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
         color: '#f5f5f5',
         overflow: 'hidden',
         position: 'relative',
@@ -157,7 +159,7 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
           left: '-10%',
           width: '30%',
           height: '150%',
-          background: 'radial-gradient(circle, rgba(255,56,92,0.05) 0%, rgba(255,56,92,0) 70%)',
+          background: 'radial-gradient(circle, rgba(115, 103, 240, 0.05), transparent 70%)',
           zIndex: 0,
         }} />
         
@@ -169,25 +171,18 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: '8px'
+            marginBottom: '10px'
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '12px',
-              fontWeight: 500,
-              color: 'rgba(255,255,255,0.6)',
-              textTransform: 'uppercase',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: 'rgba(255, 255, 255, 0.7)',
               letterSpacing: '0.5px'
             }}>
-              <div style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: '#FF385C',
-                boxShadow: '0 0 6px rgba(255,56,92,0.5)'
-              }} />
+              <FaLink size={12} style={{ color: '#7367f0' }} />
               Processed URL
             </div>
             
@@ -200,14 +195,14 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
           <div style={{
             fontSize: '13px',
             fontFamily: 'SF Mono, Consolas, monospace',
-            lineHeight: '1.5',
+            lineHeight: '1.6',
             overflowX: 'auto',
             overflowY: 'hidden',
             whiteSpace: 'nowrap',
-            padding: '8px 10px',
-            backgroundColor: 'rgba(0,0,0,0.3)',
-            borderRadius: '4px',
-            border: '1px solid rgba(255,56,92,0.1)',
+            padding: '10px 14px',
+            backgroundColor: 'rgba(15, 15, 20, 0.6)',
+            borderRadius: '8px',
+            border: '1px solid rgba(115, 103, 240, 0.1)',
             position: 'relative',
           }}>
             {/* Render the URL with highlighted variables and params */}
@@ -216,25 +211,30 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
           
           {/* Environment indicator */}
           {currentEnvironment && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginTop: '8px',
-              fontSize: '11px',
-              color: 'rgba(255,255,255,0.4)',
-            }}>
-              <FaLock size={9} />
+            <motion.div 
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginTop: '10px',
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.5)',
+              }}
+            >
+              <FaLock size={10} style={{ color: '#7367f0' }} />
               Using <span style={{ 
                 fontWeight: 'bold', 
-                color: 'rgba(255,56,92,0.8)',
-                padding: '1px 5px',
-                backgroundColor: 'rgba(255,56,92,0.08)',
-                borderRadius: '3px'
+                color: '#7367f0',
+                padding: '2px 6px',
+                backgroundColor: 'rgba(115, 103, 240, 0.15)',
+                borderRadius: '4px'
               }}>
                 {currentEnvironment.name}
               </span> environment
-            </div>
+            </motion.div>
           )}
         </div>
       </div>

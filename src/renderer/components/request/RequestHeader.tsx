@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaPaperPlane } from 'react-icons/fa';
+import { FaPaperPlane, FaLightbulb } from 'react-icons/fa';
 import { HttpMethod } from '../../types';
 import { RequestHeaderProps } from './types';
 import { 
@@ -10,6 +10,7 @@ import {
   SendButton,
   Spinner
 } from '../../styles/StyledComponents';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RequestHeader: React.FC<RequestHeaderProps> = ({
   request,
@@ -113,12 +114,67 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
     };
   }, []);
 
+  // Animation variants
+  const suggestionVariants = {
+    hidden: { opacity: 0, y: -10 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        type: "spring", 
+        stiffness: 400, 
+        damping: 25 
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      y: -10, 
+      transition: { 
+        duration: 0.2 
+      } 
+    }
+  };
+
+  const suggestionItemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: (i: number) => ({
+      opacity: 1,
+      x: 0,
+      transition: {
+        delay: i * 0.05,
+        type: "spring",
+        stiffness: 400,
+        damping: 25
+      }
+    }),
+    hover: {
+      scale: 1.02,
+      backgroundColor: 'rgba(115, 103, 240, 0.15)',
+      transition: {
+        type: "spring",
+        stiffness: 400,
+        damping: 25
+      }
+    }
+  };
+
   return (
     <RequestHeaderContainer>
-      <UrlContainer>
+      <UrlContainer 
+        style={{
+          background: 'rgba(25, 25, 30, 0.7)',
+          backdropFilter: 'blur(10px)',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+        }}
+      >
         <MethodSelector
           value={request.method}
           onChange={handleMethodChange}
+          style={{
+            borderColor: 'rgba(255, 255, 255, 0.08)',
+            fontWeight: 600
+          }}
         >
           <option value="GET">GET</option>
           <option value="POST">POST</option>
@@ -136,56 +192,102 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
           onChange={handleUrlChange}
           onKeyDown={handleUrlKeyDown}
           placeholder="Enter request URL"
+          style={{
+            fontFamily: "'SF Mono', 'Monaco', 'Menlo', monospace",
+            fontSize: '14px'
+          }}
         />
         
         {/* Environment variable suggestions */}
-        {showEnvSuggestions && suggestions.length > 0 && (
-          <div style={{
-            position: 'absolute',
-            top: '100%',
-            left: '0',
-            zIndex: 10,
-            width: '100%',
-            maxHeight: '200px',
-            overflowY: 'auto',
-            backgroundColor: '#2a2a2a',
-            border: '1px solid #444',
-            borderRadius: '4px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            marginTop: '4px'
-          }}>
-            {suggestions.map(variable => (
-              <div
-                key={variable}
-                onClick={() => insertEnvironmentVariable(variable)}
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #444',
-                  transition: 'background-color 0.2s',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#333';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <span style={{ color: '#FF385C', fontWeight: 'bold', marginRight: '8px' }}>
-                  {variable}
-                </span>
-                <span style={{ color: '#999', fontSize: '12px' }}>
-                  {currentEnvironment?.variables[variable]}
-                </span>
+        <AnimatePresence>
+          {showEnvSuggestions && suggestions.length > 0 && (
+            <motion.div 
+              variants={suggestionVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                left: '90px',
+                zIndex: 10,
+                width: 'calc(100% - 160px)',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                background: 'rgba(30, 30, 35, 0.95)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+              }}
+            >
+              <div style={{ 
+                padding: '10px 12px', 
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '13px',
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontWeight: 500
+              }}>
+                <FaLightbulb size={12} style={{ color: '#7367f0' }} />
+                Environment Variables
               </div>
-            ))}
-          </div>
-        )}
+              {suggestions.map((variable, index) => (
+                <motion.div
+                  key={variable}
+                  onClick={() => insertEnvironmentVariable(variable)}
+                  custom={index}
+                  variants={suggestionItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover="hover"
+                  style={{
+                    padding: '10px 14px',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <span style={{ 
+                    color: '#7367f0', 
+                    fontWeight: 'bold', 
+                    marginRight: '8px' 
+                  }}>
+                    {`{{${variable}}}`}
+                  </span>
+                  <span style={{ 
+                    color: 'rgba(255, 255, 255, 0.6)', 
+                    fontSize: '12px',
+                    fontStyle: 'italic',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    padding: '2px 6px',
+                    borderRadius: '4px'
+                  }}>
+                    {currentEnvironment?.variables[variable]}
+                  </span>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </UrlContainer>
 
-      <SendButton onClick={() => onSendRequest(request)} disabled={isLoading}>
+      <SendButton 
+        as={motion.button}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => onSendRequest(request)} 
+        disabled={isLoading}
+        style={{
+          background: 'linear-gradient(135deg, #7367f0, #ce9ffc)',
+          border: 'none',
+          boxShadow: '0 4px 12px rgba(115, 103, 240, 0.3)'
+        }}
+      >
         {isLoading ? <Spinner /> : <FaPaperPlane />}
       </SendButton>
     </RequestHeaderContainer>

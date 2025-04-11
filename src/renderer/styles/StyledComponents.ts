@@ -753,19 +753,37 @@ export const JSONValue = styled.span<{ type: string }>`
   color: ${({ type }) => {
     switch (type) {
       case 'string':
-        return '#FF70F9';
+        return '#ce9ffc'; // Light purple for strings (from accent.secondary)
       case 'number':
-        return '#FFC641';
+        return '#0A84FF'; // Blue for numbers (from accent.blue)
       case 'boolean':
-        return '#FF9500';
+        return '#FF9500'; // Orange for booleans (from accent.orange)
       case 'null':
-        return '#FF453A';
+        return '#F44336'; // Error red for null (from status.error)
       case 'key':
-        return '#67F9B1';
+        return '#7367f0'; // Primary purple for keys (from accent.primary)
       default:
         return colors.text.secondary;
     }
   }};
+  text-shadow: 0 0 8px ${({ type }) => {
+    switch (type) {
+      case 'string':
+        return 'rgba(206, 159, 252, 0.3)'; 
+      case 'number':
+        return 'rgba(10, 132, 255, 0.3)';
+      case 'boolean':
+        return 'rgba(255, 149, 0, 0.3)';
+      case 'null':
+        return 'rgba(244, 67, 54, 0.3)';
+      case 'key':
+        return 'rgba(115, 103, 240, 0.3)';
+      default:
+        return 'rgba(255, 255, 255, 0.2)';
+    }
+  }};
+  font-weight: ${({ type }) => type === 'key' ? 'medium' : 'normal'};
+  transition: all 0.2s ease;
 `;
 
 export const KeyValue = styled.div`

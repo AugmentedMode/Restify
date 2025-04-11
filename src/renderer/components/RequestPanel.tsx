@@ -39,7 +39,7 @@ import {
 } from '../styles/StyledComponents';
 import { processUrl, processUrlWithParams } from '../utils/apiUtils';
 import { getMethodColor } from '../utils/uiUtils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Import components using different names to avoid conflicts
 import RequestHeaderComponent from './request/RequestHeader';
@@ -55,6 +55,44 @@ interface RequestPanelProps {
   lastRequestTime?: number;
   currentEnvironment?: Environment;
 }
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.08,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 10, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { 
+      type: "spring",
+      stiffness: 300,
+      damping: 24
+    }
+  }
+};
+
+const popInVariants = {
+  hidden: { scale: 0.9, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 25
+    }
+  }
+};
 
 function RequestPanel({
   request,
@@ -446,17 +484,17 @@ function RequestPanel({
                 <motion.span 
                   key={`base-${index}`}
                   style={{ 
-                    color: '#FF385C',
+                    color: '#7367f0',
                     fontWeight: 'bold',
                     position: 'relative',
                     textDecoration: 'underline',
-                    textDecorationColor: 'rgba(255,56,92,0.3)',
+                    textDecorationColor: 'rgba(115, 103, 240, 0.3)',
                     textDecorationStyle: 'dotted',
                     textUnderlineOffset: '3px'
                   }}
                   whileHover={{ 
                     scale: 1.02,
-                    color: '#FF5A7C'
+                    color: '#8e85f2'
                   }}
                 >
                   {part}
@@ -504,35 +542,62 @@ function RequestPanel({
     (request.params && request.params.some(p => p.enabled && p.name.trim()));
 
   return (
-    <>
-      <RequestHeaderComponent
-        request={request}
-        onRequestChange={onRequestChange}
-        onSendRequest={onSendRequest}
-        isLoading={isLoading}
-        currentEnvironment={currentEnvironment}
-      />
-
-      {shouldShowProcessedUrl && (
-        <ProcessedUrlDisplayComponent
-          processedBaseUrl={processedBaseUrl}
-          processedFullUrl={processedFullUrl}
-          originalUrl={request.url}
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        height: '100%',
+        overflow: 'hidden',
+        background: 'rgba(25, 25, 30, 0.3)',
+        borderRadius: '12px'
+      }}
+    >
+      <motion.div variants={itemVariants}>
+        <RequestHeaderComponent
+          request={request}
+          onRequestChange={onRequestChange}
+          onSendRequest={onSendRequest}
+          isLoading={isLoading}
           currentEnvironment={currentEnvironment}
         />
+      </motion.div>
+
+      {shouldShowProcessedUrl && (
+        <motion.div 
+          variants={popInVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <ProcessedUrlDisplayComponent
+            processedBaseUrl={processedBaseUrl}
+            processedFullUrl={processedFullUrl}
+            originalUrl={request.url}
+            currentEnvironment={currentEnvironment}
+          />
+        </motion.div>
       )}
 
-      <TabsContainerComponent
-        request={request}
-        onRequestChange={onRequestChange}
-        formatBody={formatBody}
-      />
+      <motion.div 
+        variants={itemVariants}
+        style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+      >
+        <TabsContainerComponent
+          request={request}
+          onRequestChange={onRequestChange}
+          formatBody={formatBody}
+        />
+      </motion.div>
 
-      <StatusBarComponent 
-        lastRequestTime={lastRequestTime}
-        isLoading={isLoading}
-      />
-    </>
+      <motion.div variants={itemVariants}>
+        <StatusBarComponent 
+          lastRequestTime={lastRequestTime}
+          isLoading={isLoading}
+        />
+      </motion.div>
+    </motion.div>
   );
 }
 
