@@ -108,6 +108,7 @@ interface SidebarProps {
   onImportSecrets?: () => void;
   onExportSecrets?: (profileId: string) => void;
   onOpenSettings?: () => void;
+  onNavigateToNotes?: () => void;
 }
 
 function Sidebar({
@@ -146,6 +147,7 @@ function Sidebar({
   onImportSecrets = () => {},
   onExportSecrets = () => {},
   onOpenSettings = () => {},
+  onNavigateToNotes = () => {},
 }: SidebarProps) {
   // Get settings from context
   const { settings } = useSettings();
@@ -440,7 +442,10 @@ function Sidebar({
               color: expandedSections.notes ? '#FF385C' : 'inherit',
               transition: 'all 0.2s',
             }}
-            onClick={() => toggleSection('notes')}
+            onClick={() => {
+              toggleSection('notes');
+              onNavigateToNotes();
+            }}
             className="nav-item"
           >
             <FaStickyNote size={20} />
@@ -640,6 +645,7 @@ function Sidebar({
                       onAddNote={onAddNote}
                       onOpenNoteOptions={setNoteOptionsModal}
                       filter={filter}
+                      onNavigateToNotes={onNavigateToNotes}
                     />
                   )}
 

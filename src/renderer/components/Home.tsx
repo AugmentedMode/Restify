@@ -590,6 +590,7 @@ interface GitHubStats {
     repositories: number;
   };
   recentPRs: any[];
+  contributions: number[];
   initialized: boolean;
 }
 
@@ -616,6 +617,7 @@ const Home: React.FC<HomeProps> = ({
     prs: { open: 0, created: 0, reviews: 0 },
     commits: { lastDay: 0, lastWeek: 0, lastMonth: 0, repositories: 0 },
     recentPRs: [],
+    contributions: Array(28).fill(0),
     initialized: false
   });
   
@@ -643,6 +645,12 @@ const Home: React.FC<HomeProps> = ({
           // Fetch commit stats
           const commitStats = await githubService.getCommitStats();
           
+          // Fetch commit data for the last 28 days for visualization
+          const recentCommits = await githubService.getRecentCommits(28);
+          
+          // Process commits into daily contributions
+          const contributions = processCommitData(recentCommits);
+          
           // Sort PRs by updated_at (most recent first)
           const sortedPRs = [...myPRs].sort((a, b) => 
             new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
@@ -656,6 +664,7 @@ const Home: React.FC<HomeProps> = ({
             },
             commits: commitStats,
             recentPRs: sortedPRs.slice(0, 3),
+            contributions,
             initialized: true
           });
         }
@@ -698,13 +707,44 @@ const Home: React.FC<HomeProps> = ({
     return 'just now';
   };
   
-  // Generate random contribution data for visualization
+  // Process commits into daily contributions
+  const processCommitData = (commits: any[]): number[] => {
+    const today = new Date();
+    const contributions = Array(28).fill(0);
+    
+    // Process each commit to count contributions by day
+    commits.forEach(commit => {
+      // Extract commit date
+      const commitDate = new Date(commit.commit?.author?.date || commit.commit?.committer?.date);
+      
+      // Calculate days ago (0 = today, 1 = yesterday, etc.)
+      const daysAgo = Math.floor((today.getTime() - commitDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // If within our 28-day window, increment the counter
+      if (daysAgo >= 0 && daysAgo < 28) {
+        contributions[daysAgo]++;
+      }
+    });
+    
+    // Normalize the contributions to a 0-4 scale for visualization
+    return normalizeContributions(contributions);
+  };
+  
+  // Normalize contributions to a 0-4 scale
+  const normalizeContributions = (contributions: number[]): number[] => {
+    // Find the maximum number of contributions in a day
+    const max = Math.max(...contributions, 1); // Avoid division by zero
+    
+    // Return normalized values (0-4)
+    return contributions.map(count => {
+      if (count === 0) return 0;
+      return Math.min(Math.ceil((count / max) * 4), 4);
+    });
+  };
+  
+  // Get contribution data for visualization
   const getContributionData = () => {
-    const data = [];
-    for (let i = 0; i < 28; i++) {
-      data.push(Math.floor(Math.random() * 5)); // Random value between 0-4
-    }
-    return data;
+    return githubStats.contributions;
   };
 
   return (

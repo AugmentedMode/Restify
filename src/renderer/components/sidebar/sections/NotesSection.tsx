@@ -38,6 +38,7 @@ interface NotesSectionProps {
   onAddNote: () => void;
   onOpenNoteOptions: (note: Note) => void;
   filter: string;
+  onNavigateToNotes?: () => void;
 }
 
 const NotesSection: React.FC<NotesSectionProps> = ({
@@ -49,6 +50,7 @@ const NotesSection: React.FC<NotesSectionProps> = ({
   onAddNote,
   onOpenNoteOptions,
   filter,
+  onNavigateToNotes,
 }) => {
   // Filter notes based on search input
   const filterNotes = (notes: Note[], filter: string): Note[] => {
@@ -80,6 +82,7 @@ const NotesSection: React.FC<NotesSectionProps> = ({
         onClick={(e) => {
           e.stopPropagation();
           onAddNote();
+          onNavigateToNotes && onNavigateToNotes();
         }}
         title="Add Note"
         className="action-button"
@@ -89,11 +92,20 @@ const NotesSection: React.FC<NotesSectionProps> = ({
     </ActionButtons>
   );
 
+  // Handle combined section toggle and navigation
+  const handleToggleSection = () => {
+    toggleSection();
+    // Navigate to notes when expanding
+    if (!expanded && onNavigateToNotes) {
+      onNavigateToNotes();
+    }
+  };
+
   return (
     <CollapsibleSection
       title={sectionTitle}
       expanded={expanded}
-      onToggle={toggleSection}
+      onToggle={handleToggleSection}
       actions={sectionActions}
     >
       {filteredNotes.length === 0 ? (
@@ -119,7 +131,11 @@ const NotesSection: React.FC<NotesSectionProps> = ({
               <RequestItemContainer
                 active={activeNoteId === note.id}
                 data-active={activeNoteId === note.id}
-                onClick={() => onSelectNote(note)}
+                onClick={() => {
+                  onSelectNote(note);
+                  // Also navigate to notes when selecting a note
+                  onNavigateToNotes && onNavigateToNotes();
+                }}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

@@ -921,6 +921,24 @@ function AppContent() {
     window.dispatchEvent(new Event('popstate'));
   }, []);
 
+  // Navigate to Notes
+  const navigateToNotes = useCallback(() => {
+    // Clear any active secrets profile
+    setActiveSecretsProfile(null);
+    
+    // If there are notes and no active note is set, select the first note
+    if (notes.length > 0 && !activeNote) {
+      setActiveNote(notes[0].id);
+    } else if (notes.length === 0) {
+      // If no notes exist, set up to create one
+      addNote();
+    }
+    
+    // Navigate to root route which will show notes since activeNote will be set
+    window.history.pushState({}, '', '/');
+    window.dispatchEvent(new Event('popstate'));
+  }, [notes, activeNote, addNote]);
+
   // Update the renderMainContent function to use Home component
   const renderMainContent = () => {
     // Home route that overrides active request/note
@@ -1349,6 +1367,7 @@ function AppContent() {
           onImportSecrets={handleImportSecrets}
           onExportSecrets={handleExportSecrets}
           onOpenSettings={navigateToSettings}
+          onNavigateToNotes={navigateToNotes}
         />
         <MainContent>
           {renderMainContent()}
