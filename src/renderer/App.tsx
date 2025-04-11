@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaCode, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaCode, FaPlus, FaTrash, FaFileImport } from 'react-icons/fa';
 import {
   AppContainer,
   MainContent,
@@ -29,6 +29,7 @@ import {
 } from './services/DatabaseService';
 import { modalDataStore } from './utils/modalDataStore';
 import { initializeEncryption } from './utils/encryptionUtils';
+import ImportFileModal from './components/modals/ImportFileModal';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -85,8 +86,10 @@ const initialCollections: Folder[] = [
 
 function EmptyStateView({
   onCreateCollection,
+  onImportFromFile,
 }: {
   onCreateCollection: () => void;
+  onImportFromFile?: () => void;
 }) {
   // Add function to handle storage clearing
   const handleClearStorage = () => {
@@ -103,14 +106,20 @@ function EmptyStateView({
   return (
     <EmptyStateContainer>
       <FaCode size={64} />
-      <h3>Restify</h3>
-      <p>
-        Select a request from the sidebar or create a new collection to get
-        started. Opensource IDE for exploring and testing APIs
+      <h3 style={{ marginTop: '-10px' }}>Restify</h3>
+      <p style={{ marginTop: '-3px' }}>
+       A chill API client for chill people.
       </p>
-      <button type="button" onClick={onCreateCollection}>
-        <FaPlus /> Create New Collection
-      </button>
+      <div style={{ display: 'flex', gap: '16px' }}>
+        <button type="button" onClick={onCreateCollection} className="secondary-button">
+          <FaPlus /> Create New Collection
+        </button>
+        {onImportFromFile && (
+          <button type="button" onClick={onImportFromFile} className="secondary-button">
+            <FaFileImport /> Import from file
+          </button>
+        )}
+      </div>
     </EmptyStateContainer>
   );
 }
@@ -309,10 +318,18 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [lastRequestTime, setLastRequestTime] = useState<number>(0);
   
+  // State for import file modal
+  const [showImportFileModal, setShowImportFileModal] = useState(false);
+  
   // Store responses by request ID for persistence
   const [responseMap, setResponseMap] = useState<Record<string, ApiResponse>>(
     {},
   );
+
+  // Create a handler for the import file button
+  const handleOpenImportFileModal = useCallback(() => {
+    setShowImportFileModal(true);
+  }, []);
 
   // Load saved responses on startup
   useEffect(() => {
@@ -792,10 +809,10 @@ function App() {
     };
   }, [activeRequest, loading, handleSendRequest]);
 
-  // Determine what content to show in the main area
+  // Update the renderMainContent function to use the wrapper
   const renderMainContent = () => {
     if (!activeRequest) {
-      return <EmptyStateView onCreateCollection={addFolder} />;
+      return <EmptyStateView onCreateCollection={addFolder} onImportFromFile={handleOpenImportFileModal} />;
     }
 
     if (activeNote) {
@@ -945,6 +962,13 @@ function App() {
         <MainContent>
           {renderMainContent()}
         </MainContent>
+        
+        {/* Import file modal */}
+        <ImportFileModal
+          isOpen={showImportFileModal}
+          onClose={() => setShowImportFileModal(false)}
+          onImport={handleImportFromFile}
+        />
       </AppContainer>
     </>
   );

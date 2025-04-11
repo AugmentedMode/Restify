@@ -855,8 +855,6 @@ export const EmptyStateContainer = styled.div`
   }
 
   button {
-    background-color: ${colors.accent.primary};
-    color: white;
     font-weight: ${typography.fontWeights.medium};
     font-size: 16px;
     padding: 12px 24px;
@@ -865,22 +863,10 @@ export const EmptyStateContainer = styled.div`
     align-items: center;
     gap: 8px;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(255, 56, 92, 0.25);
-
-    &:hover {
-      background-color: ${colors.accent.primaryHover};
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(255, 56, 92, 0.35);
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-
+    
     svg {
       font-size: 18px;
       margin: 0;
-      color: white;
     }
   }
 `;
@@ -984,6 +970,28 @@ export const GlobalStyles = css`
 
   code {
     font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+  }
+  
+  .primary-button {
+    ${primaryButtonStyle}
+  }
+  
+  .secondary-button {
+    ${secondaryButtonStyle}
+    background-color: transparent;
+    border: 1px solid ${colors.border.medium};
+    color: ${colors.text.secondary};
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      transform: translateY(-1px);
+    }
+    
+    svg {
+      font-size: 18px;
+      margin-right: 8px;
+      color: ${colors.text.primary};
+    }
   }
 `;
 
