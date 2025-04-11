@@ -10,7 +10,16 @@ import {
   FaClock,
   FaCodeBranch,
   FaCheck,
-  FaTimes
+  FaTimes,
+  FaCog,
+  FaKey,
+  FaEye,
+  FaEyeSlash,
+  FaTrash,
+  FaQuestionCircle,
+  FaLink,
+  FaShieldAlt,
+  FaUserSecret
 } from 'react-icons/fa';
 import githubService, { GitHubService } from '../../services/GitHubService';
 import { useSettings } from '../../utils/SettingsContext';
@@ -118,12 +127,13 @@ const EmptyState = styled.div`
 `;
 
 const TokenContainer = styled.div`
-  max-width: 500px;
+  max-width: 550px;
   margin: 40px auto;
-  padding: 24px;
+  padding: 28px;
   background-color: #252525;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 `;
 
 const TokenInput = styled.input`
@@ -274,6 +284,243 @@ const LoadingSpinner = styled.div`
   }
 `;
 
+// Add token management styled components
+const ManagementContainer = styled.div`
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #252525;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+`;
+
+const ManagementHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  
+  svg {
+    margin-right: 10px;
+    color: #FF385C;
+  }
+`;
+
+const TokenField = styled.div`
+  display: flex;
+  align-items: center;
+  background-color: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 12px 0;
+`;
+
+const TokenDisplay = styled.div`
+  flex: 1;
+  font-family: monospace;
+  font-size: 14px;
+  color: #ddd;
+  user-select: none;
+`;
+
+const TokenActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const IconButton = styled.button`
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  
+  &:hover {
+    color: #FF385C;
+    background-color: rgba(255, 56, 92, 0.1);
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+`;
+
+const OutlineButton = styled.button`
+  background-color: transparent;
+  color: #FF385C;
+  border: 1px solid #FF385C;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  &:hover {
+    background-color: rgba(255, 56, 92, 0.1);
+  }
+`;
+
+// Add these new styled components after the other style definitions
+const ContainerHeader = styled.h3`
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 10px;
+    color: #FF385C;
+  }
+`;
+
+const TokenHelp = styled.div`
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  font-size: 14px;
+  color: #bbb;
+  
+  p {
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+  }
+  
+  ul {
+    margin: 8px 0;
+    padding-left: 20px;
+  }
+  
+  li {
+    margin: 4px 0;
+  }
+`;
+
+const PrimaryButton = styled(SaveButton)`
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(255, 56, 92, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 56, 92, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 3px rgba(255, 56, 92, 0.2);
+  }
+`;
+
+const EnhancedTokenInput = styled.div`
+  position: relative;
+  margin: 16px 0;
+`;
+
+const InputLabel = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #bbb;
+`;
+
+const TokenInputField = styled(TokenInput)`
+  padding: 14px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  
+  &:focus {
+    box-shadow: 0 0 0 2px rgba(255, 56, 92, 0.2);
+  }
+  
+  &::placeholder {
+    color: #666;
+  }
+`;
+
+const InputHint = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #888;
+  margin-top: 6px;
+`;
+
+const EnhancedErrorMessage = styled(ErrorMessage)`
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 6px;
+  gap: 12px;
+  border-left: 4px solid #ff3860;
+  
+  svg {
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+`;
+
+const ErrorContent = styled.div`
+  flex: 1;
+  
+  p {
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+  }
+`;
+
+const LinkButton = styled.a`
+  color: #FF385C;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const EnhancedSpinner = styled(LoadingSpinner)`
+  flex-direction: column;
+  height: 200px;
+  gap: 16px;
+  
+  svg {
+    font-size: 32px;
+  }
+  
+  p {
+    color: #aaa;
+    font-size: 14px;
+  }
+`;
+
+// Add a content separator to visually divide sections
+const ContentSeparator = styled.div`
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 24px 0;
+`;
+
 interface GitHubPanelProps {
   onReturn: () => void;
 }
@@ -284,6 +531,10 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [token, setToken] = useState<string>('');
   const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTokenManagement, setShowTokenManagement] = useState(false);
+  const [showFullToken, setShowFullToken] = useState(false);
+  const [editingToken, setEditingToken] = useState(false);
+  const [newToken, setNewToken] = useState('');
   
   // Get settings from context
   const { settings } = useSettings();
@@ -407,40 +658,125 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     return 'just now';
   };
   
-  // Render the content based on state
+  // Add a function to mask the token for display
+  const maskToken = (token: string) => {
+    if (!token) return '';
+    if (showFullToken) return token;
+    
+    if (token.length <= 10) {
+      return '••••••••••';
+    }
+    
+    return token.substring(0, 4) + '••••••••••••••••••••' + token.substring(token.length - 4);
+  };
+  
+  // Add a function to toggle token visibility
+  const toggleTokenVisibility = () => {
+    setShowFullToken(!showFullToken);
+  };
+  
+  // Add a function to start editing token
+  const startEditingToken = () => {
+    setEditingToken(true);
+    setNewToken(token);
+  };
+  
+  // Add a function to save the updated token
+  const saveUpdatedToken = async () => {
+    if (!newToken) {
+      setError('Please enter a token');
+      return;
+    }
+    
+    try {
+      setError(null);
+      await initializeGitHubService(newToken);
+      setEditingToken(false);
+    } catch (error: any) {
+      setError(`Failed to save token: ${error.message || 'Unknown error'}`);
+    }
+  };
+  
+  // Replace the renderContent method with this improved version
   const renderContent = () => {
     if (!initialized) {
       return (
         <TokenContainer>
-          <h3>GitHub Personal Access Token</h3>
-          <p>Enter your GitHub token to view your open pull requests:</p>
-          <TokenInput
-            type="password"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="GitHub Personal Access Token"
-          />
-          <SaveButton onClick={handleSaveToken}>Connect GitHub Account</SaveButton>
+          <ContainerHeader>
+            <FaKey />
+            GitHub Personal Access Token
+          </ContainerHeader>
           
-          {settings.security.storeGitHubToken && (
-            <SecureBadge>
-              <FaLock size={12} />
-              <span>Your token will be encrypted at rest</span>
-            </SecureBadge>
-          )}
+          <p>Enter your GitHub token to view your open pull requests.</p>
+          
+          <TokenHelp>
+            <p><strong>What is a Personal Access Token?</strong></p>
+            <p>A token is required to securely access your GitHub data. To create one:</p>
+            <ul>
+              <li>Go to your GitHub settings → Developer settings → Personal access tokens</li>
+              <li>Click "Generate new token" and confirm your password</li>
+              <li>Give it a descriptive name (like "Restify App")</li>
+              <li>Select these scopes: <code>repo</code> (to access repository data)</li>
+              <li>Click "Generate token" and copy it immediately</li>
+            </ul>
+            <p>
+              <LinkButton 
+                href="https://github.com/settings/tokens/new" 
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaLink size={12} /> Create a token on GitHub
+              </LinkButton>
+            </p>
+          </TokenHelp>
+          
+          <EnhancedTokenInput>
+            <InputLabel htmlFor="github-token">Personal Access Token</InputLabel>
+            <TokenInputField
+              id="github-token"
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              autoComplete="off"
+            />
+            <InputHint>
+              <FaShieldAlt size={12} />
+              <span>Your token will never be shared with anyone</span>
+            </InputHint>
+          </EnhancedTokenInput>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+            <PrimaryButton onClick={handleSaveToken}>
+              <FaGithub /> Connect GitHub Account
+            </PrimaryButton>
+            
+            {settings.security.storeGitHubToken && (
+              <SecureBadge>
+                <FaLock size={12} />
+                <span>Encrypted at rest</span>
+              </SecureBadge>
+            )}
+          </div>
           
           {error && (
-            <ErrorMessage>
+            <EnhancedErrorMessage>
               <FaExclamationTriangle />
-              <div>
-                <div>{error}</div>
-                {error.includes('corrupted') || error.includes('Invalid') ? (
+              <ErrorContent>
+                <p><strong>{error}</strong></p>
+                {error.includes('Invalid') && (
+                  <p>Check that your token has the correct permissions and hasn't expired.</p>
+                )}
+                {error.includes('corrupted') && (
+                  <p>Your stored token may be corrupted or invalid.</p>
+                )}
+                {(error.includes('corrupted') || error.includes('Invalid')) && (
                   <ResetButton onClick={resetToken}>
                     Reset Stored Token
                   </ResetButton>
-                ) : null}
-              </div>
-            </ErrorMessage>
+                )}
+              </ErrorContent>
+            </EnhancedErrorMessage>
           )}
         </TokenContainer>
       );
@@ -448,25 +784,42 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     
     if (loading) {
       return (
-        <LoadingSpinner>
+        <EnhancedSpinner>
           <FaSync />
-        </LoadingSpinner>
+          <p>Loading your pull requests...</p>
+        </EnhancedSpinner>
       );
     }
     
     if (error) {
       return (
-        <ErrorMessage>
+        <EnhancedErrorMessage>
           <FaExclamationTriangle />
-          <div>
-            <div>{error}</div>
+          <ErrorContent>
+            <p><strong>{error}</strong></p>
             {error.includes('Invalid') && (
-              <ResetButton onClick={resetToken}>
-                Reset Token
-              </ResetButton>
+              <>
+                <p>Your token may have expired or doesn't have the required permissions.</p>
+                <p>Try resetting your token and creating a new one with the proper scopes.</p>
+              </>
             )}
-          </div>
-        </ErrorMessage>
+            {error.includes('Invalid') && (
+              <div style={{ marginTop: '12px' }}>
+                <ResetButton onClick={resetToken}>
+                  Reset Token
+                </ResetButton>
+                <LinkButton 
+                  href="https://github.com/settings/tokens/new" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ marginLeft: '12px' }}
+                >
+                  <FaLink size={12} /> Create a new token
+                </LinkButton>
+              </div>
+            )}
+          </ErrorContent>
+        </EnhancedErrorMessage>
       );
     }
     
@@ -475,48 +828,158 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         <EmptyState>
           <FaGithub />
           <h3>No open pull requests</h3>
-          <p>You don't have any open pull requests at the moment.</p>
+          <p>You don't have any open pull requests at the moment. When you create pull requests, they'll appear here.</p>
+          <LinkButton 
+            href="https://github.com" 
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ marginTop: '10px' }}
+          >
+            <FaGithub /> Go to GitHub
+          </LinkButton>
         </EmptyState>
       );
     }
     
     return (
-      <PRList>
-        {pullRequests.map((pr: any) => (
-          <PRItem key={pr.id}>
-            <PRHeader>
-              <PRTitle>{pr.title}</PRTitle>
-              <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
-                Open in GitHub <FaExternalLinkAlt size={12} />
-              </PRLink>
-            </PRHeader>
-            <div>{pr.repository_url?.split('/').slice(-1)[0]}</div>
-            <PRMeta>
-              <PRMetaItem>
-                <FaClock size={12} />
-                <span>Updated {formatRelativeTime(pr.updated_at)}</span>
-              </PRMetaItem>
-              <PRMetaItem>
-                <FaCodeBranch size={12} />
-                <span>{pr.head?.ref}</span>
-              </PRMetaItem>
-              <PRMetaItem>
-                {pr.draft ? (
-                  <>
-                    <FaTimes size={12} color="#888" />
-                    <span>Draft</span>
-                  </>
-                ) : (
-                  <>
-                    <FaCheck size={12} color="#29a745" />
-                    <span>Ready</span>
-                  </>
-                )}
-              </PRMetaItem>
-            </PRMeta>
-          </PRItem>
-        ))}
-      </PRList>
+      <>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ margin: 0, fontSize: '18px' }}>Your Open Pull Requests</h3>
+          <div style={{ color: '#888', fontSize: '14px' }}>
+            {pullRequests.length} {pullRequests.length === 1 ? 'pull request' : 'pull requests'} found
+          </div>
+        </div>
+        <PRList>
+          {pullRequests.map((pr: any) => (
+            <PRItem key={pr.id}>
+              <PRHeader>
+                <PRTitle>{pr.title}</PRTitle>
+                <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
+                  Open in GitHub <FaExternalLinkAlt size={12} />
+                </PRLink>
+              </PRHeader>
+              <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
+                {pr.repository_url?.split('/').slice(-1)[0]}
+              </div>
+              <PRMeta>
+                <PRMetaItem>
+                  <FaClock size={12} />
+                  <span>Updated {formatRelativeTime(pr.updated_at)}</span>
+                </PRMetaItem>
+                <PRMetaItem>
+                  <FaCodeBranch size={12} />
+                  <span>{pr.head?.ref}</span>
+                </PRMetaItem>
+                <PRMetaItem>
+                  {pr.draft ? (
+                    <>
+                      <FaTimes size={12} color="#888" />
+                      <span>Draft</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaCheck size={12} color="#29a745" />
+                      <span>Ready</span>
+                    </>
+                  )}
+                </PRMetaItem>
+              </PRMeta>
+            </PRItem>
+          ))}
+        </PRList>
+      </>
+    );
+  };
+  
+  // Replace the renderTokenManagement method with this improved version
+  const renderTokenManagement = () => {
+    if (!initialized) return null;
+    
+    return (
+      <>
+        <ManagementContainer>
+          <ManagementHeader>
+            <FaUserSecret />
+            <h3>Token Management</h3>
+          </ManagementHeader>
+          
+          <p>Your GitHub personal access token is used to securely connect with GitHub API.</p>
+          
+          {editingToken ? (
+            <>
+              <EnhancedTokenInput>
+                <InputLabel htmlFor="new-github-token">New Personal Access Token</InputLabel>
+                <TokenInputField
+                  id="new-github-token"
+                  type="password"
+                  value={newToken}
+                  onChange={(e) => setNewToken(e.target.value)}
+                  placeholder="Enter new GitHub token"
+                  autoComplete="off"
+                />
+                <InputHint>
+                  <FaQuestionCircle size={12} />
+                  <span>Need a new token? <LinkButton href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer">Create one on GitHub</LinkButton></span>
+                </InputHint>
+              </EnhancedTokenInput>
+              
+              <ButtonGroup>
+                <PrimaryButton onClick={saveUpdatedToken}>
+                  <FaKey /> Save New Token
+                </PrimaryButton>
+                <OutlineButton onClick={() => setEditingToken(false)}>Cancel</OutlineButton>
+              </ButtonGroup>
+            </>
+          ) : (
+            <>
+              <div style={{ margin: '16px 0' }}>
+                <InputLabel>Current Token</InputLabel>
+                <TokenField>
+                  <TokenDisplay>{maskToken(token)}</TokenDisplay>
+                  <TokenActions>
+                    <IconButton onClick={toggleTokenVisibility} title={showFullToken ? "Hide token" : "Show token"}>
+                      {showFullToken ? <FaEyeSlash /> : <FaEye />}
+                    </IconButton>
+                    <IconButton onClick={startEditingToken} title="Edit token">
+                      <FaCog />
+                    </IconButton>
+                    <IconButton onClick={resetToken} title="Reset token">
+                      <FaTrash />
+                    </IconButton>
+                  </TokenActions>
+                </TokenField>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+                <div>
+                  <p style={{ margin: '0 0 4px 0', color: '#aaa' }}>Token Security</p>
+                  <SecureBadge>
+                    <FaLock size={12} />
+                    <span>Encrypted at rest</span>
+                  </SecureBadge>
+                </div>
+                
+                <OutlineButton onClick={startEditingToken}>
+                  <FaKey /> Update Token
+                </OutlineButton>
+              </div>
+              
+              <div style={{ marginTop: '24px', padding: '12px', backgroundColor: 'rgba(255, 56, 92, 0.05)', borderRadius: '6px', fontSize: '13px' }}>
+                <p style={{ margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FaQuestionCircle /> <strong>When to update your token:</strong>
+                </p>
+                <ul style={{ margin: '0', paddingLeft: '20px' }}>
+                  <li>Your current token has expired</li>
+                  <li>You need different permissions</li>
+                  <li>You suspect your token has been compromised</li>
+                  <li>GitHub security alerts recommend rotation</li>
+                </ul>
+              </div>
+            </>
+          )}
+        </ManagementContainer>
+        <ContentSeparator />
+      </>
     );
   };
   
@@ -532,13 +995,25 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
             My Pull Requests
           </Title>
         </HeaderLeft>
-        {initialized && !loading && (
-          <RefreshButton onClick={fetchPullRequests}>
-            <FaSync />
-          </RefreshButton>
-        )}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {initialized && !loading && (
+            <>
+              <RefreshButton onClick={fetchPullRequests}>
+                <FaSync />
+              </RefreshButton>
+              <RefreshButton 
+                onClick={() => setShowTokenManagement(!showTokenManagement)} 
+                title={showTokenManagement ? "Hide token management" : "Manage token"}
+                style={showTokenManagement ? { color: '#FF385C', backgroundColor: 'rgba(255, 56, 92, 0.1)' } : {}}
+              >
+                <FaCog />
+              </RefreshButton>
+            </>
+          )}
+        </div>
       </Header>
       <Content>
+        {showTokenManagement && initialized && renderTokenManagement()}
         {renderContent()}
       </Content>
     </Container>
