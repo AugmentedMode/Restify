@@ -21,6 +21,15 @@ interface MoveModalState {
   path: string[];
 }
 
+interface AddRequestModalState {
+  visible: boolean;
+  path: string[];
+}
+
+interface AddCollectionModalState {
+  visible: boolean;
+}
+
 export const useModalState = () => {
   // Import panel states
   const [showImportCurlModal, setShowImportCurlModal] = useState(false);
@@ -48,6 +57,17 @@ export const useModalState = () => {
     item: null,
     itemType: 'request',
     path: [],
+  });
+
+  // Add request modal state
+  const [addRequestModal, setAddRequestModal] = useState<AddRequestModalState>({
+    visible: false,
+    path: [],
+  });
+
+  // Add collection modal state
+  const [addCollectionModal, setAddCollectionModal] = useState<AddCollectionModalState>({
+    visible: false,
   });
 
   // Note options modal state
@@ -86,6 +106,36 @@ export const useModalState = () => {
     });
   };
 
+  // Show add request modal
+  const showAddRequestModal = (path: string[] = []) => {
+    setAddRequestModal({
+      visible: true,
+      path,
+    });
+  };
+
+  // Hide add request modal
+  const hideAddRequestModal = () => {
+    setAddRequestModal({
+      visible: false,
+      path: [],
+    });
+  };
+
+  // Show add collection modal
+  const showAddCollectionModal = () => {
+    setAddCollectionModal({
+      visible: true,
+    });
+  };
+
+  // Hide add collection modal
+  const hideAddCollectionModal = () => {
+    setAddCollectionModal({
+      visible: false,
+    });
+  };
+
   // Toggle create panel
   const toggleCreatePanel = () => {
     setShowCreatePanel(!showCreatePanel);
@@ -112,6 +162,16 @@ export const useModalState = () => {
     moveModal,
     setMoveModal,
     showMoveModal,
+    
+    // Add request modal
+    addRequestModal,
+    showAddRequestModal,
+    hideAddRequestModal,
+    
+    // Add collection modal
+    addCollectionModal,
+    showAddCollectionModal,
+    hideAddCollectionModal,
     
     // Note options modal
     noteOptionsModal,

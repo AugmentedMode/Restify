@@ -13,6 +13,7 @@ import {
   SidebarContent, 
   ResizeHandle,
 } from '../../styles/StyledComponents';
+import { modalDataStore } from '../../utils/modalDataStore';
 
 // Components
 import SidebarHeader from './components/SidebarHeader';
@@ -40,6 +41,8 @@ import MoveModal from '../modals/MoveModal';
 import ImportCurlModal from '../modals/ImportCurlModal';
 import ImportFileModal from '../modals/ImportFileModal';
 import NoteOptionsModal from '../notes/modals/NoteOptionsModal';
+import AddRequestModal from '../modals/AddRequestModal';
+import AddCollectionModal from '../modals/AddCollectionModal';
 
 // Types
 import { ApiRequest, Folder, HttpMethod, RequestHistoryItem, Environment, Note } from '../../types';
@@ -144,6 +147,12 @@ function Sidebar({
     moveModal,
     setMoveModal,
     showMoveModal,
+    addRequestModal,
+    showAddRequestModal,
+    hideAddRequestModal,
+    addCollectionModal,
+    showAddCollectionModal,
+    hideAddCollectionModal,
     noteOptionsModal,
     setNoteOptionsModal,
     showCreatePanel,
@@ -193,6 +202,26 @@ function Sidebar({
     }
   };
 
+  // Handle add request
+  const handleAddRequest = (request: ApiRequest, path: string[]) => {
+    // Save the request data in our store
+    modalDataStore.setLastCreatedRequest(request);
+    
+    // Call the parent's function with just the path
+    onAddRequest(path);
+    hideAddRequestModal();
+  };
+
+  // Handle add collection
+  const handleAddCollection = (collection: Folder) => {
+    // Save the collection data in our store
+    modalDataStore.setLastCreatedCollection(collection);
+    
+    // Call the parent's function
+    onAddFolder();
+    hideAddCollectionModal();
+  };
+
   // Handle context menu actions
   const handleContextMenuAction = (
     action: string, 
@@ -235,7 +264,7 @@ function Sidebar({
         }
         break;
       case 'add-request':
-        onAddRequest([...path, item.id]);
+        showAddRequestModal([...path, item.id]);
         break;
       case 'note-options':
         setNoteOptionsModal(item);
@@ -360,7 +389,7 @@ function Sidebar({
             borderRadius: '8px',
             transition: 'all 0.2s',
           }}
-          onClick={onAddFolder}
+          onClick={showAddCollectionModal}
           className="nav-item"
         >
           <FaFolderPlus size={20} />
@@ -379,7 +408,7 @@ function Sidebar({
             if (collections.length > 0) {
               onAddRequest([collections[0].id]);
             } else {
-              onAddFolder();
+              showAddCollectionModal();
             }
           }}
           className="nav-item"
@@ -398,7 +427,8 @@ function Sidebar({
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       style={{
         width: sidebarWidth,
-        maxWidth: '100vw',
+        height: '100vh',
+        position: 'relative',
       }}
     >
       <SidebarContainer style={{ width: '100%', overflowX: 'hidden' }}>
@@ -428,7 +458,7 @@ function Sidebar({
                 toggleFolder={toggleFolder}
                 toggleAllFolders={() => toggleAllFolders(collections)}
                 onSelectRequest={onSelectRequest}
-                onAddFolder={onAddFolder}
+                onAddFolder={showAddCollectionModal}
                 onAddRequest={onAddRequest}
                 handleContextMenu={handleContextMenu}
                 onContextMenuAction={handleContextMenuAction}
@@ -477,12 +507,12 @@ function Sidebar({
         <CreatePanel 
           isVisible={showCreatePanel}
           onClose={() => toggleCreatePanel()}
-          onAddCollection={onAddFolder}
+          onAddCollection={showAddCollectionModal}
           onAddRequest={() => {
             if (collections.length > 0) {
               onAddRequest([collections[0].id]);
             } else {
-              onAddFolder();
+              showAddCollectionModal();
             }
           }}
           onImportCurl={() => {
@@ -505,42 +535,34 @@ function Sidebar({
         <ImportFileModal
           isOpen={showImportFileModal}
           onClose={() => setShowImportFileModal(false)}
-          onImport={(fileContent, fileName) => {
-            onImportFromFile(fileContent, fileName);
-          }}
+          onImport={onImportFromFile}
         />
 
         {/* Modals */}
-        {renameModal.visible && (
-          <RenameModal
-            isOpen={renameModal.visible}
-            onClose={() => setRenameModal({ ...renameModal, visible: false })}
-            onRename={handleRename}
-            currentName={renameModal.item.name}
-            itemType={renameModal.itemType}
-          />
-        )}
+        <RenameModal
+          isOpen={renameModal.visible}
+          onClose={() => setRenameModal({ ...renameModal, visible: false })}
+          onRename={handleRename}
+          currentName={renameModal.item?.name || renameModal.item?.title || ''}
+          itemType={renameModal.itemType}
+        />
 
-        {deleteModal.visible && (
-          <DeleteModal
-            isOpen={deleteModal.visible}
-            onClose={() => setDeleteModal({ ...deleteModal, visible: false })}
-            onDelete={handleDelete}
-            itemType={deleteModal.itemType}
-            itemName={deleteModal.item.name}
-          />
-        )}
+        <DeleteModal
+          isOpen={deleteModal.visible}
+          onClose={() => setDeleteModal({ ...deleteModal, visible: false })}
+          onDelete={handleDelete}
+          itemType={deleteModal.itemType}
+          itemName={deleteModal.item?.name || deleteModal.item?.title || ''}
+        />
 
-        {moveModal.visible && (
-          <MoveModal
-            isOpen={moveModal.visible}
-            onClose={() => setMoveModal({ ...moveModal, visible: false })}
-            onMove={handleMove}
-            collections={collections}
-            itemType={moveModal.itemType}
-            currentPath={moveModal.path}
-          />
-        )}
+        <MoveModal
+          isOpen={moveModal.visible}
+          onClose={() => setMoveModal({ ...moveModal, visible: false })}
+          onMove={handleMove}
+          collections={collections}
+          itemType={moveModal.itemType}
+          currentPath={moveModal.path}
+        />
 
         {/* Add the NoteOptionsModal */}
         {noteOptionsModal && (
@@ -570,6 +592,19 @@ function Sidebar({
             }}
           />
         )}
+
+        <AddRequestModal
+          isOpen={addRequestModal.visible}
+          onClose={hideAddRequestModal}
+          onAddRequest={handleAddRequest}
+          path={addRequestModal.path}
+        />
+
+        <AddCollectionModal
+          isOpen={addCollectionModal.visible}
+          onClose={hideAddCollectionModal}
+          onAddCollection={handleAddCollection}
+        />
 
         {/* Context Menu */}
         {renderContextMenu()}

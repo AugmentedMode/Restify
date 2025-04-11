@@ -27,6 +27,7 @@ import {
   EnvironmentsService,
   ResponsesService
 } from './services/DatabaseService';
+import { modalDataStore } from './utils/modalDataStore';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -170,7 +171,7 @@ function App() {
   // Use our custom hooks for collections and history
   const {
     collections,
-    addFolder,
+    addFolder: addCollectionToState,
     addRequest,
     renameItem,
     deleteItem,
@@ -829,10 +830,47 @@ function App() {
     },
   });
 
-  // Function to adapt addRequest to match the old interface that Sidebar expects
+  // Add a new folder (collection)
+  const addFolder = () => {
+    // Check if we have collection data from the modal
+    const newCollection = modalDataStore.getLastCreatedCollection();
+
+    if (newCollection) {
+      // Use the collection data from the modal with the name
+      console.log(`Creating collection with name: ${newCollection.name}`);
+      addCollection({
+        id: newCollection.id,
+        name: newCollection.name,
+        items: [],
+        parentPath: [],
+      });
+    } else {
+      // Original logic as fallback
+      addCollection({
+        id: uuidv4(),
+        name: 'New Collection',
+        items: [],
+        parentPath: [],
+      });
+    }
+  };
+
+  // Adapter for adding a request to handle paths
   const addRequestAdapter = (folderPath: string[]) => {
-    const newRequest = createEmptyRequest(folderPath);
-    return addRequest(newRequest, folderPath);
+    // Check if we have request data from the modal
+    const newRequest = modalDataStore.getLastCreatedRequest();
+    
+    if (newRequest) {
+      // Use the request data from the modal
+      console.log(`Creating request with name: ${newRequest.name} and URL: ${newRequest.url}`);
+      
+      // Add the request to the specified path
+      addRequest(newRequest, folderPath);
+    } else {
+      // Original logic as fallback
+      const defaultRequest = createEmptyRequest(folderPath);
+      addRequest(defaultRequest, folderPath);
+    }
   };
 
   // Function to adapt moveItem to match the old interface that Sidebar expects
