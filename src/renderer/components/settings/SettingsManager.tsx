@@ -12,10 +12,13 @@ import {
   FaMoon,
   FaSun,
   FaArrowLeft,
-  FaTrash
+  FaTrash,
+  FaFileImport
 } from 'react-icons/fa';
 import { useSettings } from '../../utils/SettingsContext';
 import { db, NotesService, CollectionsService, HistoryService, ResponsesService, EnvironmentsService, SettingsService } from '../../services/DatabaseService';
+import ImportFileModal from '../modals/ImportFileModal';
+import { ImportService } from '../../services/ImportService';
 
 // Theme colors for consistency
 const theme = {
@@ -339,6 +342,9 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
   // State for active category
   const [activeCategory, setActiveCategory] = useState<SettingCategory>('general');
   
+  // State for import modal
+  const [showImportModal, setShowImportModal] = useState(false);
+  
   // Use settings context instead of local state
   const { settings, updateSettings, toggleSetting } = useSettings();
   
@@ -349,6 +355,93 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
     value: string | number
   ) => {
     updateSettings(category, setting, value);
+  };
+  
+  // Handle file import
+  const handleImportFile = (fileContent: string, fileName: string) => {
+    try {
+      // Use the ImportService to process the file
+      const importedCollection = ImportService.importFromFile(fileContent, fileName);
+      
+      if (importedCollection) {
+        // Save imported collections
+        CollectionsService.saveCollection(importedCollection)
+          .then(() => {
+            alert('Collection imported successfully!');
+          })
+          .catch(error => {
+            console.error('Error saving imported collection:', error);
+            alert('Failed to import collection.');
+          });
+      } else {
+        alert('Could not parse the imported file.');
+      }
+    } catch (error) {
+      console.error('Error importing file:', error);
+      alert(`Failed to import file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+  
+  // Export collections
+  const handleExportCollections = async () => {
+    try {
+      const collections = await CollectionsService.getAllCollections();
+      
+      if (collections.length === 0) {
+        alert('No collections to export.');
+        return;
+      }
+      
+      // Create a JSON file
+      const jsonContent = JSON.stringify(collections, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'restify-collections.json';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting collections:', error);
+      alert(`Failed to export collections: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+  
+  // Export environments
+  const handleExportEnvironments = async () => {
+    try {
+      const environments = await EnvironmentsService.getAllEnvironments();
+      
+      if (environments.length === 0) {
+        alert('No environments to export.');
+        return;
+      }
+      
+      // Create a JSON file
+      const jsonContent = JSON.stringify(environments, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'restify-environments.json';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting environments:', error);
+      alert(`Failed to export environments: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
   
   // Render sidebar categories
@@ -572,22 +665,6 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
           </ShortcutKeysContainer>
         </ShortcutRow>
         <ShortcutRow>
-          <SettingLabel>Save Request</SettingLabel>
-          <ShortcutKeysContainer>
-            <ShortcutKey>Ctrl</ShortcutKey>
-            <span>+</span>
-            <ShortcutKey>S</ShortcutKey>
-          </ShortcutKeysContainer>
-        </ShortcutRow>
-        <ShortcutRow>
-          <SettingLabel>Toggle Sidebar</SettingLabel>
-          <ShortcutKeysContainer>
-            <ShortcutKey>Ctrl</ShortcutKey>
-            <span>+</span>
-            <ShortcutKey>B</ShortcutKey>
-          </ShortcutKeysContainer>
-        </ShortcutRow>
-        <ShortcutRow>
           <SettingLabel>Format JSON</SettingLabel>
           <ShortcutKeysContainer>
             <ShortcutKey>Ctrl</ShortcutKey>
@@ -608,11 +685,11 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
         <SectionTitle>Data Export</SectionTitle>
         <ShortcutRow>
           <SettingLabel>Export All Collections</SettingLabel>
-          <ActionButton>Export</ActionButton>
+          <ActionButton onClick={handleExportCollections}>Export</ActionButton>
         </ShortcutRow>
         <ShortcutRow>
           <SettingLabel>Export Environments</SettingLabel>
-          <ActionButton>Export</ActionButton>
+          <ActionButton onClick={handleExportEnvironments}>Export</ActionButton>
         </ShortcutRow>
       </SettingSection>
       
@@ -620,17 +697,24 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
         <SectionTitle>Data Import</SectionTitle>
         <ShortcutRow>
           <SettingLabel>Import Collections</SettingLabel>
-          <ActionButton>Import</ActionButton>
+          <ActionButton onClick={() => setShowImportModal(true)}>Import</ActionButton>
         </ShortcutRow>
         <ShortcutRow>
           <SettingLabel>Import from Postman</SettingLabel>
-          <ActionButton>Import</ActionButton>
+          <ActionButton onClick={() => setShowImportModal(true)}>Import</ActionButton>
         </ShortcutRow>
         <ShortcutRow>
           <SettingLabel>Import from Insomnia</SettingLabel>
-          <ActionButton>Import</ActionButton>
+          <ActionButton onClick={() => setShowImportModal(true)}>Import</ActionButton>
         </ShortcutRow>
       </SettingSection>
+      
+      {/* Import File Modal */}
+      <ImportFileModal 
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImportFile}
+      />
     </SettingsPanel>
   );
   
