@@ -24,9 +24,9 @@ import { ImportService } from '../../services/ImportService';
 // Theme colors for consistency
 const theme = {
   background: {
-    primary: '#1e1e1e',
-    secondary: '#252525',
-    tertiary: '#333',
+    primary: '#121212',
+    secondary: '#1a1a1a',
+    tertiary: '#222222',
   },
   border: {
     light: 'rgba(255, 255, 255, 0.1)',
