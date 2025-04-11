@@ -22,6 +22,7 @@ import {
 } from 'react-icons/fa';
 import styled from 'styled-components';
 import githubService from '../services/GitHubService';
+import useRequestHistory from '../hooks/useRequestHistory';
 
 interface HomeProps {
   onCreateCollection: () => void;
@@ -234,21 +235,29 @@ const HistoryItem = styled.div`
   border-radius: 8px;
   padding: 12px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, background-color 0.2s;
+  margin-bottom: 6px;
   
   &:hover {
     transform: translateX(4px);
+    background-color: #2a2a2a;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
   
   .method {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: bold;
-    padding: 4px 8px;
-    border-radius: 4px;
-    width: 70px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    min-width: 50px;
     text-align: center;
   }
   
@@ -272,25 +281,47 @@ const HistoryItem = styled.div`
     color: white;
   }
   
-  .details {
-    flex: 1;
-    
-    .name {
-      font-size: 14px;
-      margin-bottom: 4px;
-      color: #fff;
-    }
-    
-    .time {
-      font-size: 12px;
-      color: #999;
-    }
+  .patch {
+    background-color: #9C27B0;
+    color: white;
+  }
+
+  .options {
+    background-color: #607D8B;
+    color: white;
+  }
+  
+  .head {
+    background-color: #795548;
+    color: white;
+  }
+  
+  .content-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .name {
+    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
+    margin-right: 10px;
+  }
+  
+  .time {
+    font-size: 11px;
+    color: #999;
+    text-align: left;
+    margin-top: 4px;
+    width: 100%;
   }
   
   .status {
-    font-size: 13px;
-    padding: 4px 8px;
-    border-radius: 4px;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
     
     &.success {
       background-color: rgba(76, 175, 80, 0.2);
@@ -457,7 +488,7 @@ const Home: React.FC<HomeProps> = ({
   // Data states for the dashboard
   const [requestCount, setRequestCount] = useState(0);
   const [collectionCount, setCollectionCount] = useState(0);
-  const [recentHistory, setRecentHistory] = useState<any[]>([]);
+  const { requestHistory, loading } = useRequestHistory();
   const [todoItems, setTodoItems] = useState({
     todo: 0,
     inProgress: 0,
@@ -474,13 +505,8 @@ const Home: React.FC<HomeProps> = ({
   
   // Fetch data on component mount
   useEffect(() => {
-    // Mock data for demonstration
-    setRecentHistory([
-      { id: '1', method: 'GET', url: 'https://api.example.com/users', name: 'Get Users', timestamp: Date.now(), status: 200 },
-      { id: '2', method: 'POST', url: 'https://api.example.com/users', name: 'Create User', timestamp: Date.now() - 10000, status: 201 },
-      { id: '3', method: 'PUT', url: 'https://api.example.com/users/1', name: 'Update User', timestamp: Date.now() - 30000, status: 200 },
-      { id: '4', method: 'DELETE', url: 'https://api.example.com/users/2', name: 'Delete User', timestamp: Date.now() - 60000, status: 204 }
-    ]);
+    // Set request count from history
+    setRequestCount(requestHistory.length);
     
     // Fetch GitHub stats if service is initialized
     const fetchGitHubStats = async () => {
@@ -510,7 +536,7 @@ const Home: React.FC<HomeProps> = ({
     };
     
     fetchGitHubStats();
-  }, []);
+  }, [requestHistory.length]);
   
   // Format timestamp
   const formatTimestamp = (timestamp: number): string => {
@@ -586,11 +612,11 @@ const Home: React.FC<HomeProps> = ({
           <StatsGrid>
             <StatItem>
               <div className="label">Collections</div>
-              <div className="value">0</div>
+              <div className="value">{collectionCount}</div>
             </StatItem>
             <StatItem>
               <div className="label">Requests</div>
-              <div className="value">0</div>
+              <div className="value">{requestCount}</div>
             </StatItem>
             <StatItem>
               <div className="label">Success Rate</div>
@@ -656,18 +682,32 @@ const Home: React.FC<HomeProps> = ({
         <MetricsCard>
           <h3><FaHistory /> Recent Activity</h3>
           <RequestHistory>
-            {recentHistory.map(item => (
-              <HistoryItem key={item.id}>
-                <div className={`method ${item.method.toLowerCase()}`}>{item.method}</div>
-                <div className="details">
-                  <div className="name">{item.name}</div>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
+                Loading history...
+              </div>
+            ) : requestHistory.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
+                No request history yet
+              </div>
+            ) : (
+              requestHistory.slice(0, 4).map(item => (
+                <HistoryItem key={item.id}>
+                  <div className="header">
+                    <div className={`method ${item.request.method.toLowerCase()}`}>
+                      {item.request.method}
+                    </div>
+                    <div className="content-row">
+                      <div className="name">{item.name}</div>
+                      <div className={`status ${item.response.status >= 200 && item.response.status < 300 ? 'success' : 'error'}`}>
+                        {item.response.status}
+                      </div>
+                    </div>
+                  </div>
                   <div className="time">{formatTimestamp(item.timestamp)}</div>
-                </div>
-                <div className={`status ${item.status >= 200 && item.status < 300 ? 'success' : 'error'}`}>
-                  {item.status}
-                </div>
-              </HistoryItem>
-            ))}
+                </HistoryItem>
+              ))
+            )}
           </RequestHistory>
           <ViewMore>
             View all history <FaArrowRight size={12} />

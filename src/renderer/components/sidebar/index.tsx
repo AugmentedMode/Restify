@@ -586,6 +586,12 @@ function Sidebar({
                     />
                   )}
 
+                  {settings.general.showGitHub && (
+                    <GitHubSection
+                      onNavigate={navigateToGitHub}
+                    />
+                  )}
+
                   {settings.general.showBoards && (
                     <KanbanSection
                       expanded={expandedSections.kanban}
@@ -609,11 +615,7 @@ function Sidebar({
                     />
                   )}
 
-                  {settings.general.showGitHub && (
-                    <GitHubSection
-                      onNavigate={navigateToGitHub}
-                    />
-                  )}
+               
 
                   {/* <EnvironmentManager 
                     environments={environments}
