@@ -11,9 +11,11 @@ import {
   FaCheck,
   FaMoon,
   FaSun,
-  FaArrowLeft
+  FaArrowLeft,
+  FaTrash
 } from 'react-icons/fa';
 import { useSettings } from '../../utils/SettingsContext';
+import { db, NotesService, CollectionsService, HistoryService, ResponsesService, EnvironmentsService, SettingsService } from '../../services/DatabaseService';
 
 // Theme colors for consistency
 const theme = {
@@ -480,37 +482,59 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
     <SettingsPanel>
       <SettingSection>
         <SectionTitle>Security Settings</SectionTitle>
-        <SettingRow>
+        <SettingRow style={{ borderBottom: '1px solid rgba(255, 56, 92, 0.2)', paddingBottom: '20px' }}>
           <div>
-            <SettingLabel>Secure Credential Storage</SettingLabel>
-            <SettingDescription>Use system keychain for storing sensitive credentials</SettingDescription>
+            <SettingLabel><FaTrash style={{ marginRight: '8px', color: theme.brand.primary }} /> Delete All Data</SettingLabel>
+            <SettingDescription>Permanently remove all app data including collections, history, environments, and settings</SettingDescription>
           </div>
-          <ToggleButton 
-            isActive={settings.security.storeCredentialsSecurely}
-            onClick={() => toggleSetting('security', 'storeCredentialsSecurely')}
-          />
-        </SettingRow>
-        <SettingRow>
-          <div>
-            <SettingLabel>Clear History on Exit</SettingLabel>
-            <SettingDescription>Automatically clear request history when closing the app</SettingDescription>
-          </div>
-          <ToggleButton 
-            isActive={settings.security.clearHistoryOnExit}
-            onClick={() => toggleSetting('security', 'clearHistoryOnExit')}
-          />
-        </SettingRow>
-        <SettingRow>
-          <div>
-            <SettingLabel>Delete All Data</SettingLabel>
-            <SettingDescription>Permanently remove all app data including collections, history, and settings</SettingDescription>
-          </div>
-          <ActionButton onClick={() => {
-            if (window.confirm('Are you sure you want to delete all data? This cannot be undone.')) {
-              // Implement data deletion logic here
-              alert('All data has been deleted.');
+          <ActionButton onClick={async () => {
+            if (window.confirm('Are you sure you want to delete ALL data? This operation is permanent and cannot be undone.')) {
+              try {
+                // Clear all IndexedDB database tables
+                await db.notes.clear();
+                await db.collections.clear();
+                await db.requestHistory.clear();
+                await db.responses.clear();
+                await db.environments.clear();
+                await db.settings.clear();
+                
+                // Clear all localStorage data
+                localStorage.clear();
+                
+                // Restore default settings
+                const defaultSettings = {
+                  general: {
+                    showCollections: true,
+                    showHistory: true,
+                    showSecretsManager: true,
+                    showBoards: true,
+                    showNotes: false,
+                    defaultResponseView: 'pretty',
+                  },
+                  api: {
+                    defaultTimeout: 30000,
+                    followRedirects: true,
+                    validateSSL: true,
+                  },
+                  security: {
+                    clearHistoryOnExit: false,
+                    storeCredentialsSecurely: true,
+                  }
+                };
+                
+                // Save default settings back to localStorage
+                localStorage.setItem('restifySettings', JSON.stringify(defaultSettings));
+                
+                alert('All data has been successfully deleted.');
+                
+                // Reload the application to reflect the changes
+                window.location.reload();
+              } catch (error) {
+                console.error('Error deleting data:', error);
+                alert(`Failed to delete all data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
             }
-          }}>Delete All</ActionButton>
+          }}>Delete All Data</ActionButton>
         </SettingRow>
       </SettingSection>
     </SettingsPanel>
