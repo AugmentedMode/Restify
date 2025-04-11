@@ -90,6 +90,7 @@ const Column = styled.div`
   flex-direction: column;
   max-width: 350px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  height: calc(100vh - 110px); /* Set a fixed height based on viewport */
 `;
 
 const ColumnHeader = styled.div`
@@ -131,6 +132,7 @@ const TaskList = styled.div`
   flex-grow: 1;
   overflow-y: auto;
   padding-right: 4px;
+  margin-bottom: 12px;
   
   &::-webkit-scrollbar {
     width: 4px;
@@ -545,6 +547,15 @@ const ArchivedTask = styled(Task)`
   }
 `;
 
+// Create a footer component to hold the Add Task button
+const ColumnFooter = styled.div`
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  background-color: #2a2a2a;
+  padding-top: 8px;
+`;
+
 // Main Kanban component
 const TodoKanban: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -919,32 +930,36 @@ const TodoKanban: React.FC = () => {
           {filteredTodos.map(todo => renderTask(todo))}
         </TaskList>
         
-        {addingStatus === status ? (
-          <NewTaskInput
-            autoFocus
-            placeholder="Task description..."
-            value={newTaskText}
-            onChange={(e) => setNewTaskText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                addTodo(status);
-              } else if (e.key === 'Escape') {
-                setNewTaskText('');
-                setAddingStatus(null);
-              }
-            }}
-            onBlur={() => {
-              if (newTaskText.trim() !== '') {
-                addTodo(status);
-              } else {
-                setAddingStatus(null);
-              }
-            }}
-          />
-        ) : (
-          <AddTaskButton onClick={() => setAddingStatus(status)}>
-            <FaPlus size={10} /> Add Task
-          </AddTaskButton>
+        {status === 'todo' && (
+          <ColumnFooter>
+            {addingStatus === status ? (
+              <NewTaskInput
+                autoFocus
+                placeholder="Task description..."
+                value={newTaskText}
+                onChange={(e) => setNewTaskText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    addTodo(status);
+                  } else if (e.key === 'Escape') {
+                    setNewTaskText('');
+                    setAddingStatus(null);
+                  }
+                }}
+                onBlur={() => {
+                  if (newTaskText.trim() !== '') {
+                    addTodo(status);
+                  } else {
+                    setAddingStatus(null);
+                  }
+                }}
+              />
+            ) : (
+              <AddTaskButton onClick={() => setAddingStatus(status)}>
+                <FaPlus size={10} /> Add Task
+              </AddTaskButton>
+            )}
+          </ColumnFooter>
         )}
       </Column>
     );
