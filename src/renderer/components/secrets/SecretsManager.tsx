@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FaChevronLeft, 
   FaPlus, 
@@ -13,123 +13,222 @@ import {
   FaLock, 
   FaUnlock,
   FaKey,
-  FaCheck
+  FaCheck,
+  FaShieldAlt,
+  FaDatabase
 } from 'react-icons/fa';
 import { Secret, SecretsProfile } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
-// Styled components
-const Container = styled.div`
+// Styled components with enhanced design
+const Container = styled(motion.div)`
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
   padding: 20px;
   gap: 16px;
-  background-color: #121212;
+  background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   color: #f5f5f5;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: radial-gradient(circle at top right, rgba(80, 50, 255, 0.05), transparent 60%);
+    pointer-events: none;
+  }
 `;
 
-const HeaderContainer = styled.div`
+const GlassPanel = styled(motion.div)`
+  background: rgba(30, 30, 30, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+`;
+
+const HeaderContainer = styled(GlassPanel)`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 24px;
   margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
 const HeaderTitle = styled.h2`
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 1.5rem;
-  font-weight: 500;
+  gap: 12px;
+  font-size: 1.6rem;
+  font-weight: 600;
   color: #f5f5f5;
+  
+  svg {
+    filter: drop-shadow(0 0 8px rgba(80, 50, 255, 0.5));
+  }
 `;
 
-const ActionButton = styled.button`
+const ActionButton = styled(motion.button)`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(to right, rgba(30, 30, 30, 0.9), rgba(34, 34, 34, 0.9));
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-  padding: 8px 12px;
+  background: linear-gradient(to right, rgba(40, 40, 40, 0.9), rgba(50, 50, 50, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px 16px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   color: #f5f5f5;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   
   &:hover {
-    background: linear-gradient(to right, rgba(40, 40, 40, 0.9), rgba(44, 44, 44, 0.9));
-    border-color: rgba(255, 255, 255, 0.25);
-    transform: translateY(-1px);
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(to right, rgba(50, 50, 50, 0.9), rgba(60, 60, 60, 0.9));
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
   
   &:active {
     transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    transform: none;
+    cursor: not-allowed;
+  }
+  
+  svg {
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
   }
 `;
 
-const ContentContainer = styled.div`
+const DeleteButton = styled(ActionButton)`
+  background: linear-gradient(to right, rgba(80, 20, 20, 0.9), rgba(100, 30, 30, 0.9));
+  border-color: rgba(255, 100, 100, 0.2);
+  
+  &:hover {
+    background: linear-gradient(to right, rgba(100, 30, 30, 0.9), rgba(120, 40, 40, 0.9));
+    border-color: rgba(255, 100, 100, 0.3);
+  }
+`;
+
+const EncryptButton = styled(ActionButton)`
+  background: linear-gradient(to right, rgba(30, 30, 80, 0.9), rgba(40, 40, 100, 0.9));
+  border-color: rgba(100, 100, 255, 0.2);
+  
+  &:hover {
+    background: linear-gradient(to right, rgba(40, 40, 100, 0.9), rgba(50, 50, 120, 0.9));
+    border-color: rgba(100, 100, 255, 0.3);
+  }
+`;
+
+const ContentContainer = styled(motion.div)`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   overflow: auto;
+  padding: 0 4px;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
 `;
 
-const NoSecretsMessage = styled.div`
+const NoSecretsMessage = styled(motion.div)`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 16px;
+  gap: 24px;
   color: rgba(255, 255, 255, 0.6);
   text-align: center;
-  padding: 40px;
+  padding: 60px;
+  
+  svg {
+    font-size: 48px;
+    opacity: 0.5;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 10px rgba(80, 50, 255, 0.3));
+  }
 `;
 
-const SecretListTable = styled.div`
+const SecretListTable = styled(GlassPanel)`
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  border-radius: 8px;
-  background-color: rgba(26, 26, 26, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(25, 25, 30, 0.5);
   overflow: hidden;
 `;
 
 const TableHeader = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr 80px;
-  gap: 8px;
-  padding: 12px 16px;
-  background-color: rgba(20, 20, 20, 0.5);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  font-weight: 500;
+  grid-template-columns: 1fr 1fr 100px;
+  gap: 16px;
+  padding: 16px 24px;
+  background-color: rgba(20, 20, 25, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 600;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 `;
 
-const TableRow = styled.div`
+const TableRow = styled(motion.div)`
   display: grid;
-  grid-template-columns: 1fr 1fr 80px;
-  gap: 8px;
-  padding: 12px 16px;
+  grid-template-columns: 1fr 1fr 100px;
+  gap: 16px;
+  padding: 16px 24px;
   align-items: center;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  position: relative;
   
   &:hover {
     background-color: rgba(255, 255, 255, 0.05);
+    
+    &::before {
+      opacity: 1;
+    }
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #7367f0, #ce9ffc);
+    opacity: 0;
+    transition: opacity 0.2s;
   }
   
   &:not(:last-child) {
@@ -138,113 +237,241 @@ const TableRow = styled.div`
 `;
 
 const SecretKeyCell = styled.div`
-  font-weight: 500;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #f5f5f5;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(135deg, #7367f0, #ce9ffc);
+    border-radius: 50%;
+    margin-right: 12px;
+  }
 `;
 
 const SecretValueCell = styled.div`
-  padding: 6px 10px;
-  background-color: rgba(20, 20, 20, 0.4);
-  border-radius: 4px;
-  font-family: monospace;
+  padding: 10px 16px;
+  background-color: rgba(15, 15, 20, 0.4);
+  border-radius: 6px;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+  font-size: 14px;
+  
+  &:hover {
+    background-color: rgba(20, 20, 25, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 `;
 
 const ActionsCell = styled.div`
   display: flex;
-  gap: 8px;
+  gap: 12px;
   justify-content: flex-end;
 `;
 
-const ActionIcon = styled.button`
+const ActionIcon = styled(motion.button)`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  background-color: transparent;
-  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background-color: rgba(40, 40, 50, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
   transition: all 0.2s;
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(60, 60, 70, 0.6);
     color: #f5f5f5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
   }
 `;
 
-const AddSecretForm = styled.div`
+const AddSecretForm = styled(GlassPanel)`
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  margin-bottom: 30px;
+  gap: 16px;
+  padding: 24px;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: visible;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: 20px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #7367f0, #ce9ffc);
+    border-radius: 6px 6px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  }
+  
+  &::after {
+    content: 'Add New Secret';
+    position: absolute;
+    top: -30px;
+    left: 20px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    z-index: 1;
+  }
 `;
 
-const Input = styled.input`
+const Input = styled(motion.input)`
   flex: 1;
-  padding: 8px 12px;
-  background-color: #222222;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  padding: 12px 16px;
+  background-color: rgba(20, 20, 25, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
   color: #f5f5f5;
   font-size: 14px;
+  letter-spacing: 0.3px;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   
   &:focus {
     outline: none;
-    border-color: rgba(50, 144, 255, 0.5);
-    box-shadow: 0 0 0 2px rgba(50, 144, 255, 0.2);
+    border-color: rgba(115, 103, 240, 0.5);
+    box-shadow: 0 0 0 3px rgba(115, 103, 240, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: rgba(30, 30, 35, 0.5);
   }
   
   &::placeholder {
     color: rgba(255, 255, 255, 0.3);
   }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
-const DescriptionArea = styled.div`
-  margin-top: 8px;
-  margin-bottom: 24px;
-  padding: 16px;
-  background-color: #1a1a1a;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  line-height: 1.5;
+const DescriptionArea = styled(GlassPanel)`
+  margin-bottom: 16px;
+  padding: 20px 24px;
+  line-height: 1.6;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8);
+  position: relative;
+  
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(to bottom, #7367f0, #ce9ffc);
+  }
 `;
 
-// Add a Toast notification component
-const Toast = styled.div<{ type: 'success' | 'error' }>`
+const Toast = styled(motion.div)<{ type: 'success' | 'error' }>`
   position: fixed;
   bottom: 24px;
   right: 24px;
   padding: 16px 24px;
-  background-color: ${props => props.type === 'success' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(244, 67, 54, 0.9)'};
+  background: ${props => props.type === 'success' 
+    ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.95), rgba(56, 142, 60, 0.95))'
+    : 'linear-gradient(135deg, rgba(244, 67, 54, 0.95), rgba(211, 47, 47, 0.95))'};
   color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px ${props => props.type === 'success' 
+    ? 'rgba(76, 175, 80, 0.3)'
+    : 'rgba(244, 67, 54, 0.3)'};
   font-size: 14px;
+  font-weight: 500;
   z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 10px;
-  animation: fadeInUp 0.3s ease-out;
+  gap: 12px;
+  border: 1px solid ${props => props.type === 'success' 
+    ? 'rgba(76, 175, 80, 0.5)'
+    : 'rgba(244, 67, 54, 0.5)'};
+  min-width: 300px;
+`;
+
+const Modal = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled(GlassPanel)`
+  width: 450px;
+  padding: 30px;
+  background: rgba(25, 25, 30, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
   
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+  h3 {
+    margin-top: 0;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #f5f5f5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    svg {
+      color: #7367f0;
+      filter: drop-shadow(0 0 5px rgba(115, 103, 240, 0.5));
     }
   }
+`;
+
+const ErrorMessage = styled(motion.div)`
+  padding: 12px 16px;
+  background-color: rgba(244, 67, 54, 0.1);
+  border-left: 4px solid #f44336;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #f44336;
+  border-radius: 0 8px 8px 0;
 `;
 
 interface SecretsManagerProps {
@@ -261,6 +488,44 @@ interface SecretsManagerProps {
   onDecryptProfile: (profileId: string, password: string) => void;
   onReturn: () => void;
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { 
+      type: "spring",
+      stiffness: 300,
+      damping: 24
+    }
+  }
+};
+
+const tableRowVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    transition: { type: "spring", stiffness: 300, damping: 25 }
+  },
+  exit: { 
+    opacity: 0, 
+    x: 20, 
+    transition: { duration: 0.2 } 
+  }
+};
 
 const SecretsManager: React.FC<SecretsManagerProps> = ({
   activeProfile,
@@ -402,10 +667,32 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
 
   if (!activeProfile) {
     return (
-      <Container>
-        <NoSecretsMessage>
-          <div>Select a secrets profile from the sidebar or create a new one.</div>
-          <ActionButton onClick={onReturn}>
+      <Container
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <NoSecretsMessage
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <FaDatabase size={60} />
+            <div style={{ fontSize: '22px', fontWeight: 600, marginBottom: '12px' }}>No Secret Profile Selected</div>
+            <div style={{ fontSize: '16px', maxWidth: '500px', marginBottom: '20px' }}>
+              Select a secrets profile from the sidebar or create a new one to securely store your API keys and tokens.
+            </div>
+          </motion.div>
+          <ActionButton 
+            onClick={onReturn}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <FaChevronLeft size={12} /> Return to API Client
           </ActionButton>
         </NoSecretsMessage>
@@ -414,60 +701,98 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
   }
 
   return (
-    <Container>
-      <HeaderContainer>
+    <Container
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <HeaderContainer
+        variants={itemVariants}
+      >
         <HeaderTitle>
-          {activeProfile.isEncrypted ? <FaLock size={18} /> : <FaKey size={18} />}
+          {activeProfile.isEncrypted ? 
+            <FaLock size={22} style={{ color: '#7367f0' }} /> : 
+            <FaKey size={22} style={{ color: '#7367f0' }} />
+          }
           {activeProfile.name}
         </HeaderTitle>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <ActionButton 
+          <EncryptButton 
             onClick={() => setShowEncryptModal(true)}
             title={activeProfile.isEncrypted ? "Decrypt Profile" : "Encrypt Profile"}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            {activeProfile.isEncrypted ? <FaUnlock size={12} /> : <FaLock size={12} />}
+            {activeProfile.isEncrypted ? <FaUnlock size={14} /> : <FaLock size={14} />}
             {activeProfile.isEncrypted ? "Decrypt" : "Encrypt"}
-          </ActionButton>
+          </EncryptButton>
           <ActionButton 
             onClick={handleExportSecrets}
             title="Export as .env file"
             disabled={activeProfile.isEncrypted}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <FaFileExport size={12} /> Export
+            <FaFileExport size={14} /> Export
           </ActionButton>
-          <ActionButton 
+          <DeleteButton 
             onClick={handleDeleteProfile}
             title="Delete this profile"
-            style={{ backgroundColor: 'rgba(244, 67, 54, 0.1)', borderColor: 'rgba(244, 67, 54, 0.3)', color: '#f44336' }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <FaTrash size={12} /> Delete
-          </ActionButton>
-          <ActionButton onClick={onReturn}>
-            <FaChevronLeft size={12} /> Return
+            <FaTrash size={14} /> Delete
+          </DeleteButton>
+          <ActionButton 
+            onClick={onReturn}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FaChevronLeft size={14} /> Return
           </ActionButton>
         </div>
       </HeaderContainer>
       
-      <ContentContainer>
+      <ContentContainer
+        variants={containerVariants}
+      >
         {activeProfile.description && (
-          <DescriptionArea>
+          <DescriptionArea
+            variants={itemVariants}
+          >
             {activeProfile.description}
           </DescriptionArea>
         )}
         
         {activeProfile.isEncrypted && (
-          <DescriptionArea style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', borderColor: 'rgba(255, 193, 7, 0.3)', color: '#ffc107' }}>
-            <FaLock style={{ marginRight: '8px' }} /> This profile is encrypted. Decrypt it to view or edit secrets.
+          <DescriptionArea 
+            variants={itemVariants}
+            style={{ 
+              borderColor: 'rgba(255, 193, 7, 0.3)', 
+              background: 'linear-gradient(to right, rgba(255, 193, 7, 0.1), rgba(25, 25, 30, 0.5))'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <FaLock size={24} style={{ color: '#ffc107' }} />
+              <div>
+                <div style={{ fontWeight: 600, marginBottom: '4px', color: '#ffc107' }}>Encrypted Profile</div>
+                <div>This profile is encrypted. Decrypt it using your password to view or edit secrets.</div>
+              </div>
+            </div>
           </DescriptionArea>
         )}
         
-        <AddSecretForm>
+        <AddSecretForm
+          variants={itemVariants}
+        >
           <Input
             type="text"
             placeholder="Secret Key (e.g. API_KEY)"
             value={newSecretKey}
             onChange={(e) => setNewSecretKey(e.target.value)}
             disabled={activeProfile.isEncrypted}
+            whileFocus={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
           />
           <Input
             type="text"
@@ -475,145 +800,190 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
             value={newSecretValue}
             onChange={(e) => setNewSecretValue(e.target.value)}
             disabled={activeProfile.isEncrypted}
+            whileFocus={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
           />
           <ActionButton 
             onClick={handleAddSecret} 
             disabled={!newSecretKey.trim() || activeProfile.isEncrypted}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <FaPlus size={12} /> Add Secret
+            <FaPlus size={14} /> Add Secret
           </ActionButton>
         </AddSecretForm>
         
         {activeProfile.secrets.length === 0 ? (
-          <NoSecretsMessage>
-            <div>No secrets yet. Use the form above to add your first secret.</div>
+          <NoSecretsMessage
+            variants={itemVariants}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              <FaKey size={40} />
+              <div style={{ fontSize: '18px', fontWeight: 500, marginBottom: '8px' }}>No secrets yet</div>
+              <div>Use the form above to add your first secret key and value.</div>
+            </motion.div>
           </NoSecretsMessage>
         ) : (
-          <SecretListTable>
+          <SecretListTable
+            variants={itemVariants}
+          >
             <TableHeader>
               <div>Key</div>
               <div>Value</div>
               <div>Actions</div>
             </TableHeader>
-            {activeProfile.secrets.map((secret) => (
-              <TableRow key={secret.id}>
-                <SecretKeyCell>{secret.key}</SecretKeyCell>
-                <SecretValueCell>
-                  {secret.isMasked ? '••••••••••••••••' : secret.value}
-                </SecretValueCell>
-                <ActionsCell>
-                  <ActionIcon 
-                    onClick={() => toggleSecretMask(secret.id)}
-                    title={secret.isMasked ? "Show value" : "Hide value"}
-                  >
-                    {secret.isMasked ? <FaEye size={14} /> : <FaEyeSlash size={14} />}
-                  </ActionIcon>
-                  <ActionIcon
-                    onClick={() => handleDeleteSecret(secret.id)}
-                    title="Delete secret"
-                    disabled={activeProfile.isEncrypted}
-                    style={{ opacity: activeProfile.isEncrypted ? 0.5 : 1 }}
-                  >
-                    <FaTrash size={14} />
-                  </ActionIcon>
-                </ActionsCell>
-              </TableRow>
-            ))}
+            <AnimatePresence>
+              {activeProfile.secrets.map((secret, index) => (
+                <TableRow 
+                  key={secret.id}
+                  custom={index}
+                  variants={tableRowVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <SecretKeyCell>{secret.key}</SecretKeyCell>
+                  <SecretValueCell>
+                    {secret.isMasked ? '••••••••••••••••' : secret.value}
+                  </SecretValueCell>
+                  <ActionsCell>
+                    <ActionIcon 
+                      onClick={() => toggleSecretMask(secret.id)}
+                      title={secret.isMasked ? "Show value" : "Hide value"}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      {secret.isMasked ? <FaEye size={16} /> : <FaEyeSlash size={16} />}
+                    </ActionIcon>
+                    <ActionIcon
+                      onClick={() => handleDeleteSecret(secret.id)}
+                      title="Delete secret"
+                      disabled={activeProfile.isEncrypted}
+                      style={{ opacity: activeProfile.isEncrypted ? 0.5 : 1 }}
+                      whileHover={{ scale: 1.1, backgroundColor: 'rgba(244, 67, 54, 0.2)' }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <FaTrash size={16} />
+                    </ActionIcon>
+                  </ActionsCell>
+                </TableRow>
+              ))}
+            </AnimatePresence>
           </SecretListTable>
         )}
       </ContentContainer>
       
       {/* Encrypt Modal */}
-      {showEncryptModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div style={{
-            width: '400px',
-            backgroundColor: '#1a1a1a',
-            borderRadius: '8px',
-            padding: '20px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-          }}>
-            <h3>
-              {activeProfile.isEncrypted ? "Decrypt Profile" : "Encrypt Profile"}
-            </h3>
-            <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '16px' }}>
-              {activeProfile.isEncrypted 
-                ? "Enter your password to decrypt this profile." 
-                : "Enter a password to encrypt this profile with AES-256 encryption. Make sure to remember this password, as there's no way to recover your secrets if you forget it."}
-            </p>
-            
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', marginBottom: '16px' }}
-            />
-            
-            {!activeProfile.isEncrypted && (
+      <AnimatePresence>
+        {showEncryptModal && (
+          <Modal
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <ModalContent
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            >
+              <h3>
+                {activeProfile.isEncrypted ? 
+                  <><FaUnlock /> Decrypt Profile</> : 
+                  <><FaLock /> Encrypt Profile</>
+                }
+              </h3>
+              <p style={{ fontSize: '15px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '20px', lineHeight: '1.6' }}>
+                {activeProfile.isEncrypted 
+                  ? "Enter your password to decrypt this profile and view its secrets." 
+                  : "Enter a password to encrypt this profile with AES-256 encryption. Make sure to remember this password, as there's no way to recover your secrets if you forget it."}
+              </p>
+              
               <Input
                 type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 style={{ width: '100%', marginBottom: '16px' }}
+                whileFocus={{ scale: 1.02 }}
               />
-            )}
-            
-            {error && (
-              <div style={{ 
-                padding: '8px 12px', 
-                backgroundColor: 'rgba(244, 67, 54, 0.1)', 
-                borderLeft: '3px solid #f44336',
-                marginBottom: '16px',
-                fontSize: '14px',
-                color: '#f44336'
-              }}>
-                {error}
+              
+              {!activeProfile.isEncrypted && (
+                <Input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={{ width: '100%', marginBottom: '24px' }}
+                  whileFocus={{ scale: 1.02 }}
+                />
+              )}
+              
+              <AnimatePresence>
+                {error && (
+                  <ErrorMessage
+                    initial={{ opacity: 0, y: -10, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {error}
+                  </ErrorMessage>
+                )}
+              </AnimatePresence>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '20px' }}>
+                <ActionButton 
+                  onClick={() => {
+                    setShowEncryptModal(false);
+                    setPassword('');
+                    setConfirmPassword('');
+                    setError(null);
+                  }}
+                  style={{ backgroundColor: 'rgba(60, 60, 70, 0.8)' }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Cancel
+                </ActionButton>
+                <EncryptButton 
+                  onClick={handleEncryptProfile}
+                  disabled={!password || (!activeProfile.isEncrypted && password !== confirmPassword)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {activeProfile.isEncrypted ? <FaUnlock size={14} /> : <FaLock size={14} />}
+                  {activeProfile.isEncrypted ? "Decrypt" : "Encrypt"}
+                </EncryptButton>
               </div>
-            )}
-            
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <ActionButton 
-                onClick={() => {
-                  setShowEncryptModal(false);
-                  setPassword('');
-                  setConfirmPassword('');
-                  setError(null);
-                }}
-                style={{ backgroundColor: 'transparent' }}
-              >
-                Cancel
-              </ActionButton>
-              <ActionButton 
-                onClick={handleEncryptProfile}
-                disabled={!password || (!activeProfile.isEncrypted && password !== confirmPassword)}
-              >
-                {activeProfile.isEncrypted ? "Decrypt" : "Encrypt"}
-              </ActionButton>
-            </div>
-          </div>
-        </div>
-      )}
+            </ModalContent>
+          </Modal>
+        )}
+      </AnimatePresence>
       
       {/* Toast notifications */}
-      {toast && (
-        <Toast type={toast.type}>
-          {toast.type === 'success' ? <FaCheck size={16} /> : <FaTrash size={16} />}
-          {toast.message}
-        </Toast>
-      )}
+      <AnimatePresence>
+        {toast && (
+          <Toast 
+            type={toast.type}
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          >
+            {toast.type === 'success' ? 
+              <FaCheck size={18} style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '4px', borderRadius: '50%' }} /> : 
+              <FaTrash size={18} style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '4px', borderRadius: '50%' }} />
+            }
+            {toast.message}
+          </Toast>
+        )}
+      </AnimatePresence>
     </Container>
   );
 };

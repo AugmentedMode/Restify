@@ -21,6 +21,7 @@ import {
   FaCode as FaCodeCommit
 } from 'react-icons/fa';
 import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
 import githubService from '../services/GitHubService';
 import useRequestHistory from '../hooks/useRequestHistory';
 
@@ -34,28 +35,65 @@ interface HomeProps {
 }
 
 // Styled components for the dashboard
-const DashboardContainer = styled.div`
+const DashboardContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   padding: 24px;
   overflow-y: auto;
-  background-color: #121212;
-  color: #e0e0e0;
+  background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+  color: #f5f5f5;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: radial-gradient(circle at top right, rgba(115, 103, 240, 0.05), transparent 60%);
+    pointer-events: none;
+  }
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
 `;
 
-const DashboardHeader = styled.div`
+const DashboardHeader = styled(motion.div)`
   display: flex;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 `;
 
-const AppLogo = styled.div`
+const AppLogo = styled(motion.div)`
   display: flex;
   align-items: center;
   gap: 12px;
   margin-right: auto;
+  
+  svg {
+    filter: drop-shadow(0 0 8px rgba(115, 103, 240, 0.5));
+    color: #7367f0;
+  }
 `;
 
 const QuickActions = styled.div`
@@ -63,25 +101,35 @@ const QuickActions = styled.div`
   gap: 12px;
 `;
 
-const ActionButton = styled.button`
+const ActionButton = styled(motion.button)`
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #222222;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
+  background: rgba(40, 40, 50, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 16px;
   color: #fff;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   
   &:hover {
-    background-color: #FF385C;
+    background: rgba(50, 50, 60, 0.7);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    border-color: rgba(115, 103, 240, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
   svg {
     font-size: 16px;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
   }
 `;
 
@@ -89,7 +137,7 @@ const DashboardGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: auto auto;
-  gap: 20px;
+  gap: 24px;
   
   @media (max-width: 1200px) {
     grid-template-columns: 1fr 1fr;
@@ -100,13 +148,24 @@ const DashboardGrid = styled.div`
   }
 `;
 
-const MetricsCard = styled.div`
-  background-color: #1a1a1a;
-  border-radius: 10px;
+const MetricsCard = styled(motion.div)`
+  background: rgba(30, 30, 35, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   height: auto;
   min-height: 220px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
   
   h3 {
     font-size: 18px;
@@ -115,8 +174,24 @@ const MetricsCard = styled.div`
     color: #fff;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-weight: 500;
+    gap: 10px;
+    font-weight: 600;
+    
+    svg {
+      color: #7367f0;
+      filter: drop-shadow(0 0 5px rgba(115, 103, 240, 0.5));
+    }
+  }
+  
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 60%;
+    background: linear-gradient(to bottom, #7367f0, #ce9ffc);
+    border-radius: 0 0 3px 3px;
   }
 `;
 
@@ -146,16 +221,25 @@ const StatsGrid = styled.div`
   gap: 16px;
 `;
 
-const StatItem = styled.div`
-  background-color: #222222;
-  border-radius: 8px;
-  padding: 16px;
+const StatItem = styled(motion.div)`
+  background: rgba(25, 25, 30, 0.5);
+  border-radius: 12px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  
+  &:hover {
+    background: rgba(35, 35, 40, 0.6);
+    border-color: rgba(115, 103, 240, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
   
   .label {
     font-size: 14px;
-    color: #999;
+    color: rgba(255, 255, 255, 0.6);
     margin-bottom: 8px;
   }
   
@@ -163,6 +247,9 @@ const StatItem = styled.div`
     font-size: 28px;
     font-weight: bold;
     color: #fff;
+    background: linear-gradient(90deg, #fff, #ce9ffc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 `;
 
@@ -174,7 +261,7 @@ const GitHubStatsItem = styled(StatItem)`
     position: absolute;
     top: 12px;
     right: 12px;
-    background-color: #FF385C;
+    background: linear-gradient(135deg, #7367f0, #ce9ffc);
     border-radius: 50%;
     width: 24px;
     height: 24px;
@@ -205,7 +292,7 @@ const GitHubStatsItem = styled(StatItem)`
 `;
 
 const ContributionContainer = styled.div`
-  margin-top: 12px;
+  margin-top: 16px;
 `;
 
 const DayHeaders = styled.div`
@@ -217,7 +304,7 @@ const DayHeaders = styled.div`
 
 const DayHeader = styled.div`
   font-size: 10px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.6);
   text-align: center;
 `;
 
@@ -232,13 +319,19 @@ const ContributionGrid = styled.div`
 const ContributionCell = styled.div<{ intensity: number }>`
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 2px;
+  border-radius: 3px;
   background-color: ${props => {
     const base = 0.1;
     const intensity = base + (props.intensity * 0.18);
-    return `rgba(76, 175, 80, ${intensity})`;
+    return `rgba(115, 103, 240, ${intensity})`;
   }};
   min-height: 8px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 8px rgba(115, 103, 240, 0.5);
+  }
 `;
 
 const ContributionLegend = styled.div`
@@ -248,7 +341,7 @@ const ContributionLegend = styled.div`
   margin-top: 8px;
   gap: 4px;
   font-size: 10px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.6);
 `;
 
 const LegendCells = styled.div`
@@ -263,7 +356,7 @@ const LegendCell = styled.div<{ intensity: number }>`
   background-color: ${props => {
     const base = 0.1;
     const intensity = base + (props.intensity * 0.18);
-    return `rgba(76, 175, 80, ${intensity})`;
+    return `rgba(115, 103, 240, ${intensity})`;
   }};
 `;
 
@@ -278,41 +371,76 @@ const CommitStatItem = styled.div`
   text-align: center;
   
   .count {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: bold;
     color: #fff;
+    text-shadow: 0 0 10px rgba(115, 103, 240, 0.5);
   }
   
   .label {
     font-size: 12px;
-    color: #999;
-    margin-top: 2px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 4px;
   }
 `;
 
 const RequestHistory = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 12px;
   max-height: 260px;
   overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
 `;
 
-const HistoryItem = styled.div`
-  background-color: #222222;
-  border-radius: 8px;
-  padding: 12px;
+const HistoryItem = styled(motion.div)`
+  background: rgba(25, 25, 30, 0.5);
+  border-radius: 10px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   margin-bottom: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #7367f0, #ce9ffc);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
   
   &:hover {
     transform: translateX(4px);
-    background-color: #2a2a2a;
+    background: rgba(35, 35, 40, 0.6);
+    border-color: rgba(115, 103, 240, 0.2);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    
+    &::before {
+      opacity: 1;
+    }
   }
   
   .header {
@@ -324,45 +452,46 @@ const HistoryItem = styled.div`
   .method {
     font-size: 11px;
     font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 3px;
+    padding: 3px 8px;
+    border-radius: 6px;
     min-width: 50px;
     text-align: center;
+    letter-spacing: 0.5px;
   }
   
   .get {
-    background-color: #4CAF50;
-    color: white;
+    background-color: rgba(115, 103, 240, 0.15);
+    color: #7367f0;
   }
   
   .post {
-    background-color: #2196F3;
-    color: white;
+    background-color: rgba(0, 166, 153, 0.15);
+    color: #00A699;
   }
   
   .put {
-    background-color: #FF9800;
-    color: white;
+    background-color: rgba(255, 149, 0, 0.15);
+    color: #FF9500;
   }
   
   .delete {
-    background-color: #F44336;
-    color: white;
+    background-color: rgba(255, 56, 92, 0.15);
+    color: #FF385C;
   }
   
   .patch {
-    background-color: #9C27B0;
-    color: white;
+    background-color: rgba(175, 82, 222, 0.15);
+    color: #AF52DE;
   }
 
   .options {
-    background-color: #607D8B;
-    color: white;
+    background-color: rgba(96, 125, 139, 0.15);
+    color: #607D8B;
   }
   
   .head {
-    background-color: #795548;
-    color: white;
+    background-color: rgba(121, 85, 72, 0.15);
+    color: #795548;
   }
   
   .content-row {
@@ -380,7 +509,7 @@ const HistoryItem = styled.div`
   
   .time {
     font-size: 11px;
-    color: #999;
+    color: rgba(255, 255, 255, 0.6);
     text-align: left;
     margin-top: 4px;
     width: 100%;
@@ -388,105 +517,143 @@ const HistoryItem = styled.div`
   
   .status {
     font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 3px;
+    padding: 2px 8px;
+    border-radius: 6px;
     font-weight: 500;
     
     &.success {
-      background-color: rgba(76, 175, 80, 0.2);
+      background-color: rgba(76, 175, 80, 0.15);
       color: #4CAF50;
     }
     
     &.error {
-      background-color: rgba(244, 67, 54, 0.2);
+      background-color: rgba(244, 67, 54, 0.15);
       color: #F44336;
     }
   }
 `;
 
-const ViewMore = styled.div`
+const ViewMore = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-top: 12px;
-  color: #FF385C;
+  margin-top: 16px;
+  color: #7367f0;
   cursor: pointer;
   font-size: 14px;
   gap: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
   
   &:hover {
-    text-decoration: underline;
+    color: #ce9ffc;
+    transform: translateX(4px);
+    
+    svg {
+      transform: translateX(4px);
+    }
+  }
+  
+  svg {
+    transition: transform 0.3s ease;
   }
 `;
 
 const KanbanBoard = styled.div`
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 12px;
+  margin-top: 16px;
 `;
 
 const KanbanColumn = styled.div`
-  background-color: #1a1a1a;
-  border-radius: 6px;
-  padding: 10px;
+  background: rgba(25, 25, 30, 0.5);
+  border-radius: 10px;
+  padding: 12px;
   flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   
   .column-header {
     font-size: 14px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     color: #fff;
     
     .count {
-      background-color: #333333;
+      background: rgba(40, 40, 50, 0.6);
       border-radius: 10px;
-      padding: 2px 6px;
-      font-size: 10px;
-      color: #ccc;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.8);
     }
   }
 `;
 
-// Add Kanban task item styling
-const KanbanTask = styled.div<{ priority: 'high' | 'medium' | 'low' }>`
-  background-color: #222222;
-  border-radius: 6px;
-  padding: 8px 10px;
+const KanbanTask = styled(motion.div)<{ priority: 'high' | 'medium' | 'low' }>`
+  background: rgba(35, 35, 40, 0.6);
+  border-radius: 8px;
+  padding: 12px 14px;
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: #fff;
-  border-left: 3px solid ${props => 
-    props.priority === 'high' ? '#F44336' : 
-    props.priority === 'medium' ? '#FF9800' : 
-    '#4CAF50'
-  };
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+    background: ${props => 
+      props.priority === 'high' ? 'linear-gradient(to bottom, #F44336, #FF7676)' : 
+      props.priority === 'medium' ? 'linear-gradient(to bottom, #FF9800, #FFBD45)' : 
+      'linear-gradient(to bottom, #4CAF50, #7ED47E)'
+    };
+  }
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    border-color: ${props => 
+      props.priority === 'high' ? 'rgba(244, 67, 54, 0.3)' : 
+      props.priority === 'medium' ? 'rgba(255, 152, 0, 0.3)' : 
+      'rgba(76, 175, 80, 0.3)'
+    };
+  }
   
   .task-title {
-    margin-bottom: 4px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    font-weight: 500;
   }
   
   .task-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 10px;
-    color: #999;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
   }
   
   .task-priority {
     display: inline-block;
-    padding: 2px 6px;
+    padding: 3px 8px;
     border-radius: 10px;
-    font-size: 9px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
     background-color: ${props => 
-      props.priority === 'high' ? 'rgba(244, 67, 54, 0.2)' : 
-      props.priority === 'medium' ? 'rgba(255, 152, 0, 0.2)' : 
-      'rgba(76, 175, 80, 0.2)'
+      props.priority === 'high' ? 'rgba(244, 67, 54, 0.15)' : 
+      props.priority === 'medium' ? 'rgba(255, 152, 0, 0.15)' : 
+      'rgba(76, 175, 80, 0.15)'
     };
     color: ${props => 
       props.priority === 'high' ? '#F44336' : 
@@ -496,38 +663,50 @@ const KanbanTask = styled.div<{ priority: 'high' | 'medium' | 'low' }>`
   }
 `;
 
-const QuickAccessItem = styled.div`
+const QuickAccessItem = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #222222;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
+  background: rgba(25, 25, 30, 0.5);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   
   &:hover {
-    background-color: #2a2a2a;
+    background: rgba(35, 35, 40, 0.6);
+    transform: translateX(5px);
+    border-color: rgba(115, 103, 240, 0.2);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
   
   .content {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     
     svg {
-      color: #FF385C;
+      color: #7367f0;
+      filter: drop-shadow(0 0 5px rgba(115, 103, 240, 0.3));
     }
     
     span {
       color: #fff;
-      font-size: 14px;
+      font-size: 15px;
+      font-weight: 500;
     }
   }
   
   .icon {
-    color: #777;
+    color: rgba(255, 255, 255, 0.4);
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover .icon {
+    color: rgba(255, 255, 255, 0.7);
+    transform: translateX(5px);
   }
 `;
 
@@ -541,20 +720,47 @@ const CardHeader = styled.div`
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
 `;
 
-const PRItem = styled.div`
-  background-color: #222222;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
+const PRItem = styled(motion.div)`
+  background: rgba(25, 25, 30, 0.5);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #7367f0, #ce9ffc);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  &:hover {
+    transform: translateY(-3px);
+    background: rgba(35, 35, 40, 0.6);
+    border-color: rgba(115, 103, 240, 0.2);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    
+    &::before {
+      opacity: 1;
+    }
+  }
   
   .title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     color: #fff;
   }
   
@@ -564,15 +770,20 @@ const PRItem = styled.div`
     
     .repo {
       font-size: 12px;
-      color: #999;
+      color: rgba(255, 255, 255, 0.6);
       display: flex;
       align-items: center;
       gap: 6px;
+      
+      svg {
+        color: #7367f0;
+      }
     }
     
     .time {
       font-size: 12px;
-      color: #FF385C;
+      color: #ce9ffc;
+      font-weight: 500;
     }
   }
 `;
@@ -593,6 +804,57 @@ interface GitHubStats {
   contributions: number[];
   initialized: boolean;
 }
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.08,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { 
+      type: "spring",
+      stiffness: 300,
+      damping: 24
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { 
+      type: "spring", 
+      stiffness: 300, 
+      damping: 25 
+    }
+  }
+};
+
+const listItemVariants = {
+  hidden: { x: -20, opacity: 0 },
+  visible: { 
+    x: 0, 
+    opacity: 1,
+    transition: { 
+      type: "spring", 
+      stiffness: 300, 
+      damping: 25 
+    }
+  }
+};
 
 const Home: React.FC<HomeProps> = ({
   onCreateCollection,
@@ -748,26 +1010,56 @@ const Home: React.FC<HomeProps> = ({
   };
 
   return (
-    <DashboardContainer>
-      <DashboardHeader>
+    <DashboardContainer
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <DashboardHeader variants={itemVariants}>
         <AppLogo>
-          <FaCode size={24} color="#FF385C" />
+          <FaCode size={24} />
           <div>
-            <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 500 }}>Restify</h1>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#999' }}>Developer Dashboard</p>
+            <motion.h1 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              style={{ margin: 0, fontSize: '22px', fontWeight: 600 }}
+            >
+              Restify
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)' }}
+            >
+              Developer Dashboard
+            </motion.p>
           </div>
         </AppLogo>
         <QuickActions>
-          <ActionButton onClick={onCreateCollection}>
+          <ActionButton 
+            onClick={onCreateCollection}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <FaPlus /> New Collection
           </ActionButton>
           {onImportFromFile && (
-            <ActionButton onClick={onImportFromFile}>
+            <ActionButton 
+              onClick={onImportFromFile}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <FaFileImport /> Import
             </ActionButton>
           )}
           {onNavigateToSettings && (
-            <ActionButton onClick={onNavigateToSettings}>
+            <ActionButton 
+              onClick={onNavigateToSettings}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <FaCog />
             </ActionButton>
           )}
@@ -775,65 +1067,112 @@ const Home: React.FC<HomeProps> = ({
       </DashboardHeader>
       
       <DashboardGrid>
-
          {/* Recent Activity */}
-         <MetricsCard>
+         <MetricsCard variants={cardVariants}>
           <h3><FaHistory /> Recent Activity</h3>
           <RequestHistory>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '20px 0', 
+                color: 'rgba(255, 255, 255, 0.6)'
+              }}>
                 Loading history...
               </div>
             ) : requestHistory.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '20px 0', 
+                color: 'rgba(255, 255, 255, 0.6)'
+              }}>
                 No request history yet
               </div>
             ) : (
-              requestHistory.slice(0, 4).map(item => (
-                <HistoryItem key={item.id}>
-                  <div className="header">
-                    <div className={`method ${item.request.method.toLowerCase()}`}>
-                      {item.request.method}
-                    </div>
-                    <div className="content-row">
-                      <div className="name">{item.name}</div>
-                      <div className={`status ${item.response.status >= 200 && item.response.status < 300 ? 'success' : 'error'}`}>
-                        {item.response.status}
+              <AnimatePresence>
+                {requestHistory.slice(0, 4).map((item, index) => (
+                  <HistoryItem 
+                    key={item.id}
+                    custom={index}
+                    variants={listItemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div className="header">
+                      <div className={`method ${item.request.method.toLowerCase()}`}>
+                        {item.request.method}
+                      </div>
+                      <div className="content-row">
+                        <div className="name">{item.name}</div>
+                        <div className={`status ${item.response.status >= 200 && item.response.status < 300 ? 'success' : 'error'}`}>
+                          {item.response.status}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="time">{formatTimestamp(item.timestamp)}</div>
-                </HistoryItem>
-              ))
+                    <div className="time">{formatTimestamp(item.timestamp)}</div>
+                  </HistoryItem>
+                ))}
+              </AnimatePresence>
             )}
           </RequestHistory>
-          <ViewMore>
+          <ViewMore
+            whileHover={{ x: 5 }}
+          >
             View all history <FaArrowRight size={12} />
           </ViewMore>
         </MetricsCard>
 
         
         {/* GitHub Stats */}
-        <MetricsCard>
+        <MetricsCard variants={cardVariants}>
           <CardHeader>
             <h3><FaGithub /> GitHub Activity</h3>
             {onNavigateToGitHub && (
-              <ActionButton onClick={onNavigateToGitHub} style={{ padding: '4px 8px' }}>
+              <ActionButton 
+                onClick={onNavigateToGitHub} 
+                style={{ padding: '8px 12px' }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 View All
               </ActionButton>
             )}
           </CardHeader>
           
           {!githubStats.initialized ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <FaGithub size={32} color="#777" />
-              <p style={{ marginTop: '12px', color: '#999' }}>Connect to GitHub to see your activity</p>
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              style={{ 
+                textAlign: 'center', 
+                padding: '20px 0',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '70%'
+              }}
+            >
+              <FaGithub size={32} style={{ opacity: 0.4, marginBottom: 16 }} />
+              <p style={{ 
+                marginTop: '12px', 
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontSize: '14px'
+              }}>
+                Connect to GitHub to see your activity
+              </p>
               {onNavigateToGitHub && (
-                <ActionButton onClick={onNavigateToGitHub} style={{ margin: '16px auto 0', display: 'inline-flex' }}>
+                <ActionButton 
+                  onClick={onNavigateToGitHub} 
+                  style={{ margin: '16px auto 0', display: 'inline-flex' }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   Connect
                 </ActionButton>
               )}
-            </div>
+            </motion.div>
           ) : (
             <>
               <CommitStats>
@@ -851,7 +1190,12 @@ const Home: React.FC<HomeProps> = ({
                 </CommitStatItem>
               </CommitStats>
               
-              <div style={{ marginBottom: '8px', fontSize: '13px', color: '#999' }}>
+              <div style={{ 
+                marginBottom: '12px', 
+                fontSize: '13px', 
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontWeight: 500
+              }}>
                 Last 28 Days
               </div>
               
@@ -867,7 +1211,10 @@ const Home: React.FC<HomeProps> = ({
                 </DayHeaders>
                 <ContributionGrid>
                   {getContributionData().map((intensity, idx) => (
-                    <ContributionCell key={idx} intensity={intensity} />
+                    <ContributionCell 
+                      key={idx} 
+                      intensity={intensity}
+                    />
                   ))}
                 </ContributionGrid>
               </ContributionContainer>
@@ -889,10 +1236,13 @@ const Home: React.FC<HomeProps> = ({
        
          
         {/* Quick Access */}
-        <MetricsCard>
+        <MetricsCard variants={cardVariants}>
           <h3><FaBolt /> Quick Access</h3>
           <div>
-          <QuickAccessItem>
+            <QuickAccessItem
+              whileHover={{ x: 5 }}
+              whileTap={{ scale: 0.98 }}
+            >
               <div className="content">
                 <FaBookmark />
                 <span>API Collections</span>
@@ -903,7 +1253,11 @@ const Home: React.FC<HomeProps> = ({
             </QuickAccessItem>
 
             {onNavigateToGitHub && (
-              <QuickAccessItem onClick={onNavigateToGitHub}>
+              <QuickAccessItem 
+                onClick={onNavigateToGitHub}
+                whileHover={{ x: 5 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <div className="content">
                   <FaGithub />
                   <span>Pull Requests</span>
@@ -916,7 +1270,11 @@ const Home: React.FC<HomeProps> = ({
 
 
             {onNavigateToSecrets && (
-              <QuickAccessItem onClick={onNavigateToSecrets}>
+              <QuickAccessItem 
+                onClick={onNavigateToSecrets}
+                whileHover={{ x: 5 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <div className="content">
                   <FaKey />
                   <span>Secrets Manager</span>
@@ -929,7 +1287,11 @@ const Home: React.FC<HomeProps> = ({
 
             {/* kanban board */}
             {onNavigateToKanban && (
-              <QuickAccessItem onClick={onNavigateToKanban}>
+              <QuickAccessItem 
+                onClick={onNavigateToKanban}
+                whileHover={{ x: 5 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <div className="content">
                   <FaColumns />
                   <span>Kanban Board</span>
@@ -940,43 +1302,67 @@ const Home: React.FC<HomeProps> = ({
               </QuickAccessItem>
             )}
             {/* notes */}
-              <QuickAccessItem>
-                <div className="content">
-                  <FaStickyNote />
-                  <span>Notes</span>
-                </div>
-                <div className="icon">
-                  <FaExternalLinkAlt size={12} />
-                </div>
-              </QuickAccessItem>            
-
+            <QuickAccessItem
+              whileHover={{ x: 5 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="content">
+                <FaStickyNote />
+                <span>Notes</span>
+              </div>
+              <div className="icon">
+                <FaExternalLinkAlt size={12} />
+              </div>
+            </QuickAccessItem>            
           </div>
         </MetricsCard>
         
 
         {/* Pull Requests */}
-        <MediumCard>
+        <MediumCard variants={cardVariants}>
           <CardHeader>
             <h3><FaExchangeAlt /> Pull Requests</h3>
             {onNavigateToGitHub && (
-              <ActionButton onClick={onNavigateToGitHub} style={{ padding: '4px 8px' }}>
+              <ActionButton 
+                onClick={onNavigateToGitHub} 
+                style={{ padding: '8px 12px' }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 View All
               </ActionButton>
             )}
           </CardHeader>
           
           {!githubStats.initialized ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <p style={{ color: '#999' }}>Connect to GitHub to see your pull requests</p>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '20px 0',
+              color: 'rgba(255, 255, 255, 0.6)',
+              fontSize: '14px'
+            }}>
+              <p>Connect to GitHub to see your pull requests</p>
             </div>
           ) : githubStats.recentPRs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <p style={{ color: '#999' }}>No open pull requests</p>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '20px 0',
+              color: 'rgba(255, 255, 255, 0.6)',
+              fontSize: '14px'
+            }}>
+              <p>No open pull requests</p>
             </div>
           ) : (
-            <div>
-              {githubStats.recentPRs.map((pr: any) => (
-                <PRItem key={pr.id}>
+            <AnimatePresence>
+              {githubStats.recentPRs.map((pr: any, index) => (
+                <PRItem 
+                  key={pr.id}
+                  custom={index}
+                  variants={listItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  transition={{ delay: 0.1 + index * 0.1 }}
+                >
                   <div className="title">{pr.title}</div>
                   <div className="meta">
                     <div className="repo">
@@ -989,41 +1375,61 @@ const Home: React.FC<HomeProps> = ({
                   </div>
                 </PRItem>
               ))}
-            </div>
+            </AnimatePresence>
           )}
         </MediumCard>
        
         
         {/* Kanban Board Overview */}
-        <MetricsCard>
+        <MetricsCard variants={cardVariants}>
           <CardHeader>
-            <h3><FaColumns />Todo</h3>
+            <h3><FaColumns /> Todo</h3>
             {onNavigateToKanban && (
-              <ActionButton onClick={onNavigateToKanban}>
+              <ActionButton 
+                onClick={onNavigateToKanban}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 Open Board
               </ActionButton>
             )}
           </CardHeader>
           
-          <div style={{ marginBottom: '10px', fontSize: '13px', color: '#999' }}>
+          <div style={{ 
+            marginBottom: '16px', 
+            fontSize: '13px', 
+            color: 'rgba(255, 255, 255, 0.6)',
+            fontWeight: 500
+          }}>
             In Progress • Sorted by Urgency
           </div>
           
           <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
-            {inProgressTasks.map(task => (
-              <KanbanTask key={task.id} priority={task.priority as 'high' | 'medium' | 'low'}>
-                <div className="task-title">
-                  {task.title}
-                  <span className={`task-priority`}>
-                    {task.priority.toUpperCase()}
-                  </span>
-                </div>
-                <div className="task-meta">
-                  <span>Assigned to: {task.assignee}</span>
-                  <span>Due: {task.dueDate}</span>
-                </div>
-              </KanbanTask>
-            ))}
+            <AnimatePresence>
+              {inProgressTasks.map((task, index) => (
+                <KanbanTask 
+                  key={task.id} 
+                  priority={task.priority as 'high' | 'medium' | 'low'}
+                  custom={index}
+                  variants={listItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  transition={{ delay: 0.1 + index * 0.1 }}
+                  whileHover={{ y: -3 }}
+                >
+                  <div className="task-title">
+                    {task.title}
+                    <span className={`task-priority`}>
+                      {task.priority.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="task-meta">
+                    <span>Assigned to: {task.assignee}</span>
+                    <span>Due: {task.dueDate}</span>
+                  </div>
+                </KanbanTask>
+              ))}
+            </AnimatePresence>
           </div>
         </MetricsCard>
       </DashboardGrid>

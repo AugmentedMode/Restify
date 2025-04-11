@@ -4,12 +4,13 @@ import styled, { css, keyframes } from 'styled-components';
 const colors = {
   background: {
     primary: '#121212',
-    secondary: '#1e1e1e',
+    secondary: '#1a1a1a',
     tertiary: '#252525',
     elevated: '#2c2c2c',
+    glass: 'rgba(30, 30, 35, 0.7)',
   },
   border: {
-    light: 'rgba(255, 255, 255, 0.1)',
+    light: 'rgba(255, 255, 255, 0.08)',
     medium: 'rgba(255, 255, 255, 0.15)',
     focused: 'rgba(255, 255, 255, 0.25)',
   },
@@ -20,17 +21,18 @@ const colors = {
     disabled: 'rgba(255, 255, 255, 0.38)',
   },
   accent: {
-    primary: '#FF385C', // Airbnb red
-    primaryHover: '#FF5A76',
-    secondary: '#00A699', // Turquoise
-    secondaryHover: '#00C2B3',
+    primary: '#7367f0', // Purple accent
+    primaryHover: '#8e85f2',
+    secondary: '#ce9ffc', // Light purple
+    secondaryHover: '#d9b7fe',
     blue: '#0A84FF',
     purple: '#AF52DE',
     yellow: '#FFCC00',
     orange: '#FF9500',
+    gradient: 'linear-gradient(135deg, #7367f0, #ce9ffc)', // Gradient accent
   },
   method: {
-    get: '#0A84FF',
+    get: '#7367f0', // Changed to match our theme
     post: '#00A699',
     put: '#FF9500',
     delete: '#FF385C',
@@ -39,12 +41,13 @@ const colors = {
     head: '#FF7D1A',
   },
   status: {
-    success: '#00C07F',
-    error: '#FF3A30',
+    success: '#4CAF50',
+    error: '#F44336',
     warning: '#FFCC00',
   },
   shadow: {
-    soft: '0 4px 12px rgba(0, 0, 0, 0.4)',
+    soft: '0 8px 32px rgba(0, 0, 0, 0.2)',
+    medium: '0 12px 20px rgba(0, 0, 0, 0.3)',
   },
 };
 
@@ -151,7 +154,8 @@ export const AppContainer = styled.div`
 // Sidebar
 export const Sidebar = styled.div`
   width: 300px;
-  background-color: ${colors.background.secondary};
+  background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+  backdrop-filter: blur(10px);
   overflow-y: auto;
   border-right: 1px solid ${colors.border.light};
   display: flex;
@@ -159,23 +163,23 @@ export const Sidebar = styled.div`
   padding: 0;
   position: relative;
   height: 100vh;
-  transition: width 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: ${colors.shadow.soft};
 
-  &.dark-theme {
-    --sidebar-bg: #121212;
-    --sidebar-border: rgba(255, 255, 255, 0.1);
-    --sidebar-text: #ffffff;
-    --sidebar-text-secondary: rgba(255, 255, 255, 0.7);
-    --sidebar-hover: #2c2c2c;
-
-    background-color: var(--sidebar-bg);
-    border-color: var(--sidebar-border);
-    color: var(--sidebar-text);
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: radial-gradient(circle at top right, rgba(115, 103, 240, 0.05), transparent 60%);
+    pointer-events: none;
   }
   
   /* Custom scrollbar */
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   &::-webkit-scrollbar-track {
@@ -184,7 +188,7 @@ export const Sidebar = styled.div`
 
   &::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    border-radius: 6px;
 
     &:hover {
       background-color: rgba(255, 255, 255, 0.2);
@@ -208,7 +212,7 @@ export const ResizeHandle = styled.div`
   cursor: col-resize;
   z-index: 100;
   background-color: transparent;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
   &:hover {
     background-color: ${colors.accent.primary}40;
@@ -220,39 +224,45 @@ export const ResizeHandle = styled.div`
 `;
 
 export const SidebarHeader = styled.div`
-  padding: 10px 16px;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid ${colors.border.light};
-  background-color: ${colors.background.secondary};
+  background: ${colors.background.glass};
+  backdrop-filter: blur(10px);
+  border-radius: 0;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 `;
 
 export const Logo = styled.div`
   display: flex;
   align-items: center;
-  font-weight: ${typography.fontWeights.bold};
-  font-size: 20px;
+  font-weight: 600;
+  font-size: 1.6rem;
   color: ${colors.text.primary};
   letter-spacing: -0.5px;
 
   svg {
-    margin-right: 10px;
+    margin-right: 12px;
     color: ${colors.accent.primary};
+    filter: drop-shadow(0 0 8px rgba(115, 103, 240, 0.5));
   }
 `;
 
 export const SidebarContent = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 0 16px 16px 16px;
   
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   &::-webkit-scrollbar-track {
     background: transparent;
+    border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
@@ -269,23 +279,46 @@ export const CollectionList = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 4px;
+  gap: 8px;
   margin-top: 24px;
 `;
 
 export const CollectionItem = styled.div`
   display: flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: 12px 16px;
   cursor: pointer;
   user-select: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: ${colors.text.secondary};
-  transition: background-color 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   font-size: 14px;
+  background: rgba(30, 30, 35, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: ${colors.accent.gradient};
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
 
   &:hover {
-    background-color: ${colors.background.tertiary};
+    background: rgba(40, 40, 45, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    
+    &::before {
+      opacity: 1;
+    }
   }
 
   &:hover .action-button {
@@ -293,14 +326,20 @@ export const CollectionItem = styled.div`
   }
 
   &.active {
-    background-color: ${colors.background.tertiary};
+    background: rgba(30, 30, 40, 0.6);
     color: ${colors.text.primary};
+    border-color: rgba(115, 103, 240, 0.3);
+    
+    &::before {
+      opacity: 1;
+    }
   }
 
   svg {
-    margin-right: 8px;
-    font-size: 14px;
-    opacity: 0.7;
+    margin-right: 12px;
+    font-size: 16px;
+    opacity: 0.9;
+    color: ${colors.accent.primary};
   }
 `;
 
@@ -309,18 +348,30 @@ export const FolderItem = styled.div`
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 16px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
-  transition: background-color 0.2s;
-
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background: rgba(30, 30, 35, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 6px;
+  font-weight: 500;
+  
   &:hover {
-    background-color: ${colors.background.elevated};
+    background: rgba(40, 40, 45, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
   
   &:hover .action-button {
     opacity: 0.8;
+  }
+  
+  svg {
+    color: ${colors.accent.primary};
+    margin-right: 8px;
   }
 `;
 
@@ -330,28 +381,64 @@ export const RequestItem = styled.div`
   justify-content: space-between;
   width: 100%;
   font-size: 14px;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 6px;
   overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  
+  &:hover {
+    background: rgba(40, 40, 45, 0.3);
+  }
   
   &:hover .action-button {
     opacity: 0.8;
+  }
+  
+  svg {
+    margin-right: 8px;
   }
 `;
 
 export const RequestItemContainer = styled.div<{ active?: boolean }>`
   cursor: pointer;
-  margin: 2px 0;
-  border-radius: 6px;
-  background-color: ${(props) => props.active ? colors.background.elevated : 'transparent'};
-  transition: background-color 0.2s;
+  margin: 4px 0;
+  border-radius: 8px;
+  background: ${(props) => props.active ? 'rgba(30, 30, 40, 0.6)' : 'rgba(25, 25, 30, 0.3)'};
+  border: 1px solid ${(props) => props.active ? 'rgba(115, 103, 240, 0.2)' : 'rgba(255, 255, 255, 0.05)'};
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: ${colors.accent.gradient};
+    opacity: ${(props) => props.active ? 1 : 0};
+    transition: opacity 0.2s;
+  }
   
   &[data-active="true"], &[data-active=""] {
-    background-color: ${colors.background.elevated};
+    background: rgba(30, 30, 40, 0.6);
+    border-color: rgba(115, 103, 240, 0.2);
+    
+    &::before {
+      opacity: 1;
+    }
   }
   
   &:hover {
-    background-color: ${colors.background.elevated};
+    background: rgba(35, 35, 45, 0.5);
+    border-color: rgba(115, 103, 240, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    
+    &::before {
+      opacity: 0.7;
+    }
   }
 `;
 
@@ -1109,22 +1196,27 @@ export const CollectionItemContainer = styled.div`
 `;
 
 export const CreateButton = styled.button`
-  ${secondaryButtonStyle}
-  color: ${colors.text.primary};
-  padding: 6px 10px;
-  margin: 0;
-  font-size: 13px;
-  font-weight: ${typography.fontWeights.medium};
-  transition: all 0.2s ease;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  border: 1px solid ${colors.border.light};
   display: flex;
   align-items: center;
-  gap: 6px;
-
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: ${colors.accent.gradient};
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 `;
 
@@ -1194,17 +1286,21 @@ export const SectionHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: background-color 0.2s;
+  padding: 12px 8px;
+  margin-top: 16px;
+  color: ${colors.text.secondary};
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   
-  .action-button {
-    opacity: 0.8;
+  &:first-of-type {
+    margin-top: 0;
   }
   
-  &:hover {
-    background-color: ${colors.background.tertiary};
+  svg {
+    color: ${colors.accent.primary};
+    margin-right: 8px;
   }
 `;
 
@@ -1348,11 +1444,36 @@ export const ContextMenuDivider = styled.div`
 `;
 
 export const SidebarFooter = styled.div`
+  padding: 16px 24px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  background: ${colors.background.glass};
+  backdrop-filter: blur(10px);
   border-top: 1px solid ${colors.border.light};
   margin-top: auto;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: rgba(40, 40, 50, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: ${colors.text.secondary};
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    
+    &:hover {
+      background-color: rgba(60, 60, 70, 0.6);
+      color: ${colors.accent.primary};
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+  }
 `;
 
 export const SearchContainer = styled.div`
@@ -1458,4 +1579,40 @@ export const Button = styled.button`
     outline: none;
     border-color: #FF385C;
   }
+`;
+
+export const MethodBadge = styled.span<{ method: string }>`
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: ${({ method }) => {
+    const m = method.toUpperCase();
+    switch (m) {
+      case 'GET': return 'rgba(115, 103, 240, 0.15)';
+      case 'POST': return 'rgba(0, 166, 153, 0.15)';
+      case 'PUT': return 'rgba(255, 149, 0, 0.15)';
+      case 'DELETE': return 'rgba(255, 56, 92, 0.15)';
+      case 'PATCH': return 'rgba(175, 82, 222, 0.15)';
+      case 'OPTIONS': return 'rgba(118, 118, 118, 0.15)';
+      case 'HEAD': return 'rgba(255, 125, 26, 0.15)';
+      default: return 'rgba(118, 118, 118, 0.15)';
+    }
+  }};
+  color: ${({ method }) => {
+    const m = method.toUpperCase();
+    switch (m) {
+      case 'GET': return colors.method.get;
+      case 'POST': return colors.method.post;
+      case 'PUT': return colors.method.put;
+      case 'DELETE': return colors.method.delete;
+      case 'PATCH': return colors.method.patch;
+      case 'OPTIONS': return colors.method.options;
+      case 'HEAD': return colors.method.head;
+      default: return colors.text.tertiary;
+    }
+  }};
+  margin-right: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;

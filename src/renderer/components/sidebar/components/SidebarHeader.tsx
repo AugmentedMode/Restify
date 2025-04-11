@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaGlobe, FaPlus } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { SidebarHeader as Header, Logo, CreateButton } from '../../../styles/StyledComponents';
 
 interface SidebarHeaderProps {
@@ -22,25 +22,50 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
     <Header>
       <Logo onClick={navigateToHome} style={{ cursor: 'pointer' }}>
         {isSidebarCollapsed ? (
-          <FaGlobe color="#FF385C" size={24} />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+          >
+            <FaGlobe size={24} />
+          </motion.div>
         ) : (
-          <>
-            <FaGlobe color="#FF385C" size={20} />
+          <motion.div
+            style={{ display: 'flex', alignItems: 'center' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <FaGlobe size={22} />
             <motion.span
-              initial={{ opacity: 1 }}
-              animate={{ opacity: isSidebarCollapsed ? 0 : 1 }}
-              transition={{ duration: 0.2 }}
+              initial={{ x: -10, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.3, type: "spring", stiffness: 300 }}
             >
-              Restify API Client
+              Restify
             </motion.span>
-          </>
+          </motion.div>
         )}
       </Logo>
-      {!isSidebarCollapsed && (
-        <CreateButton onClick={toggleCreatePanel}>
-          <FaPlus />
-        </CreateButton>
-      )}
+      <AnimatePresence>
+        {!isSidebarCollapsed && (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <CreateButton 
+              onClick={toggleCreatePanel}
+              as={motion.button}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FaPlus />
+            </CreateButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Header>
   );
 };
