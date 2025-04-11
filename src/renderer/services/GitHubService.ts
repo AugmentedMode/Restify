@@ -1,19 +1,25 @@
 /**
  * Service for interacting with GitHub API
  */
+import { encryptValue, decryptValue } from '../utils/encryptionUtils';
+
 export class GitHubService {
   private octokit: any = null;
   private token: string | null = null;
+  private static readonly TOKEN_STORAGE_KEY = 'github_token_encrypted';
+  private static readonly LEGACY_TOKEN_KEY = 'github_token';
 
   /**
    * Initialize the GitHub API client with a personal access token
    * @param token GitHub personal access token
+   * @param shouldStore Whether to store the token in localStorage (default: true)
    */
-  public async initialize(token: string): Promise<void> {
+  public async initialize(token: string, shouldStore: boolean = true): Promise<void> {
     if (!token) {
       throw new Error('GitHub token is required');
     }
     
+    console.log('[GitHub] Initializing service with token', token.substring(0, 5) + '...');
     this.token = token;
     
     try {
@@ -22,8 +28,13 @@ export class GitHubService {
       this.octokit = new Octokit({
         auth: token
       });
+      
+      // Store token in localStorage based on settings
+      if (shouldStore) {
+        await this.securelyStoreToken(token);
+      }
     } catch (error) {
-      console.error('Failed to initialize GitHub service:', error);
+      console.error('[GitHub] Failed to initialize GitHub service:', error);
       throw new Error('Failed to initialize GitHub service');
     }
   }
@@ -36,11 +47,100 @@ export class GitHubService {
   }
 
   /**
+   * Securely store the token
+   * @param token GitHub personal access token
+   */
+  private async securelyStoreToken(token: string): Promise<void> {
+    try {
+      // Encrypt the token before storing
+      console.log('[GitHub] Encrypting and storing token');
+      const encryptedToken = await encryptValue(token);
+      
+      // Store the encrypted token
+      localStorage.setItem(GitHubService.TOKEN_STORAGE_KEY, encryptedToken);
+      
+      // Remove any unencrypted token if it exists
+      localStorage.removeItem(GitHubService.LEGACY_TOKEN_KEY);
+    } catch (error) {
+      console.error('[GitHub] Error storing token securely:', error);
+    }
+  }
+
+  /**
+   * Retrieve the securely stored token
+   * @returns The decrypted GitHub token or null if not found
+   */
+  public static async getStoredToken(): Promise<string | null> {
+    try {
+      // Try to get the encrypted token
+      const encryptedToken = localStorage.getItem(GitHubService.TOKEN_STORAGE_KEY);
+      
+      if (encryptedToken) {
+        console.log('[GitHub] Found encrypted token, decrypting...');
+        // Decrypt the token
+        const decryptedToken = await decryptValue(encryptedToken);
+        
+        // Verify it's not empty
+        if (!decryptedToken || decryptedToken === encryptedToken) {
+          console.error('[GitHub] Decryption failed, token wasn\'t properly decrypted');
+          return null;
+        }
+        
+        console.log('[GitHub] Successfully decrypted token:', decryptedToken.substring(0, 5) + '...');
+        return decryptedToken;
+      }
+      
+      // Check for legacy unencrypted token
+      const legacyToken = localStorage.getItem(GitHubService.LEGACY_TOKEN_KEY);
+      if (legacyToken) {
+        console.log('[GitHub] Found legacy token, migrating to encrypted storage');
+        // If found, migrate it to encrypted storage
+        const instance = new GitHubService();
+        await instance.securelyStoreToken(legacyToken);
+        localStorage.removeItem(GitHubService.LEGACY_TOKEN_KEY);
+        return legacyToken;
+      }
+      
+      console.log('[GitHub] No token found in storage');
+      return null;
+    } catch (error) {
+      console.error('[GitHub] Error retrieving stored token:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Helper method to retrieve the token without requiring an instance
+   */
+  public static async loadStoredToken(): Promise<string | null> {
+    return await GitHubService.getStoredToken();
+  }
+  
+  /**
+   * Helper method to clear the token without requiring an instance
+   */
+  public static clearStoredToken(): void {
+    localStorage.removeItem(GitHubService.TOKEN_STORAGE_KEY);
+    localStorage.removeItem(GitHubService.LEGACY_TOKEN_KEY);
+  }
+
+  /**
+   * Clear stored token and reset service
+   */
+  public clearToken(): void {
+    localStorage.removeItem(GitHubService.TOKEN_STORAGE_KEY);
+    localStorage.removeItem(GitHubService.LEGACY_TOKEN_KEY);
+    this.token = null;
+    this.octokit = null;
+  }
+
+  /**
    * Get the current authenticated user
    * @returns The authenticated user information
    */
   public async getCurrentUser() {
     this.ensureInitialized();
+    console.log('[GitHub] Getting current user with token:', this.token?.substring(0, 5) + '...');
     const { data } = await this.octokit.users.getAuthenticated();
     return data;
   }

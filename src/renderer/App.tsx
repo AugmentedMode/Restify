@@ -196,30 +196,44 @@ function AppContent() {
       try {
         await initializeEncryption();
         console.log('Encryption system initialized');
+        
+        // Initialize GitHub after encryption is ready
+        initGitHub();
       } catch (error) {
         console.error('Failed to initialize encryption system:', error);
       }
     };
     
     initEncryption();
-  }, []);
-
-  // Initialize GitHub service if token exists
-  useEffect(() => {
-    const initGitHub = async () => {
+    
+    // Function to initialize GitHub
+    async function initGitHub() {
       try {
-        const savedToken = localStorage.getItem('github_token');
-        if (savedToken) {
-          const githubService = (await import('./services/GitHubService')).default;
-          await githubService.initialize(savedToken);
-          console.log('GitHub service initialized');
+        // Load settings to check if we should use stored token
+        const savedSettings = localStorage.getItem('restifySettings');
+        const settings = savedSettings ? JSON.parse(savedSettings) : null;
+        const shouldStoreToken = settings?.security?.storeGitHubToken !== false;
+        
+        // Only load token from secure storage if settings allow it
+        if (shouldStoreToken) {
+          // Import the GitHubService to use the static method
+          const { GitHubService } = await import('./services/GitHubService');
+          const savedToken = await GitHubService.loadStoredToken();
+          
+          if (savedToken) {
+            const githubService = (await import('./services/GitHubService')).default;
+            await githubService.initialize(savedToken, shouldStoreToken);
+            console.log('GitHub service initialized');
+          }
+        } else {
+          // If token storage is disabled, clear any existing token
+          const { GitHubService } = await import('./services/GitHubService');
+          GitHubService.clearStoredToken();
         }
       } catch (error) {
         console.error('Failed to initialize GitHub service:', error);
       }
-    };
-    
-    initGitHub();
+    }
   }, []);
 
   // Use our custom hooks for collections and history

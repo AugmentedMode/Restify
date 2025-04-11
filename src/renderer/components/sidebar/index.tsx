@@ -435,7 +435,7 @@ function Sidebar({
         </NavTooltip>
       )}
 
-      {true && (
+      {settings.general.showGitHub && (
         <NavTooltip title="GitHub PRs" isCollapsed={isSidebarCollapsed}>
           <div
             style={{
@@ -585,7 +585,7 @@ function Sidebar({
                     />
                   )}
 
-                  {true && (
+                  {settings.general.showGitHub && (
                     <GitHubSection
                       expanded={expandedSections.github}
                       toggleSection={() => toggleSection('github')}

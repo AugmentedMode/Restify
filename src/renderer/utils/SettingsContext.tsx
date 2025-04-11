@@ -73,7 +73,28 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Initialize settings from localStorage or use defaults
   const [settings, setSettings] = useState<AppSettings>(() => {
     const savedSettings = localStorage.getItem('restifySettings');
-    return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+    if (!savedSettings) {
+      return defaultSettings;
+    }
+    
+    // Parse saved settings and merge with defaults to ensure all properties exist
+    const parsedSettings = JSON.parse(savedSettings);
+    
+    // Deep merge with default settings to ensure new properties are included
+    return {
+      general: {
+        ...defaultSettings.general,
+        ...parsedSettings.general
+      },
+      api: {
+        ...defaultSettings.api,
+        ...parsedSettings.api
+      },
+      security: {
+        ...defaultSettings.security,
+        ...parsedSettings.security
+      }
+    };
   });
 
   // Save settings to localStorage when they change
@@ -101,6 +122,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     category: T,
     setting: keyof AppSettings[T] & string
   ) => {
+    console.log(`Before toggle - ${category}.${String(setting)}: ${settings[category][setting as keyof typeof settings[T]]}`);
+    
     const currentValue = settings[category][setting as keyof typeof settings[T]];
     
     if (typeof currentValue === 'boolean') {
@@ -111,6 +134,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
           [setting]: !currentValue
         }
       });
+      
+      console.log(`After toggle - ${category}.${String(setting)}: ${!currentValue}`);
+    } else {
+      console.log(`Not a boolean value: ${currentValue} (type: ${typeof currentValue})`);
     }
   };
 
