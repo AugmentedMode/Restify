@@ -23,6 +23,7 @@ const KanbanContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
   padding: 20px;
   gap: 16px;
   background-color: #1e1e1e;
@@ -34,6 +35,16 @@ const ColumnsContainer = styled.div`
   display: flex;
   gap: 16px;
   flex: 1;
+  width: 100%;
+  min-height: 0; /* Important for flex containers to allow children to scroll */
+  
+  @media (min-width: 1600px) {
+    padding: 0 5%;
+  }
+  
+  @media (min-width: 1920px) {
+    padding: 0 10%;
+  }
 `;
 
 const HeaderContainer = styled.div`
@@ -91,6 +102,18 @@ const Column = styled.div`
   max-width: 350px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   height: calc(100vh - 110px); /* Set a fixed height based on viewport */
+  
+  @media (min-width: 1440px) {
+    max-width: 400px;
+  }
+  
+  @media (min-width: 1920px) {
+    max-width: 450px;
+  }
+  
+  @media (min-width: 2560px) {
+    max-width: 550px;
+  }
 `;
 
 const ColumnHeader = styled.div`
@@ -504,7 +527,7 @@ const ArchiveButton = styled(ActionButton)`
 
 // Add ArchivedColumn component
 const ArchivedColumn = styled.div`
-  flex: 1;
+  width: 100%;
   background-color: #1e1e1e;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -513,6 +536,18 @@ const ArchivedColumn = styled.div`
   flex-direction: column;
   margin-top: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  
+  @media (min-width: 1600px) {
+    margin-left: 5%;
+    margin-right: 5%;
+    width: 90%;
+  }
+  
+  @media (min-width: 1920px) {
+    margin-left: 10%;
+    margin-right: 10%;
+    width: 80%;
+  }
 `;
 
 const ArchivedHeader = styled.div`
