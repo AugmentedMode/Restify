@@ -55,17 +55,26 @@ const EnvSelectorButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 6px 10px;
-  color: white;
+  background: linear-gradient(to right, rgba(36, 36, 36, 0.9), rgba(40, 40, 40, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #f2f2f2;
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background: linear-gradient(to right, rgba(46, 46, 46, 0.9), rgba(50, 50, 50, 0.9));
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 `;
 
@@ -751,9 +760,9 @@ function ResponsePanel({
     return (
       <EnvSelectorContainer ref={envDropdownRef}>
         <EnvSelectorButton onClick={() => setShowEnvDropdown(!showEnvDropdown)}>
-          <FaGlobeAmericas size={14} />
-          {currentEnvironment ? currentEnvironment.name : 'Global Environment'}
-          <FaChevronDown size={10} />
+          <FaGlobeAmericas size={14} style={{ color: '#FF385C' }} />
+          <span style={{ flex: 1 }}>{currentEnvironment ? currentEnvironment.name : 'Global Environment'}</span>
+          <FaChevronDown size={10} style={{ opacity: 0.7 }} />
         </EnvSelectorButton>
         
         <EnvDropdown isOpen={showEnvDropdown}>
