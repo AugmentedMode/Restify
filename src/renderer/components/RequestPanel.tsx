@@ -567,7 +567,6 @@ function RequestPanel({
 
         <SendButton onClick={() => onSendRequest(request)} disabled={isLoading}>
           {isLoading ? <Spinner /> : <FaPaperPlane />}
-          {!isLoading && <span>Send</span>}
         </SendButton>
       </RequestHeaderContainer>
 

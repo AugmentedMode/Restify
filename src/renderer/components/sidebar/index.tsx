@@ -465,7 +465,7 @@ function Sidebar({
                 filter={filter}
               />
 
-              <EnvironmentManager 
+              {/* <EnvironmentManager 
                 environments={environments}
                 currentEnvironmentId={currentEnvironmentId}
                 onAddEnvironment={onAddEnvironment}
@@ -474,7 +474,7 @@ function Sidebar({
                 onSelectEnvironment={onSelectEnvironment}
                 expanded={expandedSections.environments}
                 onToggleExpanded={() => toggleSection('environments')}
-              />
+              /> */}
 
               {/* <NotesSection
                 notes={notes}

@@ -505,8 +505,8 @@ export const UrlInput = styled.input<{ hasProtocol?: boolean }>`
 
 export const SendButton = styled.button`
   ${primaryButtonStyle}
-  height: 40px;
-  padding: 0 20px;
+  height: 36px;
+  padding: 0 10px;
   display: flex;
   align-items: center;
   border-radius: 8px;
