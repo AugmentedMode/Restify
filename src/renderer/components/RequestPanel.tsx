@@ -61,6 +61,8 @@ function RequestPanel({
   const [activeTab, setActiveTab] = useState('params');
   const [lineCount, setLineCount] = useState(1);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [processedBaseUrl, setProcessedBaseUrl] = useState<string>('');
+  const [processedFullUrl, setProcessedFullUrl] = useState<string>('');
 
   // Update line count when body content changes
   useEffect(() => {
@@ -126,11 +128,7 @@ function RequestPanel({
 
   // Get the processed URL with environment variables and parameters
   const getProcessedUrl = () => {
-    if (!currentEnvironment && (!request.params || request.params.length === 0)) {
-      return request.url;
-    }
-    
-    return processUrlWithParams(request.url, request.params, currentEnvironment);
+    return processedFullUrl;
   };
 
   // Environment variable suggestion helper
@@ -374,14 +372,47 @@ function RequestPanel({
     ));
   };
 
-  // Function to render the processed URL with highlighted variables and params
+  // Update the useEffect to handle both URLs
+  useEffect(() => {
+    const updateProcessedUrls = async () => {
+      if (!request.url) {
+        setProcessedBaseUrl('');
+        setProcessedFullUrl('');
+        return;
+      }
+      
+      try {
+        // Process base URL (just environment variables)
+        const baseProcessed = currentEnvironment 
+          ? await processUrl(request.url, currentEnvironment)
+          : request.url;
+        setProcessedBaseUrl(baseProcessed);
+        
+        // Process full URL (environment variables + params)
+        if (!request.params || request.params.length === 0) {
+          setProcessedFullUrl(baseProcessed);
+        } else {
+          const fullProcessed = await processUrlWithParams(request.url, request.params, currentEnvironment);
+          setProcessedFullUrl(fullProcessed);
+        }
+      } catch (error) {
+        console.error('Error processing URL:', error);
+        setProcessedBaseUrl(request.url);
+        setProcessedFullUrl(request.url);
+      }
+    };
+    
+    updateProcessedUrls();
+  }, [currentEnvironment, request.url, request.params]);
+
+  // Update the renderProcessedUrlWithHighlight function to use the state
   const renderProcessedUrlWithHighlight = () => {
     if (!request.url) return '';
     
     const processed = getProcessedUrl();
     
-    // Get just the base URL with environment variables replaced
-    const baseUrlWithEnvVars = currentEnvironment ? processUrl(request.url, currentEnvironment) : request.url;
+    // Use the state variable instead of calling processUrl directly
+    const baseUrlWithEnvVars = processedBaseUrl;
     
     // Check if we have query params to highlight
     const hasQueryParams = processed.length > baseUrlWithEnvVars.length;

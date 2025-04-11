@@ -1,22 +1,29 @@
 import { ApiRequest, ApiResponse, Environment, RequestParam, RequestHeader } from '../types';
+import { decryptValue } from './encryptionUtils';
 
 /**
  * Process URL with environment variables
  */
-export const processUrl = (url: string, environment?: Environment): string => {
+export const processUrl = async (url: string, environment?: Environment): Promise<string> => {
   if (!environment) return url;
   
   let processedUrl = url;
   
   // Replace all {{variableName}} with the variable value
-  Object.entries(environment.variables).forEach(([key, value]) => {
-    // If the value is encrypted (starts with 'encrypted:'), remove the prefix
-    const actualValue = typeof value === 'string' && value.startsWith('encrypted:') 
-      ? value.substring(10) // Remove 'encrypted:' prefix
-      : value;
+  // Using a for..of loop to handle async operations
+  for (const [key, value] of Object.entries(environment.variables)) {
+    // For encrypted values, decrypt them before substitution
+    let actualValue = value;
+    try {
+      if (typeof value === 'string') {
+        actualValue = await decryptValue(value);
+      }
+    } catch (error) {
+      console.error(`Error decrypting variable ${key}:`, error);
+    }
       
     processedUrl = processedUrl.replace(new RegExp(`{{${key}}}`, 'g'), actualValue);
-  });
+  }
   
   return processedUrl;
 };
@@ -24,13 +31,13 @@ export const processUrl = (url: string, environment?: Environment): string => {
 /**
  * Process URL with both environment variables and query parameters
  */
-export const processUrlWithParams = (
+export const processUrlWithParams = async (
   url: string, 
   params: RequestParam[] = [], 
   environment?: Environment
-): string => {
+): Promise<string> => {
   // First replace environment variables
-  let processedUrl = environment ? processUrl(url, environment) : url;
+  let processedUrl = environment ? await processUrl(url, environment) : url;
   
   // Then add query parameters
   const enabledParams = params.filter(param => param.enabled && param.name.trim());
@@ -83,7 +90,7 @@ export const executeRequest = async (
   request: ApiRequest,
   environment?: Environment
 ): Promise<ApiResponse> => {
-  const processedUrl = processUrl(request.url, environment);
+  const processedUrl = await processUrl(request.url, environment);
   const params = paramsToObject(request.params);
   const headers = headersToObject(request.headers);
   

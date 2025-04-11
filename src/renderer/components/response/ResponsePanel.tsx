@@ -41,6 +41,7 @@ import {
 } from './constants';
 import SecurityAuditPanel from './components/SecurityAuditPanel';
 import styled from 'styled-components';
+import { encryptValue, decryptValue } from '../../utils/encryptionUtils';
 
 // Styled components for the environment selector
 const EnvSelectorContainer = styled.div`
@@ -336,7 +337,7 @@ function ResponsePanel({
   }, [showEnvDropdown]);
 
   // Environment modal handlers
-  const openEnvModal = (environment?: Environment | 'global') => {
+  const openEnvModal = async (environment?: Environment | 'global') => {
     if (environment === 'global') {
       // Special case for global environment
       setEditingEnvironment({ id: 'global', name: 'Global Environment', variables: {} });
@@ -344,10 +345,21 @@ function ResponsePanel({
       
       // Get global variables if available
       const globalVars = environments.find(env => env.id === 'global')?.variables || {};
-      const vars = Object.entries(globalVars).map(([key, value]) => {
-        // Check if the value is in encrypted format (starts with "encrypted:")
+      const varsPromises = Object.entries(globalVars).map(async ([key, value]) => {
+        // Check if the value is in encrypted format
         const isSecret = typeof value === 'string' && value.startsWith('encrypted:');
-        const actualValue = isSecret ? value.substring(10) : value;
+        let actualValue = value;
+        
+        // If it's secret, decrypt it for editing
+        if (isSecret && typeof value === 'string') {
+          try {
+            actualValue = await decryptValue(value);
+          } catch (error) {
+            console.error(`Failed to decrypt variable ${key}:`, error);
+            // Use a placeholder if decryption fails
+            actualValue = '[Decryption Error]';
+          }
+        }
         
         return {
           key,
@@ -356,15 +368,27 @@ function ResponsePanel({
         };
       });
       
+      const vars = await Promise.all(varsPromises);
       setVariables(vars.length > 0 ? vars : [{ key: '', value: '', isSecret: false }]);
     } else if (environment) {
       setEditingEnvironment(environment);
       setEnvironmentName(environment.name);
       
-      const vars = Object.entries(environment.variables).map(([key, value]) => {
-        // Check if the value is in encrypted format (starts with "encrypted:")
+      const varsPromises = Object.entries(environment.variables).map(async ([key, value]) => {
+        // Check if the value is in encrypted format
         const isSecret = typeof value === 'string' && value.startsWith('encrypted:');
-        const actualValue = isSecret ? value.substring(10) : value;
+        let actualValue = value;
+        
+        // If it's secret, decrypt it for editing
+        if (isSecret && typeof value === 'string') {
+          try {
+            actualValue = await decryptValue(value);
+          } catch (error) {
+            console.error(`Failed to decrypt variable ${key}:`, error);
+            // Use a placeholder if decryption fails
+            actualValue = '[Decryption Error]';
+          }
+        }
         
         return {
           key,
@@ -373,6 +397,7 @@ function ResponsePanel({
         };
       });
       
+      const vars = await Promise.all(varsPromises);
       setVariables(vars.length > 0 ? vars : [{ key: '', value: '', isSecret: false }]);
     } else {
       setEditingEnvironment(null);
@@ -391,20 +416,24 @@ function ResponsePanel({
     setVariables([{ key: '', value: '', isSecret: false }]);
   };
 
-  const handleSaveEnvironment = () => {
+  const handleSaveEnvironment = async () => {
     if (!environmentName.trim()) {
       return;
     }
 
     const variablesObject: Record<string, string> = {};
-    variables.forEach(({ key, value, isSecret }) => {
+    
+    // Process each variable, encrypting secrets
+    for (const { key, value, isSecret } of variables) {
       if (key.trim()) {
-        // For secret variables, we'll prefix with "encrypted:" 
-        // In a real implementation, this would actually encrypt the value
-        const storedValue = isSecret ? `encrypted:${value}` : value;
+        // For secret variables, encrypt the value using our encryption utility
+        const storedValue = isSecret 
+          ? await encryptValue(value)
+          : value;
+          
         variablesObject[key.trim()] = storedValue;
       }
-    });
+    }
 
     // Special handling for global environment
     if (editingEnvironment && editingEnvironment.id === 'global') {

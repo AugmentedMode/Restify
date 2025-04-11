@@ -28,6 +28,7 @@ import {
   ResponsesService
 } from './services/DatabaseService';
 import { modalDataStore } from './utils/modalDataStore';
+import { initializeEncryption } from './utils/encryptionUtils';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -166,6 +167,20 @@ function App() {
     };
     
     init();
+  }, []);
+
+  // Initialize the encryption system on app start
+  useEffect(() => {
+    const initEncryption = async () => {
+      try {
+        await initializeEncryption();
+        console.log('Encryption system initialized');
+      } catch (error) {
+        console.error('Failed to initialize encryption system:', error);
+      }
+    };
+    
+    initEncryption();
   }, []);
 
   // Use our custom hooks for collections and history
