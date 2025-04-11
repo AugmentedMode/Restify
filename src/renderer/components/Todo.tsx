@@ -172,25 +172,26 @@ const Task = styled.div<{ status: string; priority?: string; isEpic?: boolean }>
   }
 `;
 
-const TaskContent = styled.div`
-  margin-top: 8px;
-  font-size: 0.85rem;
-  word-break: break-word;
-  line-height: 1.4;
-  color: #f5f5f5;
-`;
-
 const TaskHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
 `;
 
 const TaskId = styled.div`
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.75rem;
   color: #bbb;
-  margin-bottom: 4px;
+`;
+
+const TaskContent = styled.div`
+  font-size: 0.85rem;
+  word-break: break-word;
+  line-height: 1.4;
+  color: #f5f5f5;
+  margin: 10px 0;
+  padding: 0 2px;
 `;
 
 const TaskActions = styled.div`
@@ -202,6 +203,7 @@ const TaskActions = styled.div`
   ${Task}:hover & {
     opacity: 1;
   }
+  justify-content: flex-end;
 `;
 
 const TaskMeta = styled.div`
@@ -661,12 +663,8 @@ const TodoKanban: React.FC = () => {
           e.dataTransfer.setData('todoId', todo.id);
         }}
       >
-        <TaskId>{todo.id}</TaskId>
-        
         <TaskHeader>
-          <TaskContent onDoubleClick={() => setEditingId(todo.id)}>
-            {todo.text}
-          </TaskContent>
+          <TaskId>{todo.id}</TaskId>
           <TaskActions>
             <ActionButton onClick={() => cyclePriority(todo.id)} title="Change priority">
               <FaTag size={12} />
@@ -685,6 +683,10 @@ const TodoKanban: React.FC = () => {
             </ActionButton>
           </TaskActions>
         </TaskHeader>
+        
+        <TaskContent onDoubleClick={() => setEditingId(todo.id)}>
+          {todo.text}
+        </TaskContent>
         
         <TaskMeta>
           <TaskTags>
@@ -848,7 +850,7 @@ const TodoKanban: React.FC = () => {
         </ReturnButton>
       </HeaderContainer>
       <ColumnsContainer>
-        {renderColumn('todo', 'To Do')}
+        {renderColumn('todo', 'Backlog')}
         {renderColumn('in-progress', 'In Progress')}
         {renderColumn('done', 'Done')}
       </ColumnsContainer>
