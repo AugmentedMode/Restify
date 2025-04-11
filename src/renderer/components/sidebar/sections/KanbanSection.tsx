@@ -176,15 +176,15 @@ const KanbanSection: React.FC<KanbanSectionProps> = ({
             style={{ 
               cursor: 'pointer',
               padding: '8px',
-              marginBottom: '12px',
               borderRadius: '8px',
               backgroundColor: 'var(--bg-light)',
               fontSize: '0.85rem',
               fontWeight: 500,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
+              justifyContent: 'flex-start',
+              gap: '8px',
+              paddingLeft: '16px'
             }}
             onClick={navigateToKanban}
           >
