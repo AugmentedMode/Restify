@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaTrash, FaEdit, FaCodeBranch, FaCode, FaLink, FaTag, FaGithub, FaChevronLeft } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaEdit, FaCodeBranch, FaCode, FaLink, FaTag, FaGithub, FaChevronLeft, FaArchive, FaEyeSlash, FaTrashRestore } from 'react-icons/fa';
 import styled from 'styled-components';
 
 // Define the Todo item type
@@ -14,6 +14,8 @@ interface Todo {
   branch?: string;
   codeRef?: string;
   assignee?: string;
+  archived?: boolean;
+  archivedAt?: number;
 }
 
 // Styled components with ResponsePanel-inspired dark theme
@@ -488,6 +490,61 @@ const initialTodoSamples: Todo[] = [
   },
 ];
 
+// Add ArchiveButton component
+const ArchiveButton = styled(ActionButton)`
+  color: #007acc;
+  
+  &:hover {
+    color: #3b99fc;
+    background-color: rgba(59, 153, 252, 0.08);
+  }
+`;
+
+// Add ArchivedColumn component
+const ArchivedColumn = styled.div`
+  flex: 1;
+  background-color: #1e1e1e;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  margin-top: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+`;
+
+const ArchivedHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+`;
+
+const ArchivedTitle = styled.h3`
+  margin: 0;
+  font-size: 0.9rem;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ArchivedTaskList = styled(TaskList)`
+  max-height: 300px;
+`;
+
+const ArchivedTask = styled(Task)`
+  opacity: 0.7;
+  
+  &:hover {
+    opacity: 1;
+  }
+`;
+
 // Main Kanban component
 const TodoKanban: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -497,6 +554,7 @@ const TodoKanban: React.FC = () => {
   const [showEpicSelect, setShowEpicSelect] = useState<string | null>(null);
   const [showRepoSelect, setShowRepoSelect] = useState<string | null>(null);
   const [newTaskCounter, setNewTaskCounter] = useState<number>(6); // For GH-6, GH-7, etc.
+  const [showArchived, setShowArchived] = useState<boolean>(false);
   
   // Load todos from localStorage on component mount
   useEffect(() => {
@@ -627,8 +685,37 @@ const TodoKanban: React.FC = () => {
     setShowRepoSelect(null);
   };
 
+  // Archive a task instead of deleting it
+  const archiveTask = (id: string) => {
+    setTodos(todos.map(todo => 
+      todo.id === id ? { ...todo, archived: true, archivedAt: Date.now() } : todo
+    ));
+  };
+
+  // Restore an archived task
+  const restoreTask = (id: string) => {
+    setTodos(todos.map(todo => 
+      todo.id === id ? { ...todo, archived: false, archivedAt: undefined } : todo
+    ));
+  };
+
+  // Toggle archived tasks visibility
+  const toggleArchived = () => {
+    setShowArchived(!showArchived);
+  };
+
+  // Get active (non-archived) todos for a column
+  const getActiveTodos = (status: 'todo' | 'in-progress' | 'done') => {
+    return todos.filter(todo => todo.status === status && !todo.archived);
+  };
+
+  // Get all archived todos
+  const getArchivedTodos = () => {
+    return todos.filter(todo => todo.archived).sort((a, b) => (b.archivedAt || 0) - (a.archivedAt || 0));
+  };
+
   // Render a single task
-  const renderTask = (todo: Todo) => {
+  const renderTask = (todo: Todo, isArchived: boolean = false) => {
     if (editingId === todo.id) {
       return (
         <NewTaskInput
@@ -652,39 +739,59 @@ const TodoKanban: React.FC = () => {
       );
     }
 
+    const TaskComponent = isArchived ? ArchivedTask : Task;
+
     return (
-      <Task 
+      <TaskComponent 
         key={todo.id}
         status={todo.status}
         priority={todo.priority}
         isEpic={!!todo.epic}
-        draggable
+        draggable={!isArchived}
         onDragStart={(e) => {
-          e.dataTransfer.setData('todoId', todo.id);
+          if (!isArchived) {
+            e.dataTransfer.setData('todoId', todo.id);
+          }
         }}
       >
         <TaskHeader>
           <TaskId>{todo.id}</TaskId>
           <TaskActions>
-            <ActionButton onClick={() => cyclePriority(todo.id)} title="Change priority">
-              <FaTag size={12} />
-            </ActionButton>
-            <ActionButton onClick={() => toggleEpicSelect(todo.id)} title="Set epic">
-              <FaCodeBranch size={12} />
-            </ActionButton>
-            <ActionButton onClick={() => toggleRepoSelect(todo.id)} title="Set repository">
-              <FaGithub size={12} />
-            </ActionButton>
-            <ActionButton onClick={() => setEditingId(todo.id)} title="Edit task">
-              <FaEdit size={12} />
-            </ActionButton>
-            <ActionButton onClick={() => deleteTodo(todo.id)} title="Delete task">
-              <FaTrash size={12} />
-            </ActionButton>
+            {!isArchived ? (
+              <>
+                <ActionButton onClick={() => cyclePriority(todo.id)} title="Change priority">
+                  <FaTag size={12} />
+                </ActionButton>
+                <ActionButton onClick={() => toggleEpicSelect(todo.id)} title="Set epic">
+                  <FaCodeBranch size={12} />
+                </ActionButton>
+                <ActionButton onClick={() => toggleRepoSelect(todo.id)} title="Set repository">
+                  <FaGithub size={12} />
+                </ActionButton>
+                <ActionButton onClick={() => setEditingId(todo.id)} title="Edit task">
+                  <FaEdit size={12} />
+                </ActionButton>
+                <ArchiveButton onClick={() => archiveTask(todo.id)} title="Archive task">
+                  <FaArchive size={12} />
+                </ArchiveButton>
+                <ActionButton onClick={() => deleteTodo(todo.id)} title="Delete task">
+                  <FaTrash size={12} />
+                </ActionButton>
+              </>
+            ) : (
+              <>
+                <ActionButton onClick={() => restoreTask(todo.id)} title="Restore task">
+                  <FaTrashRestore size={12} />
+                </ActionButton>
+                <ActionButton onClick={() => deleteTodo(todo.id)} title="Delete permanently">
+                  <FaTrash size={12} />
+                </ActionButton>
+              </>
+            )}
           </TaskActions>
         </TaskHeader>
         
-        <TaskContent onDoubleClick={() => setEditingId(todo.id)}>
+        <TaskContent onDoubleClick={() => !isArchived && setEditingId(todo.id)}>
           {todo.text}
         </TaskContent>
         
@@ -742,11 +849,13 @@ const TodoKanban: React.FC = () => {
             <div></div>
           )}
           <TaskDate>
-            <FaLink size={10} /> {formatDate(todo.createdAt)}
+            <FaLink size={10} /> {isArchived && todo.archivedAt 
+              ? `Archived ${formatDate(todo.archivedAt)}` 
+              : formatDate(todo.createdAt)}
           </TaskDate>
         </TaskFooter>
 
-        {showEpicSelect === todo.id && (
+        {showEpicSelect === todo.id && !isArchived && (
           <EpicSelector>
             <EpicOption
               onClick={() => setEpic(todo.id, undefined)}
@@ -765,7 +874,7 @@ const TodoKanban: React.FC = () => {
           </EpicSelector>
         )}
 
-        {showRepoSelect === todo.id && (
+        {showRepoSelect === todo.id && !isArchived && (
           <EpicSelector>
             <EpicOption
               onClick={() => setRepo(todo.id, undefined)}
@@ -783,13 +892,13 @@ const TodoKanban: React.FC = () => {
             ))}
           </EpicSelector>
         )}
-      </Task>
+      </TaskComponent>
     );
   };
 
   // Render a column with its tasks
   const renderColumn = (status: 'todo' | 'in-progress' | 'done', title: string) => {
-    const filteredTodos = todos.filter(todo => todo.status === status);
+    const filteredTodos = getActiveTodos(status);
 
     return (
       <Column
@@ -841,19 +950,48 @@ const TodoKanban: React.FC = () => {
     );
   };
 
+  // Add renderArchivedSection function
+  const renderArchivedSection = () => {
+    const archivedTodos = getArchivedTodos();
+    
+    if (!showArchived || archivedTodos.length === 0) return null;
+    
+    return (
+      <ArchivedColumn>
+        <ArchivedHeader>
+          <ArchivedTitle>
+            <FaArchive size={12} /> Archived Tasks
+          </ArchivedTitle>
+          <Badge status="done">{archivedTodos.length}</Badge>
+        </ArchivedHeader>
+        
+        <ArchivedTaskList>
+          {archivedTodos.map(todo => renderTask(todo, true))}
+        </ArchivedTaskList>
+      </ArchivedColumn>
+    );
+  };
+
   return (
     <KanbanContainer>
       <HeaderContainer>
         <HeaderTitle>Development Tasks</HeaderTitle>
-        <ReturnButton onClick={returnToMainView}>
-          <FaChevronLeft size={12} /> Return to API Client
-        </ReturnButton>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <ReturnButton onClick={toggleArchived}>
+            {showArchived ? <FaEyeSlash size={12} /> : <FaArchive size={12} />} 
+            {showArchived ? 'Hide Archived' : 'Show Archived'}
+          </ReturnButton>
+          <ReturnButton onClick={returnToMainView}>
+            <FaChevronLeft size={12} /> Return to API Client
+          </ReturnButton>
+        </div>
       </HeaderContainer>
       <ColumnsContainer>
         {renderColumn('todo', 'Backlog')}
         {renderColumn('in-progress', 'In Progress')}
         {renderColumn('done', 'Done')}
       </ColumnsContainer>
+      {renderArchivedSection()}
     </KanbanContainer>
   );
 };
