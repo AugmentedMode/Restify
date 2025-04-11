@@ -1100,19 +1100,24 @@ function App() {
     const profile = secretsProfiles.find(p => p.id === profileId);
     if (!profile) return;
 
-    // Create .env format content using the service
-    const envContent = SecretsService.exportAsEnv(profile);
+    try {
+      // Create .env format content using the service
+      const envContent = SecretsService.exportAsEnv(profile);
 
-    // Create a blob and trigger download
-    const blob = new Blob([envContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${profile.name.toLowerCase().replace(/\s+/g, '-')}.env`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      // Create a blob and trigger download
+      const blob = new Blob([envContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${profile.name.toLowerCase().replace(/\s+/g, '-')}.env`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export error:', error);
+      throw error; // Re-throw to be handled in the UI component
+    }
   }, [secretsProfiles]);
 
   const handleImportSecrets = useCallback(() => {
@@ -1149,19 +1154,29 @@ function App() {
   }, [navigateToSecrets]);
 
   const handleEncryptProfile = useCallback((profileId: string, password: string) => {
-    setSecretsProfiles(prev => prev.map(profile => 
-      profile.id === profileId
-        ? SecretsService.encryptProfile(profile, password)
-        : profile
-    ));
+    try {
+      setSecretsProfiles(prev => prev.map(profile => 
+        profile.id === profileId
+          ? SecretsService.encryptProfile(profile, password)
+          : profile
+      ));
+    } catch (error) {
+      console.error('Encryption error:', error);
+      throw error; // Re-throw to be handled in the UI component
+    }
   }, []);
 
   const handleDecryptProfile = useCallback((profileId: string, password: string) => {
-    setSecretsProfiles(prev => prev.map(profile => 
-      profile.id === profileId
-        ? SecretsService.decryptProfile(profile, password)
-        : profile
-    ));
+    try {
+      setSecretsProfiles(prev => prev.map(profile => 
+        profile.id === profileId
+          ? SecretsService.decryptProfile(profile, password)
+          : profile
+      ));
+    } catch (error) {
+      console.error('Decryption error:', error);
+      throw error; // Re-throw to be handled in the UI component
+    }
   }, []);
 
   // Render the app

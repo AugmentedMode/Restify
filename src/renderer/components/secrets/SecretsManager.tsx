@@ -12,7 +12,8 @@ import {
   FaEdit, 
   FaLock, 
   FaUnlock,
-  FaKey
+  FaKey,
+  FaCheck
 } from 'react-icons/fa';
 import { Secret, SecretsProfile } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -217,6 +218,35 @@ const DescriptionArea = styled.div`
   line-height: 1.5;
 `;
 
+// Add a Toast notification component
+const Toast = styled.div<{ type: 'success' | 'error' }>`
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 16px 24px;
+  background-color: ${props => props.type === 'success' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(244, 67, 54, 0.9)'};
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeInUp 0.3s ease-out;
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
 interface SecretsManagerProps {
   activeProfile: SecretsProfile | null;
   profiles: SecretsProfile[];
@@ -251,6 +281,9 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
   const [editingSecretId, setEditingSecretId] = useState<string | null>(null);
   const [showEncryptModal, setShowEncryptModal] = useState(false);
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Clear form fields when profile changes
   useEffect(() => {
@@ -259,8 +292,28 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
     setEditingSecretId(null);
   }, [activeProfile?.id]);
 
+  // Auto-dismiss toast after 5 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+  };
+
   const handleAddSecret = () => {
     if (!activeProfile || !newSecretKey.trim()) return;
+    
+    // Don't allow adding secrets to encrypted profiles
+    if (activeProfile.isEncrypted) {
+      showToast('Please decrypt the profile before adding secrets', 'error');
+      return;
+    }
     
     const newSecret: Secret = {
       id: uuidv4(),
@@ -272,6 +325,7 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
     onAddSecret(activeProfile.id, newSecret);
     setNewSecretKey('');
     setNewSecretValue('');
+    showToast('Secret added successfully', 'success');
   };
   
   const toggleSecretMask = (secretId: string) => {
@@ -288,20 +342,42 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
   
   const handleDeleteSecret = (secretId: string) => {
     if (!activeProfile) return;
+    
+    // Don't allow deleting secrets from encrypted profiles
+    if (activeProfile.isEncrypted) {
+      showToast('Please decrypt the profile before deleting secrets', 'error');
+      return;
+    }
+    
     onDeleteSecret(activeProfile.id, secretId);
+    showToast('Secret deleted successfully', 'success');
   };
   
   const handleEncryptProfile = () => {
     if (!activeProfile) return;
     
-    if (activeProfile.isEncrypted) {
-      onDecryptProfile(activeProfile.id, password);
-    } else {
-      onEncryptProfile(activeProfile.id, password);
+    // For encrypting, we need to confirm the password
+    if (!activeProfile.isEncrypted && password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
     }
     
-    setShowEncryptModal(false);
-    setPassword('');
+    try {
+      if (activeProfile.isEncrypted) {
+        onDecryptProfile(activeProfile.id, password);
+        showToast('Profile decrypted successfully', 'success');
+      } else {
+        onEncryptProfile(activeProfile.id, password);
+        showToast('Profile encrypted successfully', 'success');
+      }
+      
+      setShowEncryptModal(false);
+      setPassword('');
+      setConfirmPassword('');
+      setError(null);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An unknown error occurred');
+    }
   };
   
   const handleDeleteProfile = () => {
@@ -309,6 +385,18 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
     
     if (confirm(`Are you sure you want to delete the profile "${activeProfile.name}"? This action cannot be undone.`)) {
       onDeleteProfile(activeProfile.id);
+      showToast('Profile deleted successfully', 'success');
+    }
+  };
+
+  const handleExportSecrets = () => {
+    if (!activeProfile) return;
+    
+    try {
+      onExportSecrets(activeProfile.id);
+      showToast('Secrets exported successfully', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to export secrets', 'error');
     }
   };
 
@@ -341,8 +429,9 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
             {activeProfile.isEncrypted ? "Decrypt" : "Encrypt"}
           </ActionButton>
           <ActionButton 
-            onClick={() => onExportSecrets(activeProfile.id)}
+            onClick={handleExportSecrets}
             title="Export as .env file"
+            disabled={activeProfile.isEncrypted}
           >
             <FaFileExport size={12} /> Export
           </ActionButton>
@@ -366,20 +455,31 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
           </DescriptionArea>
         )}
         
+        {activeProfile.isEncrypted && (
+          <DescriptionArea style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', borderColor: 'rgba(255, 193, 7, 0.3)', color: '#ffc107' }}>
+            <FaLock style={{ marginRight: '8px' }} /> This profile is encrypted. Decrypt it to view or edit secrets.
+          </DescriptionArea>
+        )}
+        
         <AddSecretForm>
           <Input
             type="text"
             placeholder="Secret Key (e.g. API_KEY)"
             value={newSecretKey}
             onChange={(e) => setNewSecretKey(e.target.value)}
+            disabled={activeProfile.isEncrypted}
           />
           <Input
             type="text"
             placeholder="Secret Value"
             value={newSecretValue}
             onChange={(e) => setNewSecretValue(e.target.value)}
+            disabled={activeProfile.isEncrypted}
           />
-          <ActionButton onClick={handleAddSecret} disabled={!newSecretKey.trim()}>
+          <ActionButton 
+            onClick={handleAddSecret} 
+            disabled={!newSecretKey.trim() || activeProfile.isEncrypted}
+          >
             <FaPlus size={12} /> Add Secret
           </ActionButton>
         </AddSecretForm>
@@ -411,6 +511,8 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
                   <ActionIcon
                     onClick={() => handleDeleteSecret(secret.id)}
                     title="Delete secret"
+                    disabled={activeProfile.isEncrypted}
+                    style={{ opacity: activeProfile.isEncrypted ? 0.5 : 1 }}
                   >
                     <FaTrash size={14} />
                   </ActionIcon>
@@ -421,7 +523,7 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
         )}
       </ContentContainer>
       
-      {/* Encrypt Modal - Simplified version, would be better with a proper modal component */}
+      {/* Encrypt Modal */}
       {showEncryptModal && (
         <div style={{
           position: 'fixed',
@@ -448,8 +550,9 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
             <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '16px' }}>
               {activeProfile.isEncrypted 
                 ? "Enter your password to decrypt this profile." 
-                : "Enter a password to encrypt this profile with AES-256 encryption."}
+                : "Enter a password to encrypt this profile with AES-256 encryption. Make sure to remember this password, as there's no way to recover your secrets if you forget it."}
             </p>
+            
             <Input
               type="password"
               placeholder="Password"
@@ -457,22 +560,59 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
               onChange={(e) => setPassword(e.target.value)}
               style={{ width: '100%', marginBottom: '16px' }}
             />
+            
+            {!activeProfile.isEncrypted && (
+              <Input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                style={{ width: '100%', marginBottom: '16px' }}
+              />
+            )}
+            
+            {error && (
+              <div style={{ 
+                padding: '8px 12px', 
+                backgroundColor: 'rgba(244, 67, 54, 0.1)', 
+                borderLeft: '3px solid #f44336',
+                marginBottom: '16px',
+                fontSize: '14px',
+                color: '#f44336'
+              }}>
+                {error}
+              </div>
+            )}
+            
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <ActionButton 
-                onClick={() => setShowEncryptModal(false)}
+                onClick={() => {
+                  setShowEncryptModal(false);
+                  setPassword('');
+                  setConfirmPassword('');
+                  setError(null);
+                }}
                 style={{ backgroundColor: 'transparent' }}
               >
                 Cancel
               </ActionButton>
               <ActionButton 
                 onClick={handleEncryptProfile}
-                disabled={!password}
+                disabled={!password || (!activeProfile.isEncrypted && password !== confirmPassword)}
               >
                 {activeProfile.isEncrypted ? "Decrypt" : "Encrypt"}
               </ActionButton>
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Toast notifications */}
+      {toast && (
+        <Toast type={toast.type}>
+          {toast.type === 'success' ? <FaCheck size={16} /> : <FaTrash size={16} />}
+          {toast.message}
+        </Toast>
       )}
     </Container>
   );
