@@ -16,6 +16,7 @@ import axios from 'axios';
 import fs from 'fs';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import https from 'https';
 
 // Configure logging safely
 log.info('App starting...');
@@ -83,9 +84,14 @@ const getHistoryPath = () => {
 // API Request handler
 ipcMain.handle('execute-request', async (_, requestData) => {
   try {
-    const { method, url, headers, data, params } = requestData;
+    const { method, url, headers, data, params, settings } = requestData;
     
     const startTime = Date.now();
+    
+    // Apply settings from the renderer if provided
+    const timeout = settings?.timeout || 60000; // Default to 60s if not specified
+    const maxRedirects = settings?.followRedirects ? 5 : 0; // Limit to 5 redirects if enabled
+    const rejectUnauthorized = settings?.validateSSL !== false; // Default to true
     
     // Set response type to json for proper parsing
     // Use maxContentLength and maxBodyLength to prevent crashes with very large responses
@@ -98,8 +104,12 @@ ipcMain.handle('execute-request', async (_, requestData) => {
       responseType: 'json',
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
-      // Add timeout to prevent hanging requests
-      timeout: 60000, // 60 seconds
+      // Apply settings
+      timeout: timeout,
+      maxRedirects: maxRedirects,
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: rejectUnauthorized
+      }),
     });
     
     const endTime = Date.now();

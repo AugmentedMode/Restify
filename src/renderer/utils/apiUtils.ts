@@ -1,5 +1,6 @@
-import { ApiRequest, ApiResponse, Environment, RequestParam, RequestHeader } from '../types';
+import { ApiRequest, ApiResponse, RequestHeader, RequestParam, Environment } from '../types';
 import { decryptValue } from './encryptionUtils';
+import { useSettings } from './SettingsContext';
 
 /**
  * Process URL with environment variables
@@ -72,11 +73,15 @@ export const paramsToObject = (params: RequestParam[]): Record<string, string> =
 };
 
 /**
- * Convert header objects to Axios header format
+ * Convert headers to a simple object
  */
-export const headersToObject = (headers: RequestHeader[]): Record<string, string> => {
+export const headersToObject = (headers: RequestHeader[] | Record<string, string>): Record<string, string> => {
+  if (!Array.isArray(headers)) {
+    return headers; // Already an object
+  }
+  
   return headers
-    .filter(header => header.enabled)
+    .filter(header => header.enabled && header.name)
     .reduce((acc, header) => {
       acc[header.name] = header.value;
       return acc;
@@ -90,6 +95,10 @@ export const executeRequest = async (
   request: ApiRequest,
   environment?: Environment
 ): Promise<ApiResponse> => {
+  // Get settings from local storage to avoid React context limitations outside components
+  const savedSettings = localStorage.getItem('restifySettings');
+  const settings = savedSettings ? JSON.parse(savedSettings) : null;
+  
   const processedUrl = await processUrl(request.url, environment);
   const params = paramsToObject(request.params);
   const headers = headersToObject(request.headers);
@@ -174,7 +183,13 @@ export const executeRequest = async (
     headers,
     params,
     data: parsedBody,
-    bodyType: request.bodyType
+    bodyType: request.bodyType,
+    // Add API settings
+    settings: {
+      timeout: settings?.api?.defaultTimeout || 30000,
+      followRedirects: settings?.api?.followRedirects !== false, // default to true
+      validateSSL: settings?.api?.validateSSL !== false, // default to true
+    }
   };
   
   try {

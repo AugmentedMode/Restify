@@ -24,6 +24,7 @@ import {
   ResizeHandle,
 } from '../../styles/StyledComponents';
 import { modalDataStore } from '../../utils/modalDataStore';
+import { useSettings } from '../../utils/SettingsContext';
 
 // Components
 import SidebarHeader from './components/SidebarHeader';
@@ -144,6 +145,9 @@ function Sidebar({
   onExportSecrets = () => {},
   onOpenSettings = () => {},
 }: SidebarProps) {
+  // Get settings from context
+  const { settings } = useSettings();
+
   // Use hooks for state management
   const { sidebarWidth, isResizing, handleResizeStart } = useSidebarResize(300);
   const { expandedFolders, toggleFolder, toggleAllFolders } = useExpandedFolders();
@@ -326,43 +330,47 @@ function Sidebar({
         gap: '20px',
       }}
     >
-      <NavTooltip title="Collections" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: expandedSections.collections
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: expandedSections.collections ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
-          }}
-          onClick={() => toggleSection('collections')}
-          className="nav-item"
-        >
-          <FaBookmark size={20} />
-        </div>
-      </NavTooltip>
+      {settings.general.showCollections && (
+        <NavTooltip title="Collections" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: expandedSections.collections
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: expandedSections.collections ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onClick={() => toggleSection('collections')}
+            className="nav-item"
+          >
+            <FaBookmark size={20} />
+          </div>
+        </NavTooltip>
+      )}
 
-      <NavTooltip title="Kanban Board" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: expandedSections.kanban
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: expandedSections.kanban ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
-          }}
-          onClick={() => toggleSection('kanban')}
-          className="nav-item"
-        >
-          <FaColumns size={20} />
-        </div>
-      </NavTooltip>
+      {settings.general.showBoards && (
+        <NavTooltip title="Kanban Board" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: expandedSections.kanban
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: expandedSections.kanban ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onClick={() => toggleSection('kanban')}
+            className="nav-item"
+          >
+            <FaColumns size={20} />
+          </div>
+        </NavTooltip>
+      )}
 
       <NavTooltip title="Environments" isCollapsed={isSidebarCollapsed}>
         <div
@@ -383,43 +391,47 @@ function Sidebar({
         </div>
       </NavTooltip>
 
-      <NavTooltip title="History" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: expandedSections.history
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: expandedSections.history ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
-          }}
-          onClick={() => toggleSection('history')}
-          className="nav-item"
-        >
-          <FaHistory size={20} />
-        </div>
-      </NavTooltip>
+      {settings.general.showHistory && (
+        <NavTooltip title="History" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: expandedSections.history
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: expandedSections.history ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onClick={() => toggleSection('history')}
+            className="nav-item"
+          >
+            <FaHistory size={20} />
+          </div>
+        </NavTooltip>
+      )}
 
-      <NavTooltip title="Notes" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: expandedSections.notes
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: expandedSections.notes ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
-          }}
-          onClick={() => toggleSection('notes')}
-          className="nav-item"
-        >
-          <FaStickyNote size={20} />
-        </div>
-      </NavTooltip>
+      {settings.general.showNotes && (
+        <NavTooltip title="Notes" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: expandedSections.notes
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: expandedSections.notes ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onClick={() => toggleSection('notes')}
+            className="nav-item"
+          >
+            <FaStickyNote size={20} />
+          </div>
+        </NavTooltip>
+      )}
 
       <NavTooltip title="New Collection" isCollapsed={isSidebarCollapsed}>
         <div
@@ -509,40 +521,46 @@ function Sidebar({
                 <SidebarSearch filter={filter} setFilter={setFilter} />
 
                 <SidebarContent style={{ overflowX: 'hidden' }}>
-                  <CollectionsSection
-                    collections={collections}
-                    activeRequestId={activeRequestId}
-                    expandedFolders={expandedFolders}
-                    expandedSections={expandedSections}
-                    toggleSection={() => toggleSection('collections')}
-                    toggleFolder={toggleFolder}
-                    toggleAllFolders={() => toggleAllFolders(collections)}
-                    onSelectRequest={onSelectRequest}
-                    onAddFolder={showAddCollectionModal}
-                    onAddRequest={onAddRequest}
-                    handleContextMenu={handleContextMenu}
-                    onContextMenuAction={handleContextMenuAction}
-                    filter={filter}
-                  />
+                  {settings.general.showCollections && (
+                    <CollectionsSection
+                      collections={collections}
+                      activeRequestId={activeRequestId}
+                      expandedFolders={expandedFolders}
+                      expandedSections={expandedSections}
+                      toggleSection={() => toggleSection('collections')}
+                      toggleFolder={toggleFolder}
+                      toggleAllFolders={() => toggleAllFolders(collections)}
+                      onSelectRequest={onSelectRequest}
+                      onAddFolder={showAddCollectionModal}
+                      onAddRequest={onAddRequest}
+                      handleContextMenu={handleContextMenu}
+                      onContextMenuAction={handleContextMenuAction}
+                      filter={filter}
+                    />
+                  )}
 
-                  <KanbanSection
-                    expanded={expandedSections.kanban}
-                    toggleSection={() => toggleSection('kanban')}
-                    onAddTodo={navigateToKanban}
-                    filter={filter}
-                  />
+                  {settings.general.showBoards && (
+                    <KanbanSection
+                      expanded={expandedSections.kanban}
+                      toggleSection={() => toggleSection('kanban')}
+                      onAddTodo={navigateToKanban}
+                      filter={filter}
+                    />
+                  )}
 
-                  <SecretsSection
-                    secretsProfiles={secretsProfiles}
-                    activeProfileId={activeSecretsProfileId}
-                    expanded={expandedSections.secrets}
-                    toggleSection={() => toggleSection('secrets')}
-                    onSelectProfile={onSelectSecretsProfile}
-                    onAddProfile={onAddSecretsProfile}
-                    onImportSecrets={onImportSecrets}
-                    onExportSecrets={onExportSecrets}
-                    filter={filter}
-                  />
+                  {settings.general.showSecretsManager && (
+                    <SecretsSection
+                      secretsProfiles={secretsProfiles}
+                      activeProfileId={activeSecretsProfileId}
+                      expanded={expandedSections.secrets}
+                      toggleSection={() => toggleSection('secrets')}
+                      onSelectProfile={onSelectSecretsProfile}
+                      onAddProfile={onAddSecretsProfile}
+                      onImportSecrets={onImportSecrets}
+                      onExportSecrets={onExportSecrets}
+                      filter={filter}
+                    />
+                  )}
 
                   {/* <EnvironmentManager 
                     environments={environments}
@@ -555,24 +573,28 @@ function Sidebar({
                     onToggleExpanded={() => toggleSection('environments')}
                   /> */}
 
-                  {/* <NotesSection
-                    notes={notes}
-                    activeNoteId={activeNoteId}
-                    expanded={expandedSections.notes}
-                    toggleSection={() => toggleSection('notes')}
-                    onSelectNote={onSelectNote}
-                    onAddNote={onAddNote}
-                    onOpenNoteOptions={setNoteOptionsModal}
-                    filter={filter}
-                  /> */}
+                  {settings.general.showNotes && (
+                    <NotesSection
+                      notes={notes}
+                      activeNoteId={activeNoteId}
+                      expanded={expandedSections.notes}
+                      toggleSection={() => toggleSection('notes')}
+                      onSelectNote={onSelectNote}
+                      onAddNote={onAddNote}
+                      onOpenNoteOptions={setNoteOptionsModal}
+                      filter={filter}
+                    />
+                  )}
 
-                  <HistorySection
-                    requestHistory={requestHistory}
-                    expanded={expandedSections.history}
-                    toggleSection={() => toggleSection('history')}
-                    onRestoreFromHistory={onRestoreFromHistory}
-                    onClearHistory={onClearHistory}
-                  />
+                  {settings.general.showHistory && (
+                    <HistorySection
+                      requestHistory={requestHistory}
+                      expanded={expandedSections.history}
+                      toggleSection={() => toggleSection('history')}
+                      onRestoreFromHistory={onRestoreFromHistory}
+                      onClearHistory={onClearHistory}
+                    />
+                  )}
                 </SidebarContent>
               </>
             )}

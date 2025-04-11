@@ -13,6 +13,7 @@ import {
   FaSun,
   FaArrowLeft
 } from 'react-icons/fa';
+import { useSettings } from '../../utils/SettingsContext';
 
 // Theme colors for consistency
 const theme = {
@@ -40,31 +41,31 @@ const theme = {
 };
 
 // Define setting categories
-type SettingCategory = 'api' | 'shortcuts' | 'security' | 'export' | 'about';
+type SettingCategory = 'general' | 'api' | 'security' | 'shortcuts' | 'export' | 'about';
 
 // Define settings types
-interface AppearanceSettings {
-  theme: string;
-  sidebarPosition: string;
-  showApiResponseTime: boolean;
-  fontSize: string;
+interface GeneralSettings {
+  showCollections: boolean;
+  showHistory: boolean;
+  showSecretsManager: boolean;
+  showBoards: boolean;
+  showNotes: boolean;
+  defaultResponseView: string;
 }
 
 interface ApiSettings {
   defaultTimeout: number;
   followRedirects: boolean;
   validateSSL: boolean;
-  preferGzipEncoding: boolean;
 }
 
 interface SecuritySettings {
-  storeCredentialsSecurely: boolean;
   clearHistoryOnExit: boolean;
-  anonymizeDataInExports: boolean;
+  storeCredentialsSecurely: boolean;
 }
 
 interface AppSettings {
-  appearance: AppearanceSettings;
+  general: GeneralSettings;
   api: ApiSettings;
   security: SecuritySettings;
 }
@@ -334,67 +335,27 @@ interface SettingsManagerProps {
 
 const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
   // State for active category
-  const [activeCategory, setActiveCategory] = useState<SettingCategory>('api');
+  const [activeCategory, setActiveCategory] = useState<SettingCategory>('general');
   
-  // Example settings state
-  const [settings, setSettings] = useState<AppSettings>({
-    appearance: {
-      theme: 'system',
-      sidebarPosition: 'left',
-      showApiResponseTime: true,
-      fontSize: 'medium',
-    },
-    api: {
-      defaultTimeout: 30000,
-      followRedirects: true,
-      validateSSL: true,
-      preferGzipEncoding: true,
-    },
-    security: {
-      storeCredentialsSecurely: true,
-      clearHistoryOnExit: false,
-      anonymizeDataInExports: false,
-    }
-  });
-  
-  // Toggle boolean settings
-  const toggleSetting = <T extends keyof AppSettings>(
-    category: T, 
-    setting: keyof AppSettings[T] & string
-  ) => {
-    // Using type assertion to safely access nested properties
-    const currentValue = settings[category][setting as keyof typeof settings[T]];
-    
-    setSettings({
-      ...settings,
-      [category]: {
-        ...settings[category],
-        [setting]: typeof currentValue === 'boolean' ? !currentValue : currentValue
-      }
-    });
-  };
+  // Use settings context instead of local state
+  const { settings, updateSettings, toggleSetting } = useSettings();
   
   // Update select input settings
-  const updateSelectSetting = <T extends keyof AppSettings>(
+  const updateSelectSetting = <T extends keyof typeof settings>(
     category: T, 
-    setting: keyof AppSettings[T] & string, 
+    setting: keyof typeof settings[T] & string, 
     value: string | number
   ) => {
-    setSettings({
-      ...settings,
-      [category]: {
-        ...settings[category],
-        [setting]: value
-      }
-    });
+    updateSettings(category, setting, value);
   };
   
   // Render sidebar categories
   const renderCategories = () => {
     const categories: { id: SettingCategory; icon: JSX.Element; name: string }[] = [
-      { id: 'api', icon: <FaGlobe />, name: 'API Defaults' },
-      { id: 'shortcuts', icon: <FaKeyboard />, name: 'Shortcuts' },
+      { id: 'general', icon: <FaPalette />, name: 'General' },
+      { id: 'api', icon: <FaGlobe />, name: 'API' },
       { id: 'security', icon: <FaShieldAlt />, name: 'Security' },
+      { id: 'shortcuts', icon: <FaKeyboard />, name: 'Shortcuts' },
       { id: 'export', icon: <FaFileExport />, name: 'Export/Import' },
       { id: 'about', icon: <FaInfoCircle />, name: 'About' },
     ];
@@ -410,6 +371,66 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
       </CategoryItem>
     ));
   };  
+  // Render General settings
+  const renderGeneralSettings = () => (
+    <SettingsPanel>
+      <SettingSection>
+        <SectionTitle>Sidebar Sections</SectionTitle>
+        <SettingRow>
+          <div>
+            <SettingLabel>Show Collections</SettingLabel>
+            <SettingDescription>Show collections section in sidebar</SettingDescription>
+          </div>
+          <ToggleButton 
+            isActive={settings.general.showCollections}
+            onClick={() => toggleSetting('general', 'showCollections')}
+          />
+        </SettingRow>
+        <SettingRow>
+          <div>
+            <SettingLabel>Show Boards</SettingLabel>
+            <SettingDescription>Show kanban boards in sidebar</SettingDescription>
+          </div>
+          <ToggleButton 
+            isActive={settings.general.showBoards}
+            onClick={() => toggleSetting('general', 'showBoards')}
+          />
+        </SettingRow>
+        <SettingRow>
+          <div>
+            <SettingLabel>Show Secret Manager</SettingLabel>
+            <SettingDescription>Show secrets manager in sidebar</SettingDescription>
+          </div>
+          <ToggleButton 
+            isActive={settings.general.showSecretsManager}
+            onClick={() => toggleSetting('general', 'showSecretsManager')}
+          />
+        </SettingRow>
+        <SettingRow>
+          <div>
+            <SettingLabel>Show Notes <span style={{ backgroundColor: "#FF385C", color: "white", padding: "2px 6px", borderRadius: "10px", fontSize: "10px", marginLeft: "8px" }}>Coming Soon</span></SettingLabel>
+            <SettingDescription>Show notes section in sidebar</SettingDescription>
+          </div>
+          <ToggleButton 
+            isActive={false}
+            onClick={() => {}}
+            style={{ opacity: 0.5, cursor: 'not-allowed' }}
+          />
+        </SettingRow>
+        <SettingRow>
+          <div>
+            <SettingLabel>Show History</SettingLabel>
+            <SettingDescription>Show request history in sidebar</SettingDescription>
+          </div>
+          <ToggleButton 
+            isActive={settings.general.showHistory}
+            onClick={() => toggleSetting('general', 'showHistory')}
+          />
+        </SettingRow>
+      </SettingSection>
+    </SettingsPanel>
+  );
+  
   // Render API default settings
   const renderApiSettings = () => (
     <SettingsPanel>
@@ -422,7 +443,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
           </div>
           <SelectInput 
             value={settings.api.defaultTimeout.toString()}
-            onChange={(e) => updateSelectSetting('api', 'defaultTimeout', e.target.value)}
+            onChange={(e) => updateSelectSetting('api', 'defaultTimeout', parseInt(e.target.value))}
           >
             <option value="5000">5000 ms</option>
             <option value="10000">10000 ms</option>
@@ -450,15 +471,46 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
             onClick={() => toggleSetting('api', 'validateSSL')}
           />
         </SettingRow>
+      </SettingSection>
+    </SettingsPanel>
+  );
+  
+  // Render Security settings
+  const renderSecuritySettings = () => (
+    <SettingsPanel>
+      <SettingSection>
+        <SectionTitle>Security Settings</SectionTitle>
         <SettingRow>
           <div>
-            <SettingLabel>Prefer Gzip Encoding</SettingLabel>
-            <SettingDescription>Request compressed responses when available</SettingDescription>
+            <SettingLabel>Secure Credential Storage</SettingLabel>
+            <SettingDescription>Use system keychain for storing sensitive credentials</SettingDescription>
           </div>
           <ToggleButton 
-            isActive={settings.api.preferGzipEncoding}
-            onClick={() => toggleSetting('api', 'preferGzipEncoding')}
+            isActive={settings.security.storeCredentialsSecurely}
+            onClick={() => toggleSetting('security', 'storeCredentialsSecurely')}
           />
+        </SettingRow>
+        <SettingRow>
+          <div>
+            <SettingLabel>Clear History on Exit</SettingLabel>
+            <SettingDescription>Automatically clear request history when closing the app</SettingDescription>
+          </div>
+          <ToggleButton 
+            isActive={settings.security.clearHistoryOnExit}
+            onClick={() => toggleSetting('security', 'clearHistoryOnExit')}
+          />
+        </SettingRow>
+        <SettingRow>
+          <div>
+            <SettingLabel>Delete All Data</SettingLabel>
+            <SettingDescription>Permanently remove all app data including collections, history, and settings</SettingDescription>
+          </div>
+          <ActionButton onClick={() => {
+            if (window.confirm('Are you sure you want to delete all data? This cannot be undone.')) {
+              // Implement data deletion logic here
+              alert('All data has been deleted.');
+            }
+          }}>Delete All</ActionButton>
         </SettingRow>
       </SettingSection>
     </SettingsPanel>
@@ -511,45 +563,6 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
             <ShortcutKey>F</ShortcutKey>
           </ShortcutKeysContainer>
         </ShortcutRow>
-      </SettingSection>
-    </SettingsPanel>
-  );
-  
-  // Render security settings
-  const renderSecuritySettings = () => (
-    <SettingsPanel>
-      <SettingSection>
-        <SectionTitle>Security Settings</SectionTitle>
-        <SettingRow>
-          <div>
-            <SettingLabel>Secure Credential Storage</SettingLabel>
-            <SettingDescription>Use system keychain for storing sensitive credentials</SettingDescription>
-          </div>
-          <ToggleButton 
-            isActive={settings.security.storeCredentialsSecurely}
-            onClick={() => toggleSetting('security', 'storeCredentialsSecurely')}
-          />
-        </SettingRow>
-        <SettingRow>
-          <div>
-            <SettingLabel>Clear History on Exit</SettingLabel>
-            <SettingDescription>Automatically clear request history when closing the app</SettingDescription>
-          </div>
-          <ToggleButton 
-            isActive={settings.security.clearHistoryOnExit}
-            onClick={() => toggleSetting('security', 'clearHistoryOnExit')}
-          />
-        </SettingRow>
-        <SettingRow>
-          <div>
-            <SettingLabel>Anonymize Data in Exports</SettingLabel>
-            <SettingDescription>Remove sensitive data when exporting collections</SettingDescription>
-          </div>
-          <ToggleButton 
-            isActive={settings.security.anonymizeDataInExports}
-            onClick={() => toggleSetting('security', 'anonymizeDataInExports')}
-          />
-        </SettingRow>
       </SettingSection>
     </SettingsPanel>
   );
@@ -609,18 +622,20 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
   // Render content based on active category
   const renderContent = () => {
     switch (activeCategory) {
+      case 'general':
+        return renderGeneralSettings();
       case 'api':
         return renderApiSettings();
-      case 'shortcuts':
-        return renderShortcutsSettings();
       case 'security':
         return renderSecuritySettings();
+      case 'shortcuts':
+        return renderShortcutsSettings();
       case 'export':
         return renderExportSettings();
       case 'about':
         return renderAboutSettings();
       default:
-        return renderApiSettings();
+        return renderGeneralSettings();
     }
   };
   

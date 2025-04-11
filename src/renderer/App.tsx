@@ -36,6 +36,7 @@ import TodoKanban from './components/Todo';
 import SecretsManager from './components/secrets/SecretsManager';
 import { SecretsService } from './services/SecretsService';
 import SettingsManager from './components/settings/SettingsManager';
+import { SettingsProvider } from './utils/SettingsContext';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -130,7 +131,7 @@ function EmptyStateView({
   );
 }
 
-function App() {
+function AppContent() {
   // One-time cleanup for potential localStorage format issues
   useEffect(() => {
     try {
@@ -1266,6 +1267,14 @@ function App() {
         />
       </AppContainer>
     </>
+  );
+}
+
+function App() {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
   );
 }
 
