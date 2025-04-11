@@ -18,6 +18,7 @@ import {
 import { useSettings } from '../../utils/SettingsContext';
 import { db, NotesService, CollectionsService, HistoryService, ResponsesService, EnvironmentsService, SettingsService } from '../../services/DatabaseService';
 import ImportFileModal from '../modals/ImportFileModal';
+import DeleteConfirmationModal from '../modals/DeleteConfirmationModal';
 import { ImportService } from '../../services/ImportService';
 
 // Theme colors for consistency
@@ -342,8 +343,9 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
   // State for active category
   const [activeCategory, setActiveCategory] = useState<SettingCategory>('general');
   
-  // State for import modal
+  // State for modals
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   // Use settings context instead of local state
   const { settings, updateSettings, toggleSetting } = useSettings();
@@ -441,6 +443,64 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
     } catch (error) {
       console.error('Error exporting environments:', error);
       alert(`Failed to export environments: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+  
+  // Handle data deletion
+  const handleDeleteAllData = async () => {
+    try {
+      // Clear all IndexedDB database tables
+      await db.notes.clear();
+      await db.collections.clear();
+      await db.requestHistory.clear();
+      await db.responses.clear();
+      await db.environments.clear();
+      await db.settings.clear();
+      
+      // Clear all localStorage data
+      localStorage.clear();
+      
+      // Also explicitly remove specific items to be sure
+      localStorage.removeItem('kanban-todos');
+      localStorage.removeItem('api-client-collections');
+      localStorage.removeItem('api-client-responses');
+      localStorage.removeItem('api-client-history');
+      localStorage.removeItem('api-client-environments');
+      localStorage.removeItem('api-client-notes');
+      localStorage.removeItem('api-client-active-request-id');
+      localStorage.removeItem('api-client-current-environment');
+      
+      // Restore default settings
+      const defaultSettings = {
+        general: {
+          showCollections: true,
+          showHistory: true,
+          showSecretsManager: true,
+          showBoards: true,
+          showNotes: true,
+          defaultResponseView: 'pretty',
+        },
+        api: {
+          defaultTimeout: 30000,
+          followRedirects: true,
+          validateSSL: true,
+        },
+        security: {
+          clearHistoryOnExit: false,
+          storeCredentialsSecurely: true,
+        }
+      };
+      
+      // Save default settings back to localStorage
+      localStorage.setItem('restifySettings', JSON.stringify(defaultSettings));
+      
+      alert('All data has been successfully deleted.');
+      
+      // Reload the application to reflect the changes
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting data:', error);
+      alert(`Failed to delete all data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
   
@@ -574,71 +634,21 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
     <SettingsPanel>
       <SettingSection>
         <SectionTitle>Security Settings</SectionTitle>
-        <SettingRow style={{ borderBottom: '1px solid rgba(255, 56, 92, 0.2)', paddingBottom: '20px' }}>
+        <SettingRow>
           <div>
             <SettingLabel><FaTrash style={{ marginRight: '8px', color: theme.brand.primary }} /> Delete All Data</SettingLabel>
             <SettingDescription>Permanently remove all app data including collections, history, environments, and settings</SettingDescription>
           </div>
-          <ActionButton onClick={async () => {
-            if (window.confirm('Are you sure you want to delete ALL data? This operation is permanent and cannot be undone.')) {
-              try {
-                // Clear all IndexedDB database tables
-                await db.notes.clear();
-                await db.collections.clear();
-                await db.requestHistory.clear();
-                await db.responses.clear();
-                await db.environments.clear();
-                await db.settings.clear();
-                
-                // Clear all localStorage data
-                localStorage.clear();
-                
-                // Also explicitly remove specific items to be sure
-                localStorage.removeItem('kanban-todos');
-                localStorage.removeItem('api-client-collections');
-                localStorage.removeItem('api-client-responses');
-                localStorage.removeItem('api-client-history');
-                localStorage.removeItem('api-client-environments');
-                localStorage.removeItem('api-client-notes');
-                localStorage.removeItem('api-client-active-request-id');
-                localStorage.removeItem('api-client-current-environment');
-                
-                // Restore default settings
-                const defaultSettings = {
-                  general: {
-                    showCollections: true,
-                    showHistory: true,
-                    showSecretsManager: true,
-                    showBoards: true,
-                    showNotes: true,
-                    defaultResponseView: 'pretty',
-                  },
-                  api: {
-                    defaultTimeout: 30000,
-                    followRedirects: true,
-                    validateSSL: true,
-                  },
-                  security: {
-                    clearHistoryOnExit: false,
-                    storeCredentialsSecurely: true,
-                  }
-                };
-                
-                // Save default settings back to localStorage
-                localStorage.setItem('restifySettings', JSON.stringify(defaultSettings));
-                
-                alert('All data has been successfully deleted.');
-                
-                // Reload the application to reflect the changes
-                window.location.reload();
-              } catch (error) {
-                console.error('Error deleting data:', error);
-                alert(`Failed to delete all data: ${error instanceof Error ? error.message : 'Unknown error'}`);
-              }
-            }
-          }}>Delete All Data</ActionButton>
+          <ActionButton onClick={() => setShowDeleteModal(true)}>Delete All Data</ActionButton>
         </SettingRow>
       </SettingSection>
+      
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAllData}
+      />
     </SettingsPanel>
   );
   
@@ -774,6 +784,13 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
         
         {renderContent()}
       </SettingsContent>
+      
+      {/* Import File Modal */}
+      <ImportFileModal 
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImportFile}
+      />
     </SettingsContainer>
   );
 };
