@@ -31,19 +31,6 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
             <FaCog size={20} />
           </div>
         </NavTooltip>
-
-        <div 
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            transition: 'all 0.2s',
-          }}
-          onClick={toggleSidebar}
-          className="nav-item"
-        >
-          {isSidebarCollapsed ? <FaChevronRight size={20} /> : <FaChevronLeft size={20} />}
-        </div>
       </div>
     </Footer>
   );

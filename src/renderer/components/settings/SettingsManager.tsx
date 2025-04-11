@@ -40,7 +40,7 @@ const theme = {
 };
 
 // Define setting categories
-type SettingCategory = 'appearance' | 'api' | 'shortcuts' | 'security' | 'export' | 'about';
+type SettingCategory = 'api' | 'shortcuts' | 'security' | 'export' | 'about';
 
 // Define settings types
 interface AppearanceSettings {
@@ -334,7 +334,7 @@ interface SettingsManagerProps {
 
 const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
   // State for active category
-  const [activeCategory, setActiveCategory] = useState<SettingCategory>('appearance');
+  const [activeCategory, setActiveCategory] = useState<SettingCategory>('api');
   
   // Example settings state
   const [settings, setSettings] = useState<AppSettings>({
@@ -392,7 +392,6 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
   // Render sidebar categories
   const renderCategories = () => {
     const categories: { id: SettingCategory; icon: JSX.Element; name: string }[] = [
-      { id: 'appearance', icon: <FaPalette />, name: 'Appearance' },
       { id: 'api', icon: <FaGlobe />, name: 'API Defaults' },
       { id: 'shortcuts', icon: <FaKeyboard />, name: 'Shortcuts' },
       { id: 'security', icon: <FaShieldAlt />, name: 'Security' },
@@ -410,68 +409,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
         <CategoryName>{category.name}</CategoryName>
       </CategoryItem>
     ));
-  };
-  
-  // Render appearance settings
-  const renderAppearanceSettings = () => (
-    <SettingsPanel>
-      <SettingSection>
-        <SectionTitle>Theme</SectionTitle>
-        <SettingRow>
-          <div>
-            <SettingLabel>Theme Mode</SettingLabel>
-            <SettingDescription>Choose between light, dark, or system theme</SettingDescription>
-          </div>
-          <SelectInput 
-            value={settings.appearance.theme}
-            onChange={(e) => updateSelectSetting('appearance', 'theme', e.target.value)}
-          >
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="system">System Default</option>
-          </SelectInput>
-        </SettingRow>
-        <SettingRow>
-          <div>
-            <SettingLabel>Sidebar Position</SettingLabel>
-            <SettingDescription>Change the position of the sidebar</SettingDescription>
-          </div>
-          <SelectInput 
-            value={settings.appearance.sidebarPosition}
-            onChange={(e) => updateSelectSetting('appearance', 'sidebarPosition', e.target.value)}
-          >
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-          </SelectInput>
-        </SettingRow>
-        <SettingRow>
-          <div>
-            <SettingLabel>Show API Response Time</SettingLabel>
-            <SettingDescription>Display the time taken for API responses</SettingDescription>
-          </div>
-          <ToggleButton 
-            isActive={settings.appearance.showApiResponseTime}
-            onClick={() => toggleSetting('appearance', 'showApiResponseTime')}
-          />
-        </SettingRow>
-        <SettingRow>
-          <div>
-            <SettingLabel>Font Size</SettingLabel>
-            <SettingDescription>Adjust the application font size</SettingDescription>
-          </div>
-          <SelectInput 
-            value={settings.appearance.fontSize}
-            onChange={(e) => updateSelectSetting('appearance', 'fontSize', e.target.value)}
-          >
-            <option value="small">Small</option>
-            <option value="medium">Medium</option>
-            <option value="large">Large</option>
-          </SelectInput>
-        </SettingRow>
-      </SettingSection>
-    </SettingsPanel>
-  );
-  
+  };  
   // Render API default settings
   const renderApiSettings = () => (
     <SettingsPanel>
@@ -671,8 +609,6 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
   // Render content based on active category
   const renderContent = () => {
     switch (activeCategory) {
-      case 'appearance':
-        return renderAppearanceSettings();
       case 'api':
         return renderApiSettings();
       case 'shortcuts':
@@ -684,7 +620,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
       case 'about':
         return renderAboutSettings();
       default:
-        return renderAppearanceSettings();
+        return renderApiSettings();
     }
   };
   
