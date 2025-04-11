@@ -47,10 +47,21 @@ npm run package
 
 This will create platform-specific installers in the `release` directory.
 
+### macOS Notarization
+
+For distributing on macOS, notarization is required to avoid security warnings:
+
+```bash
+npm run package:mac:notarized
+```
+
+For more detailed instructions on notarization, see [macOS Notarization Guide](docs/MacOS_NOTARIZATION.md).
+
 ## Scripts
 
 - `npm start` - Start the application in development mode
 - `npm run package` - Build the application for production
+- `npm run package:mac:notarized` - Build, sign, and notarize for macOS distribution
 - `npm run lint` - Run the linter
 - `npm run test` - Run tests
 
