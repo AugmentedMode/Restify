@@ -31,6 +31,7 @@ import { modalDataStore } from './utils/modalDataStore';
 import { initializeEncryption } from './utils/encryptionUtils';
 import ImportFileModal from './components/modals/ImportFileModal';
 import AddCollectionModal from './components/modals/AddCollectionModal';
+import ImportEnvModal from './components/modals/ImportEnvModal';
 import TodoKanban from './components/Todo';
 import SecretsManager from './components/secrets/SecretsManager';
 import { SecretsService } from './services/SecretsService';
@@ -326,6 +327,7 @@ function App() {
   const [showImportFileModal, setShowImportFileModal] = useState(false);
   // Add state for collection modal
   const [showAddCollectionModal, setShowAddCollectionModal] = useState(false);
+  const [showImportEnvModal, setShowImportEnvModal] = useState(false);
   
   // Store responses by request ID for persistence
   const [responseMap, setResponseMap] = useState<Record<string, ApiResponse>>(
@@ -1114,25 +1116,36 @@ function App() {
   }, [secretsProfiles]);
 
   const handleImportSecrets = useCallback(() => {
-    // This would typically open a file selector dialog
-    // For now just create a new profile with some sample secrets
-    const newProfile: SecretsProfile = {
-      id: uuidv4(),
-      name: 'Imported Profile',
-      secrets: [
-        { id: uuidv4(), key: 'API_KEY', value: 'sample_api_key_1234', isMasked: true },
-        { id: uuidv4(), key: 'API_SECRET', value: 'sample_secret_5678', isMasked: true },
-        { id: uuidv4(), key: 'DATABASE_URL', value: 'postgres://user:password@localhost:5432/db', isMasked: true },
-      ],
-      isEncrypted: false,
-      description: 'Imported from .env file',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    
-    setSecretsProfiles(prev => [...prev, newProfile]);
-    setActiveSecretsProfile(newProfile.id);
-    navigateToSecrets();
+    setShowImportEnvModal(true);
+  }, []);
+
+  // Function to handle the actual .env import
+  const handleImportEnvFile = useCallback((envContent: string, profileName: string) => {
+    try {
+      // Use the SecretsService to parse the .env content
+      const importedData = SecretsService.importFromEnv(envContent, profileName);
+      
+      // Create a complete profile with the imported data
+      const newProfile: SecretsProfile = {
+        id: uuidv4(),
+        name: profileName,
+        secrets: importedData.secrets || [],
+        isEncrypted: false,
+        description: `Imported from .env file on ${new Date().toLocaleString()}`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      
+      // Add the profile to state
+      setSecretsProfiles(prev => [...prev, newProfile]);
+      setActiveSecretsProfile(newProfile.id);
+      
+      // Navigate to secrets page to show the imported profile
+      navigateToSecrets();
+    } catch (error) {
+      console.error('Error importing .env file:', error);
+      alert('Failed to import .env file. Please check the format and try again.');
+    }
   }, [navigateToSecrets]);
 
   const handleEncryptProfile = useCallback((profileId: string, password: string) => {
@@ -1195,6 +1208,13 @@ function App() {
         <MainContent>
           {renderMainContent()}
         </MainContent>
+        
+        {/* Import env modal */}
+        <ImportEnvModal
+          isOpen={showImportEnvModal}
+          onClose={() => setShowImportEnvModal(false)}
+          onImport={handleImportEnvFile}
+        />
         
         {/* Import file modal */}
         <ImportFileModal

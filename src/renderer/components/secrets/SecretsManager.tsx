@@ -346,6 +346,13 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
           >
             <FaFileExport size={12} /> Export
           </ActionButton>
+          <ActionButton 
+            onClick={handleDeleteProfile}
+            title="Delete this profile"
+            style={{ backgroundColor: 'rgba(244, 67, 54, 0.1)', borderColor: 'rgba(244, 67, 54, 0.3)', color: '#f44336' }}
+          >
+            <FaTrash size={12} /> Delete
+          </ActionButton>
           <ActionButton onClick={onReturn}>
             <FaChevronLeft size={12} /> Return
           </ActionButton>
