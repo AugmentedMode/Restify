@@ -39,12 +39,6 @@ const TabsContainer: React.FC<TabsContainerProps> = ({
           >
             Body
           </Tab>
-          <Tab
-            active={activeTab === 'auth'}
-            onClick={() => setActiveTab('auth')}
-          >
-            Auth
-          </Tab>
         </TabList>
       </TabContainer>
 
