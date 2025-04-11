@@ -35,6 +35,7 @@ import ImportEnvModal from './components/modals/ImportEnvModal';
 import TodoKanban from './components/Todo';
 import SecretsManager from './components/secrets/SecretsManager';
 import { SecretsService } from './services/SecretsService';
+import SettingsManager from './components/settings/SettingsManager';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [
@@ -864,7 +865,13 @@ function App() {
     };
   }, []);
 
-  // Update the renderMainContent function to use the wrapper
+  // Navigate to Settings
+  const navigateToSettings = useCallback(() => {
+    window.history.pushState({}, '', '/settings');
+    window.dispatchEvent(new Event('popstate'));
+  }, []);
+
+  // Update the renderMainContent function to handle settings route
   const renderMainContent = () => {
     // Route to the kanban page if needed
     if (currentRoute === '/kanban') {
@@ -887,6 +894,18 @@ function App() {
           onImportSecrets={handleImportSecrets}
           onEncryptProfile={handleEncryptProfile}
           onDecryptProfile={handleDecryptProfile}
+          onReturn={() => {
+            window.history.pushState({}, '', '/');
+            window.dispatchEvent(new Event('popstate'));
+          }}
+        />
+      );
+    }
+    
+    // Route to settings
+    if (currentRoute === '/settings') {
+      return (
+        <SettingsManager
           onReturn={() => {
             window.history.pushState({}, '', '/');
             window.dispatchEvent(new Event('popstate'));
@@ -1219,6 +1238,7 @@ function App() {
           onAddSecretsProfile={handleAddSecretsProfile}
           onImportSecrets={handleImportSecrets}
           onExportSecrets={handleExportSecrets}
+          onOpenSettings={navigateToSettings}
         />
         <MainContent>
           {renderMainContent()}

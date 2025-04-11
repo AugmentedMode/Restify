@@ -16,6 +16,7 @@ import {
   FaPalette,
   FaSitemap,
   FaTimes,
+  FaCog,
 } from 'react-icons/fa';
 import { 
   Sidebar as SidebarContainer, 
@@ -37,6 +38,10 @@ import NotesSection from './sections/NotesSection';
 import KanbanSection from './sections/KanbanSection';
 import EnvironmentManager from '../EnvironmentManager';
 import SecretsSection from './sections/SecretsSection';
+
+// Dynamically load the SettingsSection with an import() to avoid errors
+// when the file hasn't been created yet
+const SettingsSection = React.lazy(() => import('../settings/SettingsSection'));
 
 // Hooks
 import { useSidebarResize } from './hooks/useSidebarResize';
@@ -99,6 +104,7 @@ interface SidebarProps {
   onAddSecretsProfile?: () => void;
   onImportSecrets?: () => void;
   onExportSecrets?: (profileId: string) => void;
+  onOpenSettings?: () => void;
 }
 
 function Sidebar({
@@ -136,6 +142,7 @@ function Sidebar({
   onAddSecretsProfile = () => {},
   onImportSecrets = () => {},
   onExportSecrets = () => {},
+  onOpenSettings = () => {},
 }: SidebarProps) {
   // Use hooks for state management
   const { sidebarWidth, isResizing, handleResizeStart } = useSidebarResize(300);
@@ -171,10 +178,16 @@ function Sidebar({
   // Additional state
   const [filter, setFilter] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Toggle sidebar collapsed state
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
+  // Toggle settings panel visibility
+  const toggleSettings = () => {
+    setShowSettings(!showSettings);
   };
 
   // Handle rename
@@ -474,90 +487,102 @@ function Sidebar({
           className={isResizing ? 'active' : ''}
           onMouseDown={handleResizeStart}
         />
-        <SidebarHeader 
-          isSidebarCollapsed={isSidebarCollapsed} 
-          toggleCreatePanel={toggleCreatePanel} 
-        />
-
-        {/* Collapsed or Expanded Sidebar Content */}
-        {isSidebarCollapsed ? (
-          renderCollapsedNav()
+        {/* Don't show the regular sidebar UI if settings are open */}
+        {showSettings ? (
+          <React.Suspense fallback={<div>Loading Settings...</div>}>
+            <SettingsSection 
+              onClose={toggleSettings}
+            />
+          </React.Suspense>
         ) : (
           <>
-            <SidebarSearch filter={filter} setFilter={setFilter} />
+            <SidebarHeader 
+              isSidebarCollapsed={isSidebarCollapsed} 
+              toggleCreatePanel={toggleCreatePanel} 
+            />
 
-            <SidebarContent style={{ overflowX: 'hidden' }}>
-              <CollectionsSection
-                collections={collections}
-                activeRequestId={activeRequestId}
-                expandedFolders={expandedFolders}
-                expandedSections={expandedSections}
-                toggleSection={() => toggleSection('collections')}
-                toggleFolder={toggleFolder}
-                toggleAllFolders={() => toggleAllFolders(collections)}
-                onSelectRequest={onSelectRequest}
-                onAddFolder={showAddCollectionModal}
-                onAddRequest={onAddRequest}
-                handleContextMenu={handleContextMenu}
-                onContextMenuAction={handleContextMenuAction}
-                filter={filter}
-              />
+            {/* Collapsed or Expanded Sidebar Content */}
+            {isSidebarCollapsed ? (
+              renderCollapsedNav()
+            ) : (
+              <>
+                <SidebarSearch filter={filter} setFilter={setFilter} />
 
-              <KanbanSection
-                expanded={expandedSections.kanban}
-                toggleSection={() => toggleSection('kanban')}
-                onAddTodo={navigateToKanban}
-                filter={filter}
-              />
+                <SidebarContent style={{ overflowX: 'hidden' }}>
+                  <CollectionsSection
+                    collections={collections}
+                    activeRequestId={activeRequestId}
+                    expandedFolders={expandedFolders}
+                    expandedSections={expandedSections}
+                    toggleSection={() => toggleSection('collections')}
+                    toggleFolder={toggleFolder}
+                    toggleAllFolders={() => toggleAllFolders(collections)}
+                    onSelectRequest={onSelectRequest}
+                    onAddFolder={showAddCollectionModal}
+                    onAddRequest={onAddRequest}
+                    handleContextMenu={handleContextMenu}
+                    onContextMenuAction={handleContextMenuAction}
+                    filter={filter}
+                  />
 
-              <SecretsSection
-                secretsProfiles={secretsProfiles}
-                activeProfileId={activeSecretsProfileId}
-                expanded={expandedSections.secrets}
-                toggleSection={() => toggleSection('secrets')}
-                onSelectProfile={onSelectSecretsProfile}
-                onAddProfile={onAddSecretsProfile}
-                onImportSecrets={onImportSecrets}
-                onExportSecrets={onExportSecrets}
-                filter={filter}
-              />
+                  <KanbanSection
+                    expanded={expandedSections.kanban}
+                    toggleSection={() => toggleSection('kanban')}
+                    onAddTodo={navigateToKanban}
+                    filter={filter}
+                  />
 
-              {/* <EnvironmentManager 
-                environments={environments}
-                currentEnvironmentId={currentEnvironmentId}
-                onAddEnvironment={onAddEnvironment}
-                onUpdateEnvironment={onUpdateEnvironment}
-                onDeleteEnvironment={onDeleteEnvironment}
-                onSelectEnvironment={onSelectEnvironment}
-                expanded={expandedSections.environments}
-                onToggleExpanded={() => toggleSection('environments')}
-              /> */}
+                  <SecretsSection
+                    secretsProfiles={secretsProfiles}
+                    activeProfileId={activeSecretsProfileId}
+                    expanded={expandedSections.secrets}
+                    toggleSection={() => toggleSection('secrets')}
+                    onSelectProfile={onSelectSecretsProfile}
+                    onAddProfile={onAddSecretsProfile}
+                    onImportSecrets={onImportSecrets}
+                    onExportSecrets={onExportSecrets}
+                    filter={filter}
+                  />
 
-              {/* <NotesSection
-                notes={notes}
-                activeNoteId={activeNoteId}
-                expanded={expandedSections.notes}
-                toggleSection={() => toggleSection('notes')}
-                onSelectNote={onSelectNote}
-                onAddNote={onAddNote}
-                onOpenNoteOptions={setNoteOptionsModal}
-                filter={filter}
-              /> */}
+                  {/* <EnvironmentManager 
+                    environments={environments}
+                    currentEnvironmentId={currentEnvironmentId}
+                    onAddEnvironment={onAddEnvironment}
+                    onUpdateEnvironment={onUpdateEnvironment}
+                    onDeleteEnvironment={onDeleteEnvironment}
+                    onSelectEnvironment={onSelectEnvironment}
+                    expanded={expandedSections.environments}
+                    onToggleExpanded={() => toggleSection('environments')}
+                  /> */}
 
-              <HistorySection
-                requestHistory={requestHistory}
-                expanded={expandedSections.history}
-                toggleSection={() => toggleSection('history')}
-                onRestoreFromHistory={onRestoreFromHistory}
-                onClearHistory={onClearHistory}
-              />
-            </SidebarContent>
+                  {/* <NotesSection
+                    notes={notes}
+                    activeNoteId={activeNoteId}
+                    expanded={expandedSections.notes}
+                    toggleSection={() => toggleSection('notes')}
+                    onSelectNote={onSelectNote}
+                    onAddNote={onAddNote}
+                    onOpenNoteOptions={setNoteOptionsModal}
+                    filter={filter}
+                  /> */}
+
+                  <HistorySection
+                    requestHistory={requestHistory}
+                    expanded={expandedSections.history}
+                    toggleSection={() => toggleSection('history')}
+                    onRestoreFromHistory={onRestoreFromHistory}
+                    onClearHistory={onClearHistory}
+                  />
+                </SidebarContent>
+              </>
+            )}
           </>
         )}
 
         <SidebarFooter 
           isSidebarCollapsed={isSidebarCollapsed} 
-          toggleSidebar={toggleSidebar} 
+          toggleSidebar={toggleSidebar}
+          onOpenSettings={onOpenSettings}
         />
 
         {/* CreatePanel */}
