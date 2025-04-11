@@ -503,7 +503,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
         </SettingRow>
         <SettingRow>
           <div>
-            <SettingLabel>Show Notes <span style={{ backgroundColor: "#FF385C", color: "white", padding: "2px 6px", borderRadius: "10px", fontSize: "10px", marginLeft: "8px" }}>Coming Soon</span></SettingLabel>
+            <SettingLabel>Show Notes</SettingLabel>
             <SettingDescription>Show notes section in sidebar</SettingDescription>
           </div>
           <ToggleButton 

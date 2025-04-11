@@ -129,16 +129,6 @@ const NoteHeader: React.FC<NoteHeaderProps> = ({
         <Title>{title}</Title>
       </TitleArea>
       <Controls>
-        <SearchWrapper>
-          <SearchIconWrapper>
-            <FaSearch />
-          </SearchIconWrapper>
-          <SearchInput 
-            placeholder="Search notes..." 
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </SearchWrapper>
         <ActionButton 
           $isPrimary 
           onClick={onAddNote}

@@ -508,7 +508,7 @@ function AppContent() {
     const newNote: Note = {
       id: uuidv4(),
       title: 'New Note',
-      content: '# New Note\n\nStart writing your markdown here...',
+      content: '',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
