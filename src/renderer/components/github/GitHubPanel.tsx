@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { 
   FaGithub, 
@@ -21,7 +21,12 @@ import {
   FaShieldAlt,
   FaUserSecret,
   FaCommentDots,
-  FaUserEdit
+  FaUserEdit,
+  FaFilter,
+  FaSearch,
+  FaSortAmountDown,
+  FaSortAmountUp,
+  FaTimesCircle
 } from 'react-icons/fa';
 import githubService, { GitHubService } from '../../services/GitHubService';
 import { useSettings } from '../../utils/SettingsContext';
@@ -564,9 +569,164 @@ const EmptyReview = styled(EmptyState)`
   }
 `;
 
+// Add these new styled components after the existing style definitions
+const FilterContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+  background-color: #252525;
+  padding: 12px;
+  border-radius: 8px;
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const FilterLabel = styled.label`
+  font-size: 13px;
+  color: #aaa;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background-color: #333;
+  border-radius: 6px;
+  border: 1px solid #444;
+`;
+
+const FilterSelect = styled.select`
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  min-width: 140px;
+  
+  &:focus {
+    outline: none;
+    border-color: #FF385C;
+  }
+`;
+
+const SearchInput = styled.div`
+  position: relative;
+  flex-grow: 1;
+  min-width: 200px;
+  
+  input {
+    width: 100%;
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 6px 10px 6px 32px;
+    font-size: 13px;
+    
+    &:focus {
+      outline: none;
+      border-color: #FF385C;
+    }
+    
+    &::placeholder {
+      color: #777;
+    }
+  }
+  
+  svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #777;
+    font-size: 14px;
+  }
+`;
+
+const ClearSearch = styled.button`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #777;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    color: #FF385C;
+  }
+`;
+
+const FilterBadge = styled.div`
+  background-color: #FF385C;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const SortButton = styled.button<{ active: boolean }>`
+  background-color: ${props => props.active ? 'rgba(255, 56, 92, 0.1)' : 'transparent'};
+  color: ${props => props.active ? '#FF385C' : '#aaa'};
+  border: 1px solid ${props => props.active ? '#FF385C' : '#444'};
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: rgba(255, 56, 92, 0.1);
+    color: #FF385C;
+  }
+`;
+
+const ClearFilters = styled.button`
+  background-color: transparent;
+  color: #aaa;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #FF385C;
+    border-color: #FF385C;
+  }
+`;
+
 interface GitHubPanelProps {
   onReturn: () => void;
 }
+
+// Define types for filter and sort options
+type SortOption = 'newest' | 'oldest' | 'updated' | 'title';
+type AgeFilter = 'all' | 'today' | 'week' | 'month';
+type StatusFilter = 'all' | 'draft' | 'ready';
 
 const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [pullRequests, setPullRequests] = useState<any[]>([]);
@@ -581,8 +741,60 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [editingToken, setEditingToken] = useState(false);
   const [newToken, setNewToken] = useState('');
   
+  // Create separate filter states for each tab
+  // My PRs filters
+  const [myPrSearchTerm, setMyPrSearchTerm] = useState('');
+  const [myPrRepoFilter, setMyPrRepoFilter] = useState<string>('all');
+  const [myPrStatusFilter, setMyPrStatusFilter] = useState<StatusFilter>('all');
+  const [myPrAgeFilter, setMyPrAgeFilter] = useState<AgeFilter>('all');
+  const [myPrSortOption, setMyPrSortOption] = useState<SortOption>('newest');
+  const [myPrSortDirection, setMyPrSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Review requests filters
+  const [reviewPrSearchTerm, setReviewPrSearchTerm] = useState('');
+  const [reviewPrRepoFilter, setReviewPrRepoFilter] = useState<string>('all');
+  const [reviewPrStatusFilter, setReviewPrStatusFilter] = useState<StatusFilter>('all');
+  const [reviewPrAgeFilter, setReviewPrAgeFilter] = useState<AgeFilter>('all');
+  const [reviewPrSortOption, setReviewPrSortOption] = useState<SortOption>('newest');
+  const [reviewPrSortDirection, setReviewPrSortDirection] = useState<'asc' | 'desc'>('desc');
+
   // Get settings from context
   const { settings } = useSettings();
+  
+  // Function to get current filter state based on active tab
+  const getFilterState = () => {
+    if (activeTab === 'mine') {
+      return {
+        searchTerm: myPrSearchTerm,
+        setSearchTerm: setMyPrSearchTerm,
+        repoFilter: myPrRepoFilter,
+        setRepoFilter: setMyPrRepoFilter,
+        statusFilter: myPrStatusFilter,
+        setStatusFilter: setMyPrStatusFilter,
+        ageFilter: myPrAgeFilter,
+        setAgeFilter: setMyPrAgeFilter,
+        sortOption: myPrSortOption,
+        setSortOption: setMyPrSortOption,
+        sortDirection: myPrSortDirection,
+        setSortDirection: setMyPrSortDirection
+      };
+    } else {
+      return {
+        searchTerm: reviewPrSearchTerm,
+        setSearchTerm: setReviewPrSearchTerm,
+        repoFilter: reviewPrRepoFilter,
+        setRepoFilter: setReviewPrRepoFilter,
+        statusFilter: reviewPrStatusFilter,
+        setStatusFilter: setReviewPrStatusFilter,
+        ageFilter: reviewPrAgeFilter,
+        setAgeFilter: setReviewPrAgeFilter,
+        sortOption: reviewPrSortOption,
+        setSortOption: setReviewPrSortOption,
+        sortDirection: reviewPrSortDirection,
+        setSortDirection: setReviewPrSortDirection
+      };
+    }
+  };
   
   // Function to reset token in case of issues
   const resetToken = () => {
@@ -593,6 +805,72 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     setError(null);
     setShowTokenManagement(false);
   };
+  
+  // Load filter settings from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedMyPrFilters = localStorage.getItem('github-panel-mypr-filters');
+      const savedReviewPrFilters = localStorage.getItem('github-panel-reviewpr-filters');
+      
+      if (savedMyPrFilters) {
+        const filters = JSON.parse(savedMyPrFilters);
+        setMyPrSearchTerm(filters.searchTerm || '');
+        setMyPrRepoFilter(filters.repoFilter || 'all');
+        setMyPrStatusFilter(filters.statusFilter || 'all');
+        setMyPrAgeFilter(filters.ageFilter || 'all');
+        setMyPrSortOption(filters.sortOption || 'newest');
+        setMyPrSortDirection(filters.sortDirection || 'desc');
+      }
+      
+      if (savedReviewPrFilters) {
+        const filters = JSON.parse(savedReviewPrFilters);
+        setReviewPrSearchTerm(filters.searchTerm || '');
+        setReviewPrRepoFilter(filters.repoFilter || 'all');
+        setReviewPrStatusFilter(filters.statusFilter || 'all');
+        setReviewPrAgeFilter(filters.ageFilter || 'all');
+        setReviewPrSortOption(filters.sortOption || 'newest');
+        setReviewPrSortDirection(filters.sortDirection || 'desc');
+      }
+    } catch (error) {
+      console.error('[GitHub] Error loading saved filters:', error);
+      // If there's an error, we'll just use the default filters
+    }
+  }, []);
+  
+  // Save filter settings to localStorage whenever they change
+  useEffect(() => {
+    try {
+      const myPrFilters = {
+        searchTerm: myPrSearchTerm,
+        repoFilter: myPrRepoFilter,
+        statusFilter: myPrStatusFilter,
+        ageFilter: myPrAgeFilter,
+        sortOption: myPrSortOption,
+        sortDirection: myPrSortDirection
+      };
+      
+      localStorage.setItem('github-panel-mypr-filters', JSON.stringify(myPrFilters));
+    } catch (error) {
+      console.error('[GitHub] Error saving My PR filters:', error);
+    }
+  }, [myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter, myPrSortOption, myPrSortDirection]);
+  
+  useEffect(() => {
+    try {
+      const reviewPrFilters = {
+        searchTerm: reviewPrSearchTerm,
+        repoFilter: reviewPrRepoFilter,
+        statusFilter: reviewPrStatusFilter,
+        ageFilter: reviewPrAgeFilter,
+        sortOption: reviewPrSortOption,
+        sortDirection: reviewPrSortDirection
+      };
+      
+      localStorage.setItem('github-panel-reviewpr-filters', JSON.stringify(reviewPrFilters));
+    } catch (error) {
+      console.error('[GitHub] Error saving Review PR filters:', error);
+    }
+  }, [reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter, reviewPrSortOption, reviewPrSortDirection]);
   
   // Load token from secure storage on component mount
   useEffect(() => {
@@ -749,6 +1027,131 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     }
   };
   
+  // Add a function to extract unique repositories from PRs
+  const getUniqueRepositories = (prs: any[]): string[] => {
+    const repos = prs.map(pr => {
+      const repoUrl = pr.repository_url || '';
+      return repoUrl.split('/').slice(-1)[0];
+    }).filter(Boolean);
+    
+    return ['all', ...Array.from(new Set(repos))];
+  };
+  
+  // Apply filters and sorting to PRs using useMemo
+  const filteredPullRequests = useMemo(() => {
+    // Get the right list based on active tab
+    const sourceList = activeTab === 'mine' ? pullRequests : reviewRequests;
+    const filters = getFilterState();
+    
+    return sourceList
+      .filter(pr => {
+        // Search term filter
+        if (filters.searchTerm && !pr.title.toLowerCase().includes(filters.searchTerm.toLowerCase())) {
+          return false;
+        }
+        
+        // Repository filter
+        if (filters.repoFilter !== 'all') {
+          const prRepo = (pr.repository_url || '').split('/').slice(-1)[0];
+          if (prRepo !== filters.repoFilter) {
+            return false;
+          }
+        }
+        
+        // Status filter
+        if (filters.statusFilter !== 'all') {
+          if (filters.statusFilter === 'draft' && !pr.draft) {
+            return false;
+          }
+          if (filters.statusFilter === 'ready' && pr.draft) {
+            return false;
+          }
+        }
+        
+        // Age filter
+        if (filters.ageFilter !== 'all') {
+          const prDate = new Date(pr.created_at);
+          const now = new Date();
+          const diffDays = Math.floor((now.getTime() - prDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (filters.ageFilter === 'today' && diffDays > 1) {
+            return false;
+          }
+          if (filters.ageFilter === 'week' && diffDays > 7) {
+            return false;
+          }
+          if (filters.ageFilter === 'month' && diffDays > 30) {
+            return false;
+          }
+        }
+        
+        return true;
+      })
+      .sort((a, b) => {
+        // Apply sorting
+        let comparison = 0;
+        
+        switch (filters.sortOption) {
+          case 'newest':
+            comparison = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            break;
+          case 'oldest':
+            comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+            break;
+          case 'updated':
+            comparison = new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+            break;
+          case 'title':
+            comparison = a.title.localeCompare(b.title);
+            break;
+        }
+        
+        // Apply sort direction
+        return filters.sortDirection === 'desc' ? comparison : -comparison;
+      });
+  }, [
+    activeTab, pullRequests, reviewRequests, 
+    myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter, myPrSortOption, myPrSortDirection,
+    reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter, reviewPrSortOption, reviewPrSortDirection
+  ]);
+  
+  // Get unique repositories for the filter dropdown
+  const uniqueRepositories = useMemo(() => {
+    return getUniqueRepositories(activeTab === 'mine' ? pullRequests : reviewRequests);
+  }, [activeTab, pullRequests, reviewRequests]);
+  
+  // Count active filters to show indicator
+  const activeFilterCount = useMemo(() => {
+    const filters = getFilterState();
+    let count = 0;
+    if (filters.searchTerm) count++;
+    if (filters.repoFilter !== 'all') count++;
+    if (filters.statusFilter !== 'all') count++;
+    if (filters.ageFilter !== 'all') count++;
+    return count;
+  }, [
+    activeTab,
+    myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter,
+    reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter
+  ]);
+  
+  // Function to clear all filters
+  const clearAllFilters = () => {
+    const filters = getFilterState();
+    filters.setSearchTerm('');
+    filters.setRepoFilter('all');
+    filters.setStatusFilter('all');
+    filters.setAgeFilter('all');
+    filters.setSortOption('newest');
+    filters.setSortDirection('desc');
+  };
+  
+  // Toggle sort direction
+  const toggleSortDirection = () => {
+    const filters = getFilterState();
+    filters.setSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
+  };
+  
   // Replace the renderContent method with this improved version
   const renderContent = () => {
     if (!initialized) {
@@ -901,51 +1304,149 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px' }}>Your Open Pull Requests</h3>
               <div style={{ color: '#888', fontSize: '14px' }}>
-                {pullRequests.length} {pullRequests.length === 1 ? 'pull request' : 'pull requests'} found
+                {filteredPullRequests.length} of {pullRequests.length} {pullRequests.length === 1 ? 'pull request' : 'pull requests'}
               </div>
             </div>
-            <PRList>
-              {pullRequests.map((pr: any) => (
-                <PRItem key={pr.id}>
-                  <PRHeader>
-                    <PRTitle>{pr.title}</PRTitle>
-                    <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
-                      Open in GitHub <FaExternalLinkAlt size={12} />
-                    </PRLink>
-                  </PRHeader>
-                  <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
-                    {pr.repository_url?.split('/').slice(-1)[0]}
-                  </div>
-                  <PRMeta>
-                    <PRMetaItem>
-                      <FaClock size={12} />
-                      <span>Updated {formatRelativeTime(pr.updated_at)}</span>
-                    </PRMetaItem>
-                    <PRMetaItem>
-                      <FaCodeBranch size={12} />
-                      <span>{pr.head?.ref}</span>
-                    </PRMetaItem>
-                    <PRMetaItem>
-                      {pr.draft ? (
-                        <>
-                          <FaTimes size={12} color="#888" />
-                          <span>Draft</span>
-                        </>
-                      ) : (
-                        <>
-                          <FaCheck size={12} color="#29a745" />
-                          <span>Ready</span>
-                        </>
-                      )}
-                    </PRMetaItem>
-                  </PRMeta>
-                </PRItem>
-              ))}
-            </PRList>
+            
+            <FilterContainer>
+              <FilterGroup>
+                <FilterLabel>
+                  <FaFilter /> 
+                  Filters
+                  {activeFilterCount > 0 && <FilterBadge>{activeFilterCount}</FilterBadge>}
+                </FilterLabel>
+              </FilterGroup>
+              
+              <SearchInput>
+                <FaSearch />
+                <input 
+                  type="text" 
+                  placeholder="Search PR titles..." 
+                  value={myPrSearchTerm}
+                  onChange={(e) => setMyPrSearchTerm(e.target.value)}
+                />
+                {myPrSearchTerm && (
+                  <ClearSearch onClick={() => setMyPrSearchTerm('')}>
+                    <FaTimesCircle />
+                  </ClearSearch>
+                )}
+              </SearchInput>
+              
+              <FilterGroup>
+                <FilterSelect 
+                  value={myPrRepoFilter} 
+                  onChange={(e) => setMyPrRepoFilter(e.target.value)}
+                >
+                  {uniqueRepositories.map(repo => (
+                    <option key={repo} value={repo}>
+                      {repo === 'all' ? 'All repositories' : repo}
+                    </option>
+                  ))}
+                </FilterSelect>
+              </FilterGroup>
+              
+              <FilterGroup>
+                <FilterSelect 
+                  value={myPrStatusFilter} 
+                  onChange={(e) => setMyPrStatusFilter(e.target.value as StatusFilter)}
+                >
+                  <option value="all">All statuses</option>
+                  <option value="draft">Draft only</option>
+                  <option value="ready">Ready only</option>
+                </FilterSelect>
+              </FilterGroup>
+              
+              <FilterGroup>
+                <FilterSelect 
+                  value={myPrAgeFilter} 
+                  onChange={(e) => setMyPrAgeFilter(e.target.value as AgeFilter)}
+                >
+                  <option value="all">Any time</option>
+                  <option value="today">Last 24 hours</option>
+                  <option value="week">Last 7 days</option>
+                  <option value="month">Last 30 days</option>
+                </FilterSelect>
+              </FilterGroup>
+              
+              <FilterGroup>
+                <FilterSelect 
+                  value={myPrSortOption} 
+                  onChange={(e) => setMyPrSortOption(e.target.value as SortOption)}
+                >
+                  <option value="newest">Created (newest)</option>
+                  <option value="oldest">Created (oldest)</option>
+                  <option value="updated">Recently updated</option>
+                  <option value="title">Title (A-Z)</option>
+                </FilterSelect>
+                
+                <SortButton 
+                  active={true} 
+                  onClick={() => setMyPrSortDirection(prev => prev === 'desc' ? 'asc' : 'desc')}
+                >
+                  {myPrSortDirection === 'desc' ? <FaSortAmountDown /> : <FaSortAmountUp />}
+                </SortButton>
+              </FilterGroup>
+              
+              {activeFilterCount > 0 && (
+                <ClearFilters onClick={clearAllFilters}>
+                  Clear all
+                </ClearFilters>
+              )}
+            </FilterContainer>
+            
+            {filteredPullRequests.length === 0 ? (
+              <EmptyState>
+                <FaFilter />
+                <h3>No matching pull requests</h3>
+                <p>No pull requests match the current filters. Try adjusting or clearing your filters.</p>
+                <ClearFilters onClick={clearAllFilters} style={{ margin: '10px auto' }}>
+                  Clear all filters
+                </ClearFilters>
+              </EmptyState>
+            ) : (
+              <PRList>
+                {filteredPullRequests.map((pr: any) => (
+                  <PRItem key={pr.id}>
+                    <PRHeader>
+                      <PRTitle>{pr.title}</PRTitle>
+                      <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
+                        Open in GitHub <FaExternalLinkAlt size={12} />
+                      </PRLink>
+                    </PRHeader>
+                    <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
+                      {pr.repository_url?.split('/').slice(-1)[0]}
+                    </div>
+                    <PRMeta>
+                      <PRMetaItem>
+                        <FaClock size={12} />
+                        <span>Updated {formatRelativeTime(pr.updated_at)}</span>
+                      </PRMetaItem>
+                      <PRMetaItem>
+                        <FaCodeBranch size={12} />
+                        <span>{pr.head?.ref}</span>
+                      </PRMetaItem>
+                      <PRMetaItem>
+                        {pr.draft ? (
+                          <>
+                            <FaTimes size={12} color="#888" />
+                            <span>Draft</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaCheck size={12} color="#29a745" />
+                            <span>Ready</span>
+                          </>
+                        )}
+                      </PRMetaItem>
+                    </PRMeta>
+                  </PRItem>
+                ))}
+              </PRList>
+            )}
           </>
         );
       } else {
-        // Review requests tab
+        // Review requests tab with similar filtering UI
         if (reviewRequests.length === 0) {
           return (
             <EmptyReview>
@@ -969,38 +1470,136 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px' }}>Pull Requests to Review</h3>
               <div style={{ color: '#888', fontSize: '14px' }}>
-                {reviewRequests.length} {reviewRequests.length === 1 ? 'pull request' : 'pull requests'} need your review
+                {filteredPullRequests.length} of {reviewRequests.length} {reviewRequests.length === 1 ? 'pull request' : 'pull requests'} need your review
               </div>
             </div>
-            <PRList>
-              {reviewRequests.map((pr: any) => (
-                <PRItem key={pr.id}>
-                  <PRHeader>
-                    <PRTitle>{pr.title}</PRTitle>
-                    <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
-                      Review on GitHub <FaExternalLinkAlt size={12} />
-                    </PRLink>
-                  </PRHeader>
-                  <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
-                    {pr.repository_url?.split('/').slice(-1)[0]} • Opened by {pr.user?.login}
-                  </div>
-                  <PRMeta>
-                    <PRMetaItem>
-                      <FaClock size={12} />
-                      <span>Updated {formatRelativeTime(pr.updated_at)}</span>
-                    </PRMetaItem>
-                    <PRMetaItem>
-                      <FaCodeBranch size={12} />
-                      <span>{pr.head?.ref}</span>
-                    </PRMetaItem>
-                    <PRMetaItem style={{ color: '#FF385C' }}>
-                      <FaUserEdit size={12} />
-                      <span>Review requested</span>
-                    </PRMetaItem>
-                  </PRMeta>
-                </PRItem>
-              ))}
-            </PRList>
+            
+            <FilterContainer>
+              <FilterGroup>
+                <FilterLabel>
+                  <FaFilter /> 
+                  Filters
+                  {activeFilterCount > 0 && <FilterBadge>{activeFilterCount}</FilterBadge>}
+                </FilterLabel>
+              </FilterGroup>
+              
+              <SearchInput>
+                <FaSearch />
+                <input 
+                  type="text" 
+                  placeholder="Search PR titles..." 
+                  value={reviewPrSearchTerm}
+                  onChange={(e) => setReviewPrSearchTerm(e.target.value)}
+                />
+                {reviewPrSearchTerm && (
+                  <ClearSearch onClick={() => setReviewPrSearchTerm('')}>
+                    <FaTimesCircle />
+                  </ClearSearch>
+                )}
+              </SearchInput>
+              
+              <FilterGroup>
+                <FilterSelect 
+                  value={reviewPrRepoFilter} 
+                  onChange={(e) => setReviewPrRepoFilter(e.target.value)}
+                >
+                  {uniqueRepositories.map(repo => (
+                    <option key={repo} value={repo}>
+                      {repo === 'all' ? 'All repositories' : repo}
+                    </option>
+                  ))}
+                </FilterSelect>
+              </FilterGroup>
+              
+              <FilterGroup>
+                <FilterSelect 
+                  value={reviewPrStatusFilter} 
+                  onChange={(e) => setReviewPrStatusFilter(e.target.value as StatusFilter)}
+                >
+                  <option value="all">All statuses</option>
+                  <option value="draft">Draft only</option>
+                  <option value="ready">Ready only</option>
+                </FilterSelect>
+              </FilterGroup>
+              
+              <FilterGroup>
+                <FilterSelect 
+                  value={reviewPrAgeFilter} 
+                  onChange={(e) => setReviewPrAgeFilter(e.target.value as AgeFilter)}
+                >
+                  <option value="all">Any time</option>
+                  <option value="today">Last 24 hours</option>
+                  <option value="week">Last 7 days</option>
+                  <option value="month">Last 30 days</option>
+                </FilterSelect>
+              </FilterGroup>
+              
+              <FilterGroup>
+                <FilterSelect 
+                  value={reviewPrSortOption} 
+                  onChange={(e) => setReviewPrSortOption(e.target.value as SortOption)}
+                >
+                  <option value="newest">Created (newest)</option>
+                  <option value="oldest">Created (oldest)</option>
+                  <option value="updated">Recently updated</option>
+                  <option value="title">Title (A-Z)</option>
+                </FilterSelect>
+                
+                <SortButton 
+                  active={true} 
+                  onClick={() => setReviewPrSortDirection(prev => prev === 'desc' ? 'asc' : 'desc')}
+                >
+                  {reviewPrSortDirection === 'desc' ? <FaSortAmountDown /> : <FaSortAmountUp />}
+                </SortButton>
+              </FilterGroup>
+              
+              {activeFilterCount > 0 && (
+                <ClearFilters onClick={clearAllFilters}>
+                  Clear all
+                </ClearFilters>
+              )}
+            </FilterContainer>
+            
+            {filteredPullRequests.length === 0 ? (
+              <EmptyState>
+                <FaFilter />
+                <h3>No matching review requests</h3>
+                <p>No review requests match the current filters. Try adjusting or clearing your filters.</p>
+                <ClearFilters onClick={clearAllFilters} style={{ margin: '10px auto' }}>
+                  Clear all filters
+                </ClearFilters>
+              </EmptyState>
+            ) : (
+              <PRList>
+                {filteredPullRequests.map((pr: any) => (
+                  <PRItem key={pr.id}>
+                    <PRHeader>
+                      <PRTitle>{pr.title}</PRTitle>
+                      <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
+                        Review on GitHub <FaExternalLinkAlt size={12} />
+                      </PRLink>
+                    </PRHeader>
+                    <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
+                      {pr.repository_url?.split('/').slice(-1)[0]} • Opened by {pr.user?.login}
+                    </div>
+                    <PRMeta>
+                      <PRMetaItem>
+                        <FaClock size={12} />
+                        <span>Updated {formatRelativeTime(pr.updated_at)}</span>
+                      </PRMetaItem>
+                      <PRMetaItem>
+                        <FaCodeBranch size={12} />
+                        <span>{pr.head?.ref}</span>
+                      </PRMetaItem>
+                      <PRMetaItem style={{ color: '#FF385C' }}>
+                        <FaUserEdit size={12} />
+                        <span>Review requested</span>
+                      </PRMetaItem>
+                    </PRMeta>
+                  </PRItem>
+                ))}
+              </PRList>
+            )}
           </>
         );
       }
@@ -1027,7 +1626,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     );
   };
   
-  // Replace the renderTokenManagement method with this improved version
+  // The renderTokenManagement function should be inside the component
   const renderTokenManagement = () => {
     if (!initialized) return null;
     
