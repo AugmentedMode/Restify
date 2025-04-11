@@ -643,10 +643,18 @@ const Block: React.FC<BlockProps> = ({
 
   // Set initial content on mount
   useEffect(() => {
-    if (contentRef.current && isInitialMount.current) {
-      contentRef.current.textContent = content;
+    if (contentRef.current) {
+      // Always update the DOM with the current block content
+      contentRef.current.textContent = block.content;
+      
+      // Only update state on initial mount
+      if (isInitialMount.current) {
+        isInitialMount.current = false;
+        setContent(block.content);
+        previousContentRef.current = block.content;
+      }
     }
-  }, []);
+  }, [block.content]);
 
   return (
     <BlockContainer 

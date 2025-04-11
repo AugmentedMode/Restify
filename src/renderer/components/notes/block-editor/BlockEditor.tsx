@@ -65,9 +65,22 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
   
   // Memoize the blocks parsing to avoid unnecessary re-parsing
   const initialBlocks = useMemo(() => {
-    return initialContent 
-      ? parseContentToBlocks(initialContent)
-      : [{ id: uuidv4(), type: BlockType.Paragraph, content: '', level: 0 }];
+    console.log("Parsing content for BlockEditor:", initialContent);
+    
+    // Safety check for null/undefined content
+    if (!initialContent) {
+      console.log("Content is empty, using default block");
+      return [{ id: uuidv4(), type: BlockType.Paragraph, content: '', level: 0 }];
+    }
+    
+    try {
+      const blocks = parseContentToBlocks(initialContent);
+      console.log("Parsed blocks:", blocks);
+      return blocks;
+    } catch (error) {
+      console.error("Error parsing content to blocks:", error);
+      return [{ id: uuidv4(), type: BlockType.Paragraph, content: initialContent, level: 0 }];
+    }
   }, [initialContent]);
   
   // Initialize editor state from the memoized blocks
@@ -84,8 +97,15 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
   
   // Reinitialize the editor ONLY when the note ID changes
   useEffect(() => {
+    console.log("Note ID changed check:", { 
+      current: currentNoteIdRef.current, 
+      new: noteId, 
+      equal: noteId === currentNoteIdRef.current 
+    });
+    
     // If note ID is different, completely reinitialize the editor
-    if (noteId !== currentNoteIdRef.current) {
+    if (noteId !== currentNoteIdRef.current || initialContent !== lastEmittedContent.current) {
+      console.log("Reinitializing editor with new note:", { noteId, initialContent, initialTitle });
       currentNoteIdRef.current = noteId;
       isUpdatingFromProps.current = true;
       

@@ -61,6 +61,11 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
     ? notes.find(note => String(note.id) === String(activeNoteId))
     : null;
   
+  // Add debug logging
+  console.log("Active Note ID:", activeNoteId);
+  console.log("Available Notes:", notes);
+  console.log("Found Active Note:", activeNote);
+  
   // Debounce timeout refs
   const contentUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const titleUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -179,6 +184,8 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
   // Ensure we have valid content for the editor
   const noteContent = activeNote.content || '# New Note\n\nStart writing your markdown here...';
   const noteTitle = activeNote.title || 'Untitled Note';
+  
+  console.log("Rendering BlockEditor with content:", noteContent);
 
   return (
     <Container>
@@ -195,6 +202,7 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
       <Content>
         <EditorContainer>
           <BlockEditor
+            key={activeNote.id} // Add key to force re-mount when note changes
             initialContent={noteContent}
             onContentChange={handleContentChange}
             onTitleChange={handleTitleChange}

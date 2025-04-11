@@ -921,9 +921,13 @@ function AppContent() {
     // Check for active note first
     if (activeNote) {
       console.log("Rendering note with ID:", activeNote);
-      const note = notes.find(n => n.id === activeNote);
+      console.log("All Notes:", notes.map(n => ({ id: n.id, title: n.title })));
+      
+      // Ensure proper string comparison for IDs
+      const note = notes.find(n => String(n.id) === String(activeNote));
       if (note) {
-        console.log("Found note to render:", note.title);
+        console.log("Found note to render:", note);
+
         return <NotesContainer 
           notes={notes} 
           activeNoteId={activeNote} 
