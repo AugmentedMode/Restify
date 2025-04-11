@@ -501,6 +501,16 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
                 // Clear all localStorage data
                 localStorage.clear();
                 
+                // Also explicitly remove specific items to be sure
+                localStorage.removeItem('kanban-todos');
+                localStorage.removeItem('api-client-collections');
+                localStorage.removeItem('api-client-responses');
+                localStorage.removeItem('api-client-history');
+                localStorage.removeItem('api-client-environments');
+                localStorage.removeItem('api-client-notes');
+                localStorage.removeItem('api-client-active-request-id');
+                localStorage.removeItem('api-client-current-environment');
+                
                 // Restore default settings
                 const defaultSettings = {
                   general: {

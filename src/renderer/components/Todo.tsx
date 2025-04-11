@@ -616,9 +616,11 @@ const TodoKanban: React.FC = () => {
       
       setNewTaskCounter(highestId + 1);
     } else {
-      // Set sample todos
-      setTodos(initialTodoSamples);
-      localStorage.setItem('kanban-todos', JSON.stringify(initialTodoSamples));
+      // Don't set sample todos by default
+      setTodos([]);
+      setNewTaskCounter(1);
+      // Save empty array to localStorage
+      localStorage.setItem('kanban-todos', JSON.stringify([]));
     }
   }, []);
 

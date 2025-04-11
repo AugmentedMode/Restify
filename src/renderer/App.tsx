@@ -39,6 +39,10 @@ import SettingsManager from './components/settings/SettingsManager';
 import { SettingsProvider } from './utils/SettingsContext';
 
 // Sample initial data for new users
+const initialCollections: Folder[] = [];
+
+// Original sample data - commented out to prevent auto-creation
+/* 
 const initialCollections: Folder[] = [
   {
     id: 'collection1',
@@ -90,6 +94,7 @@ const initialCollections: Folder[] = [
     parentPath: [],
   },
 ];
+*/
 
 function EmptyStateView({
   onCreateCollection,
