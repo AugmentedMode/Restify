@@ -17,6 +17,7 @@ import {
   FaSitemap,
   FaTimes,
   FaCog,
+  FaGithub
 } from 'react-icons/fa';
 import { 
   Sidebar as SidebarContainer, 
@@ -39,6 +40,7 @@ import NotesSection from './sections/NotesSection';
 import KanbanSection from './sections/KanbanSection';
 import EnvironmentManager from '../EnvironmentManager';
 import SecretsSection from './sections/SecretsSection';
+import GitHubSection from './sections/GitHubSection';
 
 // Dynamically load the SettingsSection with an import() to avoid errors
 // when the file hasn't been created yet
@@ -433,6 +435,27 @@ function Sidebar({
         </NavTooltip>
       )}
 
+      {true && (
+        <NavTooltip title="GitHub PRs" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: expandedSections.github
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: expandedSections.github ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onClick={() => toggleSection('github')}
+            className="nav-item"
+          >
+            <FaGithub size={20} />
+          </div>
+        </NavTooltip>
+      )}
+
       <NavTooltip title="New Collection" isCollapsed={isSidebarCollapsed}>
         <div
           style={{
@@ -559,6 +582,13 @@ function Sidebar({
                       onImportSecrets={onImportSecrets}
                       onExportSecrets={onExportSecrets}
                       filter={filter}
+                    />
+                  )}
+
+                  {true && (
+                    <GitHubSection
+                      expanded={expandedSections.github}
+                      toggleSection={() => toggleSection('github')}
                     />
                   )}
 

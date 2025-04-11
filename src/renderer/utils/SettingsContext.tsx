@@ -7,6 +7,7 @@ interface GeneralSettings {
   showSecretsManager: boolean;
   showBoards: boolean;
   showNotes: boolean;
+  showGitHub: boolean;
   defaultResponseView: string;
 }
 
@@ -19,6 +20,7 @@ interface ApiSettings {
 interface SecuritySettings {
   clearHistoryOnExit: boolean;
   storeCredentialsSecurely: boolean;
+  storeGitHubToken: boolean;
 }
 
 export interface AppSettings {
@@ -35,6 +37,7 @@ const defaultSettings: AppSettings = {
     showSecretsManager: true,
     showBoards: true,
     showNotes: false,
+    showGitHub: true,
     defaultResponseView: 'pretty',
   },
   api: {
@@ -45,6 +48,7 @@ const defaultSettings: AppSettings = {
   security: {
     clearHistoryOnExit: false,
     storeCredentialsSecurely: true,
+    storeGitHubToken: true,
   }
 };
 

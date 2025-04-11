@@ -57,6 +57,7 @@ interface GeneralSettings {
   showBoards: boolean;
   showNotes: boolean;
   defaultResponseView: string;
+  showGitHub: boolean;
 }
 
 interface ApiSettings {
@@ -68,6 +69,7 @@ interface ApiSettings {
 interface SecuritySettings {
   clearHistoryOnExit: boolean;
   storeCredentialsSecurely: boolean;
+  storeGitHubToken: boolean;
 }
 
 interface AppSettings {
@@ -478,6 +480,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
           showSecretsManager: true,
           showBoards: true,
           showNotes: true,
+          showGitHub: true,
           defaultResponseView: 'pretty',
         },
         api: {
@@ -488,6 +491,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
         security: {
           clearHistoryOnExit: false,
           storeCredentialsSecurely: true,
+          storeGitHubToken: true,
         }
       };
       
@@ -581,6 +585,16 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
             onClick={() => toggleSetting('general', 'showHistory')}
           />
         </SettingRow>
+        <SettingRow>
+          <div>
+            <SettingLabel>Show GitHub PRs</SettingLabel>
+            <SettingDescription>Show your open GitHub pull requests in sidebar</SettingDescription>
+          </div>
+          <ToggleButton 
+            isActive={settings.general.showGitHub}
+            onClick={() => toggleSetting('general', 'showGitHub')}
+          />
+        </SettingRow>
       </SettingSection>
     </SettingsPanel>
   );
@@ -634,6 +648,16 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
     <SettingsPanel>
       <SettingSection>
         <SectionTitle>Security Settings</SectionTitle>
+        <SettingRow>
+          <div>
+            <SettingLabel>Store GitHub Token</SettingLabel>
+            <SettingDescription>Securely store GitHub personal access token in local storage</SettingDescription>
+          </div>
+          <ToggleButton 
+            isActive={settings.security.storeGitHubToken}
+            onClick={() => toggleSetting('security', 'storeGitHubToken')}
+          />
+        </SettingRow>
         <SettingRow>
           <div>
             <SettingLabel><FaTrash style={{ marginRight: '8px', color: theme.brand.primary }} /> Delete All Data</SettingLabel>

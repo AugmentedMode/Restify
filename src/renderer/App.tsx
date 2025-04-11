@@ -204,6 +204,24 @@ function AppContent() {
     initEncryption();
   }, []);
 
+  // Initialize GitHub service if token exists
+  useEffect(() => {
+    const initGitHub = async () => {
+      try {
+        const savedToken = localStorage.getItem('github_token');
+        if (savedToken) {
+          const githubService = (await import('./services/GitHubService')).default;
+          await githubService.initialize(savedToken);
+          console.log('GitHub service initialized');
+        }
+      } catch (error) {
+        console.error('Failed to initialize GitHub service:', error);
+      }
+    };
+    
+    initGitHub();
+  }, []);
+
   // Use our custom hooks for collections and history
   const {
     collections,
