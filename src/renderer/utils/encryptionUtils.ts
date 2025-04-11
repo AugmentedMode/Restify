@@ -8,27 +8,49 @@
 // Application encryption key - in a real app, this would be generated on first run
 // and securely stored in the system keychain or user preferences
 let encryptionKey: CryptoKey | null = null;
+const ENCRYPTION_KEY_SALT = 'RESTIFY_APP_SALT_12345';
+const ENCRYPTION_KEY_STORAGE = 'restify_encryption_key';
 
 /**
  * Initialize the encryption system
- * In a production app, you would generate this key once and store it securely
+ * This loads the key from storage if available or generates a new one if not
  */
 export const initializeEncryption = async (): Promise<void> => {
   if (encryptionKey) return;
   
   try {
-    // Generate a new encryption key if one doesn't exist
-    // In a real app, you'd try to load a saved key first
-    encryptionKey = await window.crypto.subtle.generateKey(
-      {
-        name: 'AES-GCM',
-        length: 256
-      },
-      true, // extractable
-      ['encrypt', 'decrypt']
-    );
+    // First try to load existing key from storage
+    const storedKey = localStorage.getItem(ENCRYPTION_KEY_STORAGE);
     
-    console.log('Encryption initialized successfully');
+    if (storedKey) {
+      // Convert stored key material back to CryptoKey
+      const keyData = base64ToBuffer(storedKey);
+      encryptionKey = await window.crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'AES-GCM' },
+        true,
+        ['encrypt', 'decrypt']
+      );
+      console.log('Loaded existing encryption key from storage');
+    } else {
+      // Generate a new encryption key if one doesn't exist
+      encryptionKey = await window.crypto.subtle.generateKey(
+        {
+          name: 'AES-GCM',
+          length: 256
+        },
+        true, // extractable
+        ['encrypt', 'decrypt']
+      );
+      
+      // Export and store the key for future sessions
+      const rawKey = await window.crypto.subtle.exportKey('raw', encryptionKey);
+      const keyString = bufferToBase64(new Uint8Array(rawKey));
+      localStorage.setItem(ENCRYPTION_KEY_STORAGE, keyString);
+      
+      console.log('Generated and stored new encryption key');
+    }
   } catch (error) {
     console.error('Failed to initialize encryption:', error);
     // Fallback to a less secure approach in case of error

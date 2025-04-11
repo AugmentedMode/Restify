@@ -123,6 +123,21 @@ export class GitHubService {
     localStorage.removeItem(GitHubService.TOKEN_STORAGE_KEY);
     localStorage.removeItem(GitHubService.LEGACY_TOKEN_KEY);
   }
+  
+  /**
+   * Helper method to reset all GitHub-related tokens and encryption keys
+   * This is a nuclear option for when encryption fails
+   */
+  public static resetAllTokens(): void {
+    // Clear GitHub tokens
+    localStorage.removeItem(GitHubService.TOKEN_STORAGE_KEY);
+    localStorage.removeItem(GitHubService.LEGACY_TOKEN_KEY);
+    
+    // Clear encryption key to force re-generation
+    localStorage.removeItem('restify_encryption_key');
+    
+    console.log('[GitHub] Reset all tokens and encryption keys');
+  }
 
   /**
    * Clear stored token and reset service
@@ -158,6 +173,27 @@ export class GitHubService {
     // Search for PRs created by the authenticated user that are open
     const { data } = await this.octokit.search.issuesAndPullRequests({
       q: `is:pr is:open author:${user.login}`,
+      sort: 'updated',
+      order: 'desc',
+      per_page: 100
+    });
+
+    return data.items;
+  }
+
+  /**
+   * Get open pull requests where the authenticated user is requested as a reviewer
+   * @returns Array of pull requests needing review
+   */
+  public async getPullRequestsForReview() {
+    this.ensureInitialized();
+    
+    // Get authenticated user first
+    const user = await this.getCurrentUser();
+    
+    // Search for PRs where the authenticated user is requested as a reviewer
+    const { data } = await this.octokit.search.issuesAndPullRequests({
+      q: `is:pr is:open review-requested:${user.login}`,
       sort: 'updated',
       order: 'desc',
       per_page: 100

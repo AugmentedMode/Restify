@@ -19,7 +19,9 @@ import {
   FaQuestionCircle,
   FaLink,
   FaShieldAlt,
-  FaUserSecret
+  FaUserSecret,
+  FaCommentDots,
+  FaUserEdit
 } from 'react-icons/fa';
 import githubService, { GitHubService } from '../../services/GitHubService';
 import { useSettings } from '../../utils/SettingsContext';
@@ -521,12 +523,55 @@ const ContentSeparator = styled.div`
   margin: 24px 0;
 `;
 
+// Add tab navigation styled components
+const TabsContainer = styled.div`
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const Tab = styled.button<{ active: boolean }>`
+  background: none;
+  border: none;
+  color: ${props => props.active ? '#FF385C' : '#aaa'};
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid ${props => props.active ? '#FF385C' : 'transparent'};
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &:hover {
+    color: ${props => props.active ? '#FF385C' : '#ddd'};
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+`;
+
+const ReviewBadge = styled.span`
+  background-color: rgba(255, 56, 92, 0.1);
+  color: #FF385C;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+`;
+
+const EmptyReview = styled(EmptyState)`
+  svg {
+    color: #555;
+  }
+`;
+
 interface GitHubPanelProps {
   onReturn: () => void;
 }
 
 const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [pullRequests, setPullRequests] = useState<any[]>([]);
+  const [reviewRequests, setReviewRequests] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'mine' | 'reviews'>('mine');
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string>('');
   const [initialized, setInitialized] = useState(false);
@@ -542,10 +587,11 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   // Function to reset token in case of issues
   const resetToken = () => {
     console.log('[GitHub] Resetting token due to user request');
-    GitHubService.clearStoredToken();
+    GitHubService.resetAllTokens();
     setToken('');
     setInitialized(false);
     setError(null);
+    setShowTokenManagement(false);
   };
   
   // Load token from secure storage on component mount
@@ -584,7 +630,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
       setInitialized(true);
       
       // Fetch PRs immediately after initialization
-      fetchPullRequests();
+      fetchAllPullRequests();
     } catch (error) {
       console.error('[GitHub] Failed to initialize GitHub service:', error);
       setError('Failed to initialize GitHub service. Please check your token.');
@@ -592,7 +638,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     }
   };
   
-  const fetchPullRequests = async () => {
+  const fetchAllPullRequests = async () => {
     if (!githubService.isInitialized()) {
       setError('GitHub service not initialized. Please add your token.');
       return;
@@ -602,8 +648,13 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     setError(null);
     
     try {
-      const prs = await githubService.getMyOpenPullRequests();
-      setPullRequests(prs);
+      // Fetch both types of PRs in parallel
+      const [myPRs, reviewPRs] = await Promise.all([
+        githubService.getMyOpenPullRequests(),
+        githubService.getPullRequestsForReview()
+      ]);
+      setPullRequests(myPRs);
+      setReviewRequests(reviewPRs);
     } catch (error: any) {
       console.error('[GitHub] Error fetching pull requests:', error);
       if (error.message?.includes('Bad credentials')) {
@@ -613,6 +664,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         setError(`Error fetching PRs: ${error.message || 'Unknown error'}`);
       }
       setPullRequests([]);
+      setReviewRequests([]);
     } finally {
       setLoading(false);
     }
@@ -772,7 +824,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
                 )}
                 {(error.includes('corrupted') || error.includes('Invalid')) && (
                   <ResetButton onClick={resetToken}>
-                    Reset Stored Token
+                    Reset All Tokens
                   </ResetButton>
                 )}
               </ErrorContent>
@@ -786,7 +838,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
       return (
         <EnhancedSpinner>
           <FaSync />
-          <p>Loading your pull requests...</p>
+          <p>Loading pull requests...</p>
         </EnhancedSpinner>
       );
     }
@@ -806,7 +858,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
             {error.includes('Invalid') && (
               <div style={{ marginTop: '12px' }}>
                 <ResetButton onClick={resetToken}>
-                  Reset Token
+                  Reset All Tokens
                 </ResetButton>
                 <LinkButton 
                   href="https://github.com/settings/tokens/new" 
@@ -823,70 +875,154 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
       );
     }
     
-    if (pullRequests.length === 0) {
-      return (
-        <EmptyState>
-          <FaGithub />
-          <h3>No open pull requests</h3>
-          <p>You don't have any open pull requests at the moment. When you create pull requests, they'll appear here.</p>
-          <LinkButton 
-            href="https://github.com" 
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ marginTop: '10px' }}
-          >
-            <FaGithub /> Go to GitHub
-          </LinkButton>
-        </EmptyState>
-      );
-    }
+    // Add tab navigation
+    const renderTabContent = () => {
+      if (activeTab === 'mine') {
+        if (pullRequests.length === 0) {
+          return (
+            <EmptyState>
+              <FaGithub />
+              <h3>No open pull requests</h3>
+              <p>You don't have any open pull requests at the moment. When you create pull requests, they'll appear here.</p>
+              <LinkButton 
+                href="https://github.com" 
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ marginTop: '10px' }}
+              >
+                <FaGithub /> Go to GitHub
+              </LinkButton>
+            </EmptyState>
+          );
+        }
+
+        return (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>Your Open Pull Requests</h3>
+              <div style={{ color: '#888', fontSize: '14px' }}>
+                {pullRequests.length} {pullRequests.length === 1 ? 'pull request' : 'pull requests'} found
+              </div>
+            </div>
+            <PRList>
+              {pullRequests.map((pr: any) => (
+                <PRItem key={pr.id}>
+                  <PRHeader>
+                    <PRTitle>{pr.title}</PRTitle>
+                    <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
+                      Open in GitHub <FaExternalLinkAlt size={12} />
+                    </PRLink>
+                  </PRHeader>
+                  <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
+                    {pr.repository_url?.split('/').slice(-1)[0]}
+                  </div>
+                  <PRMeta>
+                    <PRMetaItem>
+                      <FaClock size={12} />
+                      <span>Updated {formatRelativeTime(pr.updated_at)}</span>
+                    </PRMetaItem>
+                    <PRMetaItem>
+                      <FaCodeBranch size={12} />
+                      <span>{pr.head?.ref}</span>
+                    </PRMetaItem>
+                    <PRMetaItem>
+                      {pr.draft ? (
+                        <>
+                          <FaTimes size={12} color="#888" />
+                          <span>Draft</span>
+                        </>
+                      ) : (
+                        <>
+                          <FaCheck size={12} color="#29a745" />
+                          <span>Ready</span>
+                        </>
+                      )}
+                    </PRMetaItem>
+                  </PRMeta>
+                </PRItem>
+              ))}
+            </PRList>
+          </>
+        );
+      } else {
+        // Review requests tab
+        if (reviewRequests.length === 0) {
+          return (
+            <EmptyReview>
+              <FaCommentDots />
+              <h3>No review requests</h3>
+              <p>You don't have any pull requests to review at the moment. When someone requests your review, they'll appear here.</p>
+              <LinkButton 
+                href="https://github.com/pulls/review-requested" 
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ marginTop: '10px' }}
+              >
+                <FaGithub /> Check on GitHub
+              </LinkButton>
+            </EmptyReview>
+          );
+        }
+
+        return (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>Pull Requests to Review</h3>
+              <div style={{ color: '#888', fontSize: '14px' }}>
+                {reviewRequests.length} {reviewRequests.length === 1 ? 'pull request' : 'pull requests'} need your review
+              </div>
+            </div>
+            <PRList>
+              {reviewRequests.map((pr: any) => (
+                <PRItem key={pr.id}>
+                  <PRHeader>
+                    <PRTitle>{pr.title}</PRTitle>
+                    <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
+                      Review on GitHub <FaExternalLinkAlt size={12} />
+                    </PRLink>
+                  </PRHeader>
+                  <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
+                    {pr.repository_url?.split('/').slice(-1)[0]} • Opened by {pr.user?.login}
+                  </div>
+                  <PRMeta>
+                    <PRMetaItem>
+                      <FaClock size={12} />
+                      <span>Updated {formatRelativeTime(pr.updated_at)}</span>
+                    </PRMetaItem>
+                    <PRMetaItem>
+                      <FaCodeBranch size={12} />
+                      <span>{pr.head?.ref}</span>
+                    </PRMetaItem>
+                    <PRMetaItem style={{ color: '#FF385C' }}>
+                      <FaUserEdit size={12} />
+                      <span>Review requested</span>
+                    </PRMetaItem>
+                  </PRMeta>
+                </PRItem>
+              ))}
+            </PRList>
+          </>
+        );
+      }
+    };
     
     return (
       <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3 style={{ margin: 0, fontSize: '18px' }}>Your Open Pull Requests</h3>
-          <div style={{ color: '#888', fontSize: '14px' }}>
-            {pullRequests.length} {pullRequests.length === 1 ? 'pull request' : 'pull requests'} found
-          </div>
-        </div>
-        <PRList>
-          {pullRequests.map((pr: any) => (
-            <PRItem key={pr.id}>
-              <PRHeader>
-                <PRTitle>{pr.title}</PRTitle>
-                <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
-                  Open in GitHub <FaExternalLinkAlt size={12} />
-                </PRLink>
-              </PRHeader>
-              <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
-                {pr.repository_url?.split('/').slice(-1)[0]}
-              </div>
-              <PRMeta>
-                <PRMetaItem>
-                  <FaClock size={12} />
-                  <span>Updated {formatRelativeTime(pr.updated_at)}</span>
-                </PRMetaItem>
-                <PRMetaItem>
-                  <FaCodeBranch size={12} />
-                  <span>{pr.head?.ref}</span>
-                </PRMetaItem>
-                <PRMetaItem>
-                  {pr.draft ? (
-                    <>
-                      <FaTimes size={12} color="#888" />
-                      <span>Draft</span>
-                    </>
-                  ) : (
-                    <>
-                      <FaCheck size={12} color="#29a745" />
-                      <span>Ready</span>
-                    </>
-                  )}
-                </PRMetaItem>
-              </PRMeta>
-            </PRItem>
-          ))}
-        </PRList>
+        <TabsContainer>
+          <Tab 
+            active={activeTab === 'mine'} 
+            onClick={() => setActiveTab('mine')}
+          >
+            <FaGithub /> My PRs {pullRequests.length > 0 && <ReviewBadge>{pullRequests.length}</ReviewBadge>}
+          </Tab>
+          <Tab 
+            active={activeTab === 'reviews'} 
+            onClick={() => setActiveTab('reviews')}
+          >
+            <FaCommentDots /> Review Requests {reviewRequests.length > 0 && <ReviewBadge>{reviewRequests.length}</ReviewBadge>}
+          </Tab>
+        </TabsContainer>
+        {renderTabContent()}
       </>
     );
   };
@@ -992,13 +1128,13 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
           </BackButton>
           <Title>
             <FaGithub />
-            My Pull Requests
+            GitHub Pull Requests
           </Title>
         </HeaderLeft>
         <div style={{ display: 'flex', gap: '8px' }}>
           {initialized && !loading && (
             <>
-              <RefreshButton onClick={fetchPullRequests}>
+              <RefreshButton onClick={fetchAllPullRequests}>
                 <FaSync />
               </RefreshButton>
               <RefreshButton 
