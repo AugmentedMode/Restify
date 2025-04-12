@@ -17,7 +17,8 @@ import {
   FaSitemap,
   FaTimes,
   FaCog,
-  FaGithub
+  FaGithub,
+  FaRobot
 } from 'react-icons/fa';
 import { 
   Sidebar as SidebarContainer, 
@@ -41,6 +42,7 @@ import KanbanSection from './sections/KanbanSection';
 import EnvironmentManager from '../EnvironmentManager';
 import SecretsSection from './sections/SecretsSection';
 import GitHubSection from './sections/GitHubSection';
+import AISection from '../sidebar/sections/AISection';
 
 // Dynamically load the SettingsSection with an import() to avoid errors
 // when the file hasn't been created yet
@@ -368,6 +370,30 @@ function Sidebar({
         </NavTooltip>
       )}
 
+      {/* AI Assistant */}
+      <NavTooltip title="AI Assistant" isCollapsed={isSidebarCollapsed}>
+        <div
+          style={{
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            backgroundColor: expandedSections.ai
+              ? 'rgba(255, 56, 92, 0.1)'
+              : 'transparent',
+            color: expandedSections.ai ? '#FF385C' : 'inherit',
+            transition: 'all 0.2s',
+          }}
+          onClick={() => {
+            toggleSection('ai');
+            window.history.pushState({}, '', '/ai');
+            window.dispatchEvent(new Event('popstate'));
+          }}
+          className="nav-item"
+        >
+          <FaRobot size={20} />
+        </div>
+      </NavTooltip>
+
       {settings.general.showBoards && (
         <NavTooltip title="Kanban Board" isCollapsed={isSidebarCollapsed}>
           <div
@@ -591,13 +617,21 @@ function Sidebar({
                     />
                   )}
 
+                  {/* Add AI Section */}
+                  <AISection
+                    expanded={expandedSections.ai}
+                    toggleSection={() => toggleSection('ai')}
+                    onNavigateToAI={() => {
+                      window.history.pushState({}, '', '/ai');
+                      window.dispatchEvent(new Event('popstate'));
+                    }}
+                  />
+
                   {settings.general.showGitHub && (
                     <GitHubSection
                       onNavigate={navigateToGitHub}
                     />
                   )}
-
-        
 
                   {settings.general.showSecretsManager && (
                     <SecretsSection
@@ -621,19 +655,6 @@ function Sidebar({
                       filter={filter}
                     />
                   )}
-
-               
-
-                  {/* <EnvironmentManager 
-                    environments={environments}
-                    currentEnvironmentId={currentEnvironmentId}
-                    onAddEnvironment={onAddEnvironment}
-                    onUpdateEnvironment={onUpdateEnvironment}
-                    onDeleteEnvironment={onDeleteEnvironment}
-                    onSelectEnvironment={onSelectEnvironment}
-                    expanded={expandedSections.environments}
-                    onToggleExpanded={() => toggleSection('environments')}
-                  /> */}
 
                   {settings.general.showNotes && (
                     <NotesSection

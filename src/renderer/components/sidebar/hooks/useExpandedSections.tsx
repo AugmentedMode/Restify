@@ -8,6 +8,7 @@ interface ExpandedSections {
   kanban: boolean;
   secrets: boolean;
   github: boolean;
+  ai: boolean;
 }
 
 export const useExpandedSections = (initialState: Partial<ExpandedSections> = {}) => {
@@ -19,6 +20,7 @@ export const useExpandedSections = (initialState: Partial<ExpandedSections> = {}
     kanban: false,
     secrets: false,
     github: false,
+    ai: false,
     ...initialState,
   });
 

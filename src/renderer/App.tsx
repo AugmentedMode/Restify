@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaCode, FaPlus, FaTrash, FaFileImport } from 'react-icons/fa';
+import { FaCode, FaPlus, FaTrash, FaFileImport, FaRobot } from 'react-icons/fa';
 import {
   AppContainer,
   MainContent,
@@ -39,6 +39,9 @@ import SettingsManager from './components/settings/SettingsManager';
 import { SettingsProvider } from './utils/SettingsContext';
 import GitHubPanel from './components/github/GitHubPanel';
 import Home from './components/Home';
+import AIChat from './components/AIChat';
+import AISection from './components/sidebar/sections/AISection';
+import { useExpandedSections } from './components/sidebar/hooks/useExpandedSections';
 
 // Sample initial data for new users
 const initialCollections: Folder[] = [];
@@ -381,6 +384,9 @@ function AppContent() {
   // Add state for secrets profiles
   const [secretsProfiles, setSecretsProfiles] = useState<SecretsProfile[]>([]);
   const [activeSecretsProfile, setActiveSecretsProfile] = useState<string | null>(null);
+
+  // Add useExpandedSections hook
+  const { expandedSections, toggleSection } = useExpandedSections();
 
   // Function to navigate to home
   const navigateToHome = useCallback(() => {
@@ -939,6 +945,16 @@ function AppContent() {
     window.dispatchEvent(new Event('popstate'));
   }, [notes, activeNote, addNote]);
 
+  // Add a function to navigate to AI Chat
+  const navigateToAI = () => {
+    if (window.location.pathname !== '/ai') {
+      window.history.pushState({}, '', '/ai');
+      
+      // Dispatch a custom event to notify the App component
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
   // Update the renderMainContent function to use Home component
   const renderMainContent = () => {
     // Home route that overrides active request/note
@@ -959,6 +975,11 @@ function AppContent() {
           }}
         />
       );
+    }
+
+    // Route to the AI Chat page
+    if (currentRoute === '/ai') {
+      return <AIChat />;
     }
 
     // Route to the kanban page if needed
@@ -1368,7 +1389,13 @@ function AppContent() {
           onExportSecrets={handleExportSecrets}
           onOpenSettings={navigateToSettings}
           onNavigateToNotes={navigateToNotes}
-        />
+        >
+          <AISection 
+            expanded={expandedSections.ai} 
+            toggleSection={() => toggleSection('ai')}
+            onNavigateToAI={navigateToAI}
+          />
+        </Sidebar>
         <MainContent>
           {renderMainContent()}
         </MainContent>
