@@ -14,8 +14,14 @@ import {
   FaExclamationCircle,
   FaCaretRight,
   FaPlus,
-  FaRobot
+  FaRobot,
+  FaEdit,
+  FaTimes
 } from 'react-icons/fa';
+
+// Load markdown components dynamically to avoid ESM import issues
+const ReactMarkdown = React.lazy(() => import('react-markdown'));
+const rehypeRaw = { default: () => null }; // Placeholder
 
 interface BlockContainerProps {
   $isSelected: boolean;
@@ -323,6 +329,142 @@ const LoadingIndicator = styled.div`
   }
 `;
 
+// Add styled component for markdown rendering
+const MarkdownContent = styled.div`
+  color: #eee;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 8px 6px;
+  position: relative;
+  
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    color: #fff;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  
+  h1 {
+    font-size: 1.8em;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.3em;
+  }
+  
+  h2 {
+    font-size: 1.5em;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.3em;
+  }
+  
+  h3 {
+    font-size: 1.25em;
+  }
+
+  p {
+    margin-bottom: 1em;
+    color: #ddd;
+  }
+
+  ul, ol {
+    margin-bottom: 1em;
+    padding-left: 2em;
+    color: #ddd;
+  }
+  
+  li {
+    margin-bottom: 0.5em;
+  }
+  
+  code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+    background-color: #2b2b2b;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: #FF385C;
+  }
+
+  pre {
+    background-color: #2b2b2b;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 1em;
+    border: 1px solid #333;
+    
+    code {
+      background-color: transparent;
+      padding: 0;
+      color: #ccc;
+    }
+  }
+
+  blockquote {
+    border-left: 4px solid #FF385C;
+    padding: 0.5em 1em;
+    margin-left: 0;
+    margin-bottom: 1em;
+    background-color: rgba(255, 56, 92, 0.1);
+    border-radius: 0 4px 4px 0;
+    color: #ccc;
+    
+    p {
+      margin-bottom: 0;
+    }
+  }
+
+  a {
+    color: #FF385C;
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 1em 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+`;
+
+// Add delete button alongside edit button
+const ActionsContainer = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  
+  ${MarkdownContent}:hover & {
+    opacity: 1;
+  }
+`;
+
+const ActionButton = styled.button`
+  background-color: transparent;
+  border: none;
+  color: #777;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+  
+  &.delete:hover {
+    background-color: rgba(255, 56, 92, 0.2);
+    color: #FF385C;
+  }
+`;
+
 interface BlockProps {
   block: BlockData;
   isSelected: boolean;
@@ -360,6 +502,40 @@ const Block: React.FC<BlockProps> = ({
   const isUpdatingFromParent = useRef(false);
   const [aiPrompt, setAIPrompt] = useState('');
   const aiPromptInputRef = useRef<HTMLInputElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Determine if content should be rendered as markdown
+  const shouldRenderMarkdown = () => {
+    // If editing or this is a fresh AI block, allow editing
+    if (isEditing || (block.content === "Generating AI response...")) {
+      return false;
+    }
+    
+    // Otherwise check for markdown syntax
+    return (
+      block.content.includes('#') || 
+      block.content.includes('```') || 
+      block.content.includes('- ') ||
+      block.content.includes('1. ') ||
+      block.content.includes('*') ||
+      block.content.includes('[') ||
+      block.content.includes('>') ||
+      block.content.includes('|')
+    );
+  };
+  
+  // Toggle edit mode
+  const toggleEditMode = () => {
+    setIsEditing(!isEditing);
+    // If switching to edit mode, focus the content element
+    if (!isEditing && contentRef.current) {
+      setTimeout(() => {
+        if (contentRef.current) {
+          contentRef.current.focus();
+        }
+      }, 0);
+    }
+  };
   
   // Focus the AI input when this block becomes the active AI block
   useEffect(() => {
@@ -671,7 +847,9 @@ const Block: React.FC<BlockProps> = ({
     } 
     // Handle Backspace on empty block to delete
     else if (e.key === 'Backspace') {
-      if (content === '') {
+      // If content is empty or just at the very beginning of a non-empty block
+      const selection = window.getSelection();
+      if (content === '' || (selection?.anchorOffset === 0 && selection.isCollapsed)) {
         e.preventDefault();
         onDeleteBlock(block.id);
       } else if (slashMenuActive && slashMenuText === '') {
@@ -826,6 +1004,39 @@ const Block: React.FC<BlockProps> = ({
     }
   }, [block.content]);
 
+  // Function to process markdown content
+  const processMarkdown = (content: string) => {
+    // Process task lists for better rendering
+    return content.replace(
+      /^(\s*)[-*]\s*\[([ x])\]\s*(.+)$/gm, 
+      (match, indent, checked, text) => {
+        const checkedAttr = checked === 'x' ? ' checked' : '';
+        return `${indent}- <div class="task-list-item"><input type="checkbox"${checkedAttr} class="task-list-item-checkbox" disabled />${text}</div>`;
+      }
+    );
+  };
+
+  // Add a keyDown handler to the markdown content container to allow keyboard deletion
+  useEffect(() => {
+    // This effect adds keyboard event listeners to the document
+    const handleDocKeyDown = (e: globalThis.KeyboardEvent) => {
+      // Only handle events if this block is selected
+      if (!isSelected) return;
+      
+      // Handle backspace or delete key in markdown view mode
+      if ((e.key === 'Backspace' || e.key === 'Delete') && shouldRenderMarkdown() && !isEditing) {
+        e.preventDefault();
+        onDeleteBlock(block.id);
+      }
+    };
+    
+    document.addEventListener('keydown', handleDocKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleDocKeyDown);
+    };
+  }, [isSelected, block.id, onDeleteBlock, shouldRenderMarkdown, isEditing]);
+
   return (
     <BlockContainer 
       $isSelected={isSelected} 
@@ -853,6 +1064,10 @@ const Block: React.FC<BlockProps> = ({
             {isLoading ? 'Generating' : 'Generate'}
           </GenerateButton>
         </AIPromptContainer>
+      ) : isLoading ? (
+        <BlockContent $blockType={block.type}>
+          <LoadingIndicator>Generating</LoadingIndicator>
+        </BlockContent>
       ) : (
         <BlockContent $blockType={block.type}>
           {block.type === BlockType.ToDo && (
@@ -873,15 +1088,55 @@ const Block: React.FC<BlockProps> = ({
               <span>1.</span>
             </NumberIndicator>
           )}
-          <BlockInput
-            ref={contentRef}
-            $blockType={block.type}
-            contentEditable={!isLoading}
-            suppressContentEditableWarning
-            onInput={handleContentChange}
-            onKeyDown={handleKeyDown}
-          />
-          {isLoading && <LoadingIndicator>Generating</LoadingIndicator>}
+          
+          {/* Render markdown or editable content */}
+          {shouldRenderMarkdown() ? (
+            <MarkdownContent>
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <ReactMarkdown>
+                  {block.content}
+                </ReactMarkdown>
+              </React.Suspense>
+              <ActionsContainer>
+                <ActionButton onClick={toggleEditMode} title="Edit block">
+                  <FaEdit size={12} />
+                </ActionButton>
+                <ActionButton 
+                  className="delete" 
+                  onClick={() => onDeleteBlock(block.id)} 
+                  title="Delete block"
+                >
+                  <FaTimes size={12} />
+                </ActionButton>
+              </ActionsContainer>
+            </MarkdownContent>
+          ) : (
+            <>
+              <BlockInput
+                ref={contentRef}
+                $blockType={block.type}
+                contentEditable={!isLoading}
+                suppressContentEditableWarning
+                onInput={handleContentChange}
+                onKeyDown={handleKeyDown}
+                onBlur={() => {
+                  // Only switch to markdown mode if there's actual content
+                  if (block.content && block.content !== "Generating AI response...") {
+                    setIsEditing(false);
+                  }
+                }}
+              />
+              <ActionsContainer>
+                <ActionButton 
+                  className="delete" 
+                  onClick={() => onDeleteBlock(block.id)} 
+                  title="Delete block"
+                >
+                  <FaTimes size={12} />
+                </ActionButton>
+              </ActionsContainer>
+            </>
+          )}
         </BlockContent>
       )}
     </BlockContainer>

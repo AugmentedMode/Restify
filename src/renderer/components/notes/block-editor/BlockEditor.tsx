@@ -471,11 +471,21 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
         };
       });
       
-      // Generate content from AI - specifically request markdown format
-      let enhancedPrompt = `${prompt}\n\nPlease format your response in clean markdown.`;
+      // Generate content from AI - specifically request clean markdown format
+      let enhancedPrompt = `
+${prompt}
+
+Guidelines for response:
+1. Format your response in clean, well-structured markdown.
+2. Use proper markdown headings with # for organization.
+3. Use code blocks with \`\`\` for any code or technical content.
+4. Use proper markdown for lists, links, and emphasis.
+5. Keep formatting clean and consistent.
+`;
+
       const aiResponse = await aiService.generateCompletion(enhancedPrompt, {
         temperature: 0.7,
-        maxTokens: 800
+        maxTokens: 1000
       });
       
       // Find the target block
