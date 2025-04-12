@@ -198,10 +198,13 @@ export class GitHubService {
       per_page: 100
     });
 
+    // Enhance PR data with review information
+    const enhancedPRs = await this.enhancePRsWithReviewData(data.items);
+
     // Cache the result for future use
-    await GitHubPRService.saveMyPRs(data.items);
+    await GitHubPRService.saveMyPRs(enhancedPRs);
     
-    return data.items;
+    return enhancedPRs;
   }
 
   /**
@@ -239,6 +242,118 @@ export class GitHubService {
     await GitHubPRService.savePRsForReview(data.items);
 
     return data.items;
+  }
+
+  /**
+   * Get pull request review data for a specific PR
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param pull_number Pull request number
+   * @returns Review data for the pull request
+   */
+  public async getPullRequestReviews(owner: string, repo: string, pull_number: number) {
+    this.ensureInitialized();
+    try {
+      const { data } = await this.octokit.pulls.listReviews({
+        owner,
+        repo,
+        pull_number
+      });
+      return data;
+    } catch (error) {
+      console.error(`[GitHub] Error fetching reviews for PR #${pull_number}:`, error);
+      return [];
+    }
+  }
+  
+  /**
+   * Get the number of comments on a pull request
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param pull_number Pull request number
+   * @returns Number of comments on the pull request
+   */
+  public async getPullRequestCommentCount(owner: string, repo: string, pull_number: number) {
+    this.ensureInitialized();
+    try {
+      const { data } = await this.octokit.pulls.get({
+        owner,
+        repo,
+        pull_number
+      });
+      return data.comments;
+    } catch (error) {
+      console.error(`[GitHub] Error fetching comment count for PR #${pull_number}:`, error);
+      return 0;
+    }
+  }
+  
+  /**
+   * Enhance PR data with review information
+   * @param prs Array of pull requests
+   * @returns Enhanced PR data with review information
+   */
+  public async enhancePRsWithReviewData(prs: any[]) {
+    if (!prs || prs.length === 0) return prs;
+    
+    const enhancedPRs = await Promise.all(prs.map(async (pr) => {
+      try {
+        // Extract owner and repo from repository_url
+        // Format: "https://api.github.com/repos/OWNER/REPO"
+        const urlParts = pr.repository_url.split('/');
+        const owner = urlParts[urlParts.length - 2];
+        const repo = urlParts[urlParts.length - 1];
+        const pull_number = pr.number;
+        
+        // Get review data
+        const reviews = await this.getPullRequestReviews(owner, repo, pull_number);
+        
+        // Extract latest review state from each reviewer
+        const reviewers = new Map();
+        reviews.forEach((review: any) => {
+          // Only consider the latest review from each reviewer
+          reviewers.set(review.user.login, review.state);
+        });
+        
+        // Calculate review summary
+        const reviewSummary = {
+          approvals: 0,
+          changes_requested: 0,
+          comments: 0,
+          pending: 0,
+          total_reviews: reviews.length,
+          reviewers: Array.from(reviewers).map(([login, state]) => ({ login, state }))
+        };
+        
+        // Count reviews by state
+        reviewers.forEach((state: string) => {
+          switch (state) {
+            case 'APPROVED':
+              reviewSummary.approvals++;
+              break;
+            case 'CHANGES_REQUESTED':
+              reviewSummary.changes_requested++;
+              break;
+            case 'COMMENTED':
+              reviewSummary.comments++;
+              break;
+            case 'PENDING':
+              reviewSummary.pending++;
+              break;
+          }
+        });
+        
+        return {
+          ...pr,
+          review_data: reviewSummary
+        };
+      } catch (error) {
+        console.error(`[GitHub] Error enhancing PR #${pr.number}:`, error);
+        return pr;
+      }
+    }));
+    
+    return enhancedPRs;
   }
 
   /**

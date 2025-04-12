@@ -26,7 +26,11 @@ import {
   FaSearch,
   FaSortAmountDown,
   FaSortAmountUp,
-  FaTimesCircle
+  FaTimesCircle,
+  FaThumbsUp,
+  FaThumbsDown,
+  FaComment,
+  FaCircle
 } from 'react-icons/fa';
 import githubService, { GitHubService } from '../../services/GitHubService';
 import { useSettings } from '../../utils/SettingsContext';
@@ -719,6 +723,48 @@ const ClearFilters = styled.button`
   }
 `;
 
+// Add these new styled components for review status
+const ReviewStatusContainer = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 12px;
+`;
+
+const ReviewBadgeStyled = styled.div<{ badgeType: 'approved' | 'changes' | 'comment' | 'pending' }>`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: ${props => {
+    switch (props.badgeType) {
+      case 'approved': return 'rgba(45, 164, 78, 0.1)';
+      case 'changes': return 'rgba(255, 56, 92, 0.1)';
+      case 'comment': return 'rgba(88, 166, 255, 0.1)';
+      case 'pending': return 'rgba(209, 213, 219, 0.1)';
+      default: return 'transparent';
+    }
+  }};
+  color: ${props => {
+    switch (props.badgeType) {
+      case 'approved': return '#2da44e';
+      case 'changes': return '#ff385c';
+      case 'comment': return '#58a6ff';
+      case 'pending': return '#d1d5db';
+      default: return '#aaa';
+    }
+  }};
+`;
+
+const ReviewStatus = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
 interface GitHubPanelProps {
   onReturn: () => void;
 }
@@ -727,6 +773,9 @@ interface GitHubPanelProps {
 type SortOption = 'newest' | 'oldest' | 'updated' | 'title';
 type AgeFilter = 'all' | 'today' | 'week' | 'month';
 type StatusFilter = 'all' | 'draft' | 'ready';
+
+// Add a type for review status filtering
+type ReviewFilter = 'all' | 'approved' | 'changes_requested' | 'commented' | 'none';
 
 const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [pullRequests, setPullRequests] = useState<any[]>([]);
@@ -758,6 +807,10 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [reviewPrSortOption, setReviewPrSortOption] = useState<SortOption>('newest');
   const [reviewPrSortDirection, setReviewPrSortDirection] = useState<'asc' | 'desc'>('desc');
 
+  // Add review filter state for each tab
+  const [myPrReviewFilter, setMyPrReviewFilter] = useState<ReviewFilter>('all');
+  const [reviewPrReviewFilter, setReviewPrReviewFilter] = useState<ReviewFilter>('all');
+  
   // Get settings from context
   const { settings } = useSettings();
   
@@ -776,7 +829,9 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         sortOption: myPrSortOption,
         setSortOption: setMyPrSortOption,
         sortDirection: myPrSortDirection,
-        setSortDirection: setMyPrSortDirection
+        setSortDirection: setMyPrSortDirection,
+        reviewFilter: myPrReviewFilter,
+        setReviewFilter: setMyPrReviewFilter
       };
     } else {
       return {
@@ -791,7 +846,9 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         sortOption: reviewPrSortOption,
         setSortOption: setReviewPrSortOption,
         sortDirection: reviewPrSortDirection,
-        setSortDirection: setReviewPrSortDirection
+        setSortDirection: setReviewPrSortDirection,
+        reviewFilter: reviewPrReviewFilter,
+        setReviewFilter: setReviewPrReviewFilter
       };
     }
   };
@@ -820,6 +877,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         setMyPrAgeFilter(filters.ageFilter || 'all');
         setMyPrSortOption(filters.sortOption || 'newest');
         setMyPrSortDirection(filters.sortDirection || 'desc');
+        setMyPrReviewFilter(filters.reviewFilter || 'all');
       }
       
       if (savedReviewPrFilters) {
@@ -830,6 +888,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         setReviewPrAgeFilter(filters.ageFilter || 'all');
         setReviewPrSortOption(filters.sortOption || 'newest');
         setReviewPrSortDirection(filters.sortDirection || 'desc');
+        setReviewPrReviewFilter(filters.reviewFilter || 'all');
       }
     } catch (error) {
       console.error('[GitHub] Error loading saved filters:', error);
@@ -846,14 +905,15 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         statusFilter: myPrStatusFilter,
         ageFilter: myPrAgeFilter,
         sortOption: myPrSortOption,
-        sortDirection: myPrSortDirection
+        sortDirection: myPrSortDirection,
+        reviewFilter: myPrReviewFilter
       };
       
       localStorage.setItem('github-panel-mypr-filters', JSON.stringify(myPrFilters));
     } catch (error) {
       console.error('[GitHub] Error saving My PR filters:', error);
     }
-  }, [myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter, myPrSortOption, myPrSortDirection]);
+  }, [myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter, myPrSortOption, myPrSortDirection, myPrReviewFilter]);
   
   useEffect(() => {
     try {
@@ -863,14 +923,15 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         statusFilter: reviewPrStatusFilter,
         ageFilter: reviewPrAgeFilter,
         sortOption: reviewPrSortOption,
-        sortDirection: reviewPrSortDirection
+        sortDirection: reviewPrSortDirection,
+        reviewFilter: reviewPrReviewFilter
       };
       
       localStorage.setItem('github-panel-reviewpr-filters', JSON.stringify(reviewPrFilters));
     } catch (error) {
       console.error('[GitHub] Error saving Review PR filters:', error);
     }
-  }, [reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter, reviewPrSortOption, reviewPrSortDirection]);
+  }, [reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter, reviewPrSortOption, reviewPrSortDirection, reviewPrReviewFilter]);
   
   // Load token from secure storage on component mount
   useEffect(() => {
@@ -1058,6 +1119,47 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     return ['all', ...Array.from(new Set(repos))];
   };
   
+  // Add a render function for review status
+  const renderReviewStatus = (pr: any) => {
+    if (!pr.review_data) return null;
+    
+    const { approvals, changes_requested, comments, total_reviews } = pr.review_data;
+    
+    if (total_reviews === 0) {
+      return (
+        <ReviewStatus>
+          <ReviewBadgeStyled badgeType="pending">
+            <FaCircle size={10} />
+            <span>No reviews yet</span>
+          </ReviewBadgeStyled>
+        </ReviewStatus>
+      );
+    }
+    
+    return (
+      <ReviewStatus>
+        {approvals > 0 && (
+          <ReviewBadgeStyled badgeType="approved">
+            <FaThumbsUp size={12} />
+            <span>{approvals} {approvals === 1 ? 'approval' : 'approvals'}</span>
+          </ReviewBadgeStyled>
+        )}
+        {changes_requested > 0 && (
+          <ReviewBadgeStyled badgeType="changes">
+            <FaThumbsDown size={12} />
+            <span>{changes_requested} {changes_requested === 1 ? 'change requested' : 'changes requested'}</span>
+          </ReviewBadgeStyled>
+        )}
+        {comments > 0 && (
+          <ReviewBadgeStyled badgeType="comment">
+            <FaCommentDots size={12} />
+            <span>{comments} {comments === 1 ? 'comment' : 'comments'}</span>
+          </ReviewBadgeStyled>
+        )}
+      </ReviewStatus>
+    );
+  };
+  
   // Apply filters and sorting to PRs using useMemo
   const filteredPullRequests = useMemo(() => {
     // Get the right list based on active tab
@@ -1106,6 +1208,24 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
           }
         }
         
+        // Review status filter
+        if (filters.reviewFilter !== 'all' && pr.review_data) {
+          const { approvals, changes_requested, comments, total_reviews } = pr.review_data;
+          
+          if (filters.reviewFilter === 'approved' && approvals === 0) {
+            return false;
+          }
+          if (filters.reviewFilter === 'changes_requested' && changes_requested === 0) {
+            return false;
+          }
+          if (filters.reviewFilter === 'commented' && comments === 0) {
+            return false;
+          }
+          if (filters.reviewFilter === 'none' && total_reviews > 0) {
+            return false;
+          }
+        }
+        
         return true;
       })
       .sort((a, b) => {
@@ -1132,8 +1252,8 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
       });
   }, [
     activeTab, pullRequests, reviewRequests, 
-    myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter, myPrSortOption, myPrSortDirection,
-    reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter, reviewPrSortOption, reviewPrSortDirection
+    myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter, myPrSortOption, myPrSortDirection, myPrReviewFilter,
+    reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter, reviewPrSortOption, reviewPrSortDirection, reviewPrReviewFilter
   ]);
   
   // Get unique repositories for the filter dropdown
@@ -1149,11 +1269,12 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     if (filters.repoFilter !== 'all') count++;
     if (filters.statusFilter !== 'all') count++;
     if (filters.ageFilter !== 'all') count++;
+    if (filters.reviewFilter !== 'all') count++;
     return count;
   }, [
     activeTab,
-    myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter,
-    reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter
+    myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter, myPrReviewFilter,
+    reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter, reviewPrReviewFilter
   ]);
   
   // Function to clear all filters
@@ -1165,6 +1286,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     filters.setAgeFilter('all');
     filters.setSortOption('newest');
     filters.setSortDirection('desc');
+    filters.setReviewFilter('all');
   };
   
   // Toggle sort direction
@@ -1408,6 +1530,19 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
                 </SortButton>
               </FilterGroup>
               
+              <FilterGroup>
+                <FilterSelect 
+                  value={myPrReviewFilter} 
+                  onChange={(e) => setMyPrReviewFilter(e.target.value as ReviewFilter)}
+                >
+                  <option value="all">All reviews</option>
+                  <option value="approved">Has approvals</option>
+                  <option value="changes_requested">Has changes requested</option>
+                  <option value="commented">Has comments</option>
+                  <option value="none">No reviews yet</option>
+                </FilterSelect>
+              </FilterGroup>
+              
               {activeFilterCount > 0 && (
                 <ClearFilters onClick={clearAllFilters}>
                   Clear all
@@ -1460,6 +1595,9 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
                         )}
                       </PRMetaItem>
                     </PRMeta>
+                    <ReviewStatusContainer>
+                      {renderReviewStatus(pr)}
+                    </ReviewStatusContainer>
                   </PRItem>
                 ))}
               </PRList>
@@ -1574,6 +1712,19 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
                 </SortButton>
               </FilterGroup>
               
+              <FilterGroup>
+                <FilterSelect 
+                  value={reviewPrReviewFilter} 
+                  onChange={(e) => setReviewPrReviewFilter(e.target.value as ReviewFilter)}
+                >
+                  <option value="all">All reviews</option>
+                  <option value="approved">Has approvals</option>
+                  <option value="changes_requested">Has changes requested</option>
+                  <option value="commented">Has comments</option>
+                  <option value="none">No reviews yet</option>
+                </FilterSelect>
+              </FilterGroup>
+              
               {activeFilterCount > 0 && (
                 <ClearFilters onClick={clearAllFilters}>
                   Clear all
@@ -1617,6 +1768,9 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
                         <span>Review requested</span>
                       </PRMetaItem>
                     </PRMeta>
+                    <ReviewStatusContainer>
+                      {renderReviewStatus(pr)}
+                    </ReviewStatusContainer>
                   </PRItem>
                 ))}
               </PRList>
