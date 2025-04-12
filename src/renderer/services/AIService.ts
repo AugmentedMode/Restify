@@ -2,6 +2,9 @@
  * Service for integrating LLM capabilities into the app using Vercel AI SDK
  */
 import axios from 'axios';
+import { EndpointService, EndpointConfig, EndpointCreationResponse } from './EndpointService';
+import AIToolsService, { AITool } from './AIToolsService';
+import EventService from './EventService';
 
 type AIModelProvider = 'openai' | 'anthropic' | 'gemini' | 'mistral' | 'custom';
 
@@ -10,6 +13,12 @@ interface AIModelConfig {
   model: string;
   apiKey: string;
   apiUrl?: string;
+}
+
+// Define tool request format for AI models
+interface AIToolCall {
+  type: string;
+  parameters: any;
 }
 
 // Simple event emitter for streaming completions
@@ -50,6 +59,7 @@ export class AIService {
   private static readonly MODEL_CONFIG_KEY = 'ai_model_config';
   
   private config: AIModelConfig | null = null;
+  private tools: AITool[] = [];
   
   /**
    * Initialize the AI service with configuration
@@ -61,7 +71,12 @@ export class AIService {
     // Store configuration for future use
     localStorage.setItem(AIService.MODEL_CONFIG_KEY, JSON.stringify(config));
     
+    // Initialize the AI tools
+    AIToolsService.initialize();
+    this.tools = AIToolsService.getAllTools();
+    
     console.log('[AI] Initialized AI service with provider:', config.provider);
+    console.log('[AI] Available tools:', this.tools.map(t => t.name));
   }
   
   /**
@@ -132,9 +147,25 @@ export class AIService {
   ): CompletionStream {
     const stream = new CompletionStream();
     
+    // Check if the prompt contains a direct tool call request
+    const directToolCall = this.checkForDirectToolCall(prompt);
+    if (directToolCall) {
+      console.log('[AI] Detected direct tool call in prompt');
+      this.handleToolCall(directToolCall, stream);
+      return stream;
+    }
+    
     // Start generating in the background
     this.generateCompletion(prompt, options)
       .then(result => {
+        // Check if the result contains a tool call
+        const toolCall = this.extractToolCall(result);
+        if (toolCall) {
+          console.log('[AI] Tool call detected in response, executing');
+          this.handleToolCall(toolCall, stream);
+          return; // Don't append the original result with the tool call
+        }
+        
         stream.append(result);
         stream.done();
       })
@@ -146,6 +177,159 @@ export class AIService {
   }
   
   /**
+   * Extract tool call from AI response if present
+   * This improved version can handle more variations in how the AI formats tool calls
+   */
+  private extractToolCall(response: string): AIToolCall | null {
+    // Try several regex patterns to extract the tool call
+    const patterns = [
+      // Standard format: [TOOL:createEndpoint]{ json }
+      /\[TOOL:(\w+)\](\{[\s\S]*\})/,
+      
+      // Alternative format: [TOOL:createEndpoint]{ json }]
+      /\[TOOL:(\w+)\](\{[\s\S]*\}\])/,
+      
+      // Clean format without brackets: TOOL:createEndpoint{ json }
+      /TOOL:(\w+)(\{[\s\S]*\})/
+    ];
+    
+    // Try each pattern in order
+    for (const pattern of patterns) {
+      const match = response.match(pattern);
+      if (match) {
+        try {
+          const toolType = match[1];
+          let paramsJson = match[2].trim();
+          
+          // Remove any trailing brackets that might have been caught
+          if (paramsJson.endsWith(']')) {
+            paramsJson = paramsJson.slice(0, -1);
+          }
+          
+          // Clean up the JSON string
+          paramsJson = this.sanitizeJsonString(paramsJson);
+          
+          console.log('[AI] Extracted tool call with pattern:', pattern);
+          console.log('[AI] Tool type:', toolType);
+          console.log('[AI] Raw params:', paramsJson);
+          
+          const parameters = JSON.parse(paramsJson);
+          return { type: toolType, parameters };
+        } catch (error) {
+          console.error('[AI] Error parsing tool parameters with pattern:', pattern);
+          console.error('[AI] Error details:', error);
+          // Continue trying other patterns
+        }
+      }
+    }
+    
+    // Try a more aggressive approach for edge cases
+    try {
+      const jsonStart = response.indexOf('{');
+      const jsonEnd = response.lastIndexOf('}') + 1;
+      
+      if (jsonStart > 0 && jsonEnd > jsonStart) {
+        const toolTypeMatch = response.slice(0, jsonStart).match(/\[?TOOL:(\w+)\]?/);
+        if (toolTypeMatch) {
+          const toolType = toolTypeMatch[1];
+          const paramsJson = response.slice(jsonStart, jsonEnd);
+          
+          console.log('[AI] Extracted tool call with fallback method');
+          console.log('[AI] Tool type:', toolType);
+          console.log('[AI] Raw params:', paramsJson);
+          
+          try {
+            const parameters = JSON.parse(paramsJson);
+            return { type: toolType, parameters };
+          } catch (e) {
+            console.error('[AI] Error parsing fallback JSON:', e);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[AI] Error in fallback tool extraction:', error);
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Sanitize JSON string for safer parsing
+   */
+  private sanitizeJsonString(jsonStr: string): string {
+    // Remove any trailing commas in objects which can cause JSON.parse to fail
+    return jsonStr.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+  }
+  
+  /**
+   * Check if prompt contains a direct tool call (for debugging/testing)
+   */
+  private checkForDirectToolCall(prompt: string): AIToolCall | null {
+    if (prompt.includes('[TOOL:') && prompt.includes('}]')) {
+      try {
+        // Extract the tool type and parameters
+        const toolMatch = prompt.match(/\[TOOL:(\w+)\]/);
+        if (!toolMatch) return null;
+        
+        const toolType = toolMatch[1];
+        const jsonMatch = prompt.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) return null;
+        
+        const paramsJson = this.sanitizeJsonString(jsonMatch[0]);
+        const parameters = JSON.parse(paramsJson);
+        
+        return { type: toolType, parameters };
+      } catch (error) {
+        console.error('[AI] Error parsing direct tool call:', error);
+        return null;
+      }
+    }
+    return null;
+  }
+  
+  /**
+   * Handle a tool call and stream the result
+   */
+  private async handleToolCall(toolCall: AIToolCall, stream: CompletionStream): Promise<void> {
+    try {
+      console.log('[AI] Executing tool call:', toolCall.type, toolCall.parameters);
+      
+      // Execute the requested tool
+      const result = await AIToolsService.executeTool(toolCall.type, toolCall.parameters);
+      
+      // Format the result for display
+      const formattedResult = AIToolsService.formatToolResult(toolCall.type, result);
+      
+      // Stream the result
+      stream.append(formattedResult);
+      stream.done();
+    } catch (error) {
+      console.error('[AI] Error executing tool call:', error);
+      stream.append(`Error executing ${toolCall.type}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      stream.done();
+    }
+  }
+  
+  /**
+   * Create an API endpoint from code
+   * @param config Endpoint configuration including code
+   */
+  public async createEndpointFromCode(config: EndpointConfig): Promise<EndpointCreationResponse> {
+    if (!this.isInitialized()) {
+      throw new Error('AI service not initialized. Call initialize() first.');
+    }
+    
+    try {
+      console.log('[AI] Creating endpoint from code:', config.path);
+      // Use the EndpointService to create the endpoint
+      return await EndpointService.createEndpoint(config);
+    } catch (error) {
+      console.error('[AI] Error creating endpoint:', error);
+      throw error;
+    }
+  }
+  
+  /**
    * Call OpenAI API
    */
   private async callOpenAI(
@@ -153,11 +337,46 @@ export class AIService {
     temperature: number,
     maxTokens: number
   ): Promise<string> {
+    // Add system message instructing about tools
+    const systemMessage = {
+      role: 'system',
+      content: `You are a helpful assistant that can create REST API endpoints. 
+You have access to tools that you can use.
+
+To use a tool, respond with [TOOL:toolName]{...tool parameters as JSON...}
+
+Available tools:
+- createEndpoint: Create a new API endpoint
+  Parameters:
+  {
+    "endpoint": "/path/to/endpoint", (string, required)
+    "method": "POST", (string, required, one of: GET, POST, PUT, DELETE, PATCH)
+    "requestFormat": "{...}", (string, optional, example JSON request)
+    "responseFormat": "{...}", (string, required, example JSON response)
+    "description": "Description of what the endpoint does", (string, required)
+    "implementation": "code that implements the endpoint", (string, required)
+    "authRequired": false, (boolean, optional)
+    "collectionName": "My API Collection", (string, optional - creates or uses existing collection)
+    "collectionPath": ["Parent Collection", "Child Collection"] (array of strings, optional - specify a nested collection path)
+  }
+
+When asked to create an endpoint, please always use the createEndpoint tool.
+When using the tool, provide complete, functional code for the implementation.
+Endpoints are automatically added to collections in the application. You can organize endpoints in three ways:
+1. Default collection: If no collection is specified, endpoints go to "AI Generated Endpoints"
+2. Specific collection: Use collectionName for a top-level collection
+3. Nested collection: Use collectionPath to place the endpoint in a nested folder structure
+   Example: ["API Collection", "User Management", "Authentication"] creates the path API Collection > User Management > Authentication`
+    };
+    
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
         model: this.config!.model,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          systemMessage,
+          { role: 'user', content: prompt }
+        ],
         temperature,
         max_tokens: maxTokens
       },
@@ -180,10 +399,40 @@ export class AIService {
     temperature: number,
     maxTokens: number
   ): Promise<string> {
+    // Add system message instructing about tools
+    const systemPrompt = `You are a helpful assistant that can create REST API endpoints. 
+You have access to tools that you can use.
+
+To use a tool, respond with [TOOL:toolName]{...tool parameters as JSON...}
+
+Available tools:
+- createEndpoint: Create a new API endpoint
+  Parameters:
+  {
+    "endpoint": "/path/to/endpoint", (string, required)
+    "method": "POST", (string, required, one of: GET, POST, PUT, DELETE, PATCH)
+    "requestFormat": "{...}", (string, optional, example JSON request)
+    "responseFormat": "{...}", (string, required, example JSON response)
+    "description": "Description of what the endpoint does", (string, required)
+    "implementation": "code that implements the endpoint", (string, required)
+    "authRequired": false, (boolean, optional)
+    "collectionName": "My API Collection", (string, optional - creates or uses existing collection)
+    "collectionPath": ["Parent Collection", "Child Collection"] (array of strings, optional - specify a nested collection path)
+  }
+
+When asked to create an endpoint, please always use the createEndpoint tool.
+When using the tool, provide complete, functional code for the implementation.
+Endpoints are automatically added to collections in the application. You can organize endpoints in three ways:
+1. Default collection: If no collection is specified, endpoints go to "AI Generated Endpoints"
+2. Specific collection: Use collectionName for a top-level collection
+3. Nested collection: Use collectionPath to place the endpoint in a nested folder structure
+   Example: ["API Collection", "User Management", "Authentication"] creates the path API Collection > User Management > Authentication.`;
+    
     const response = await axios.post(
       'https://api.anthropic.com/v1/messages',
       {
         model: this.config!.model,
+        system: systemPrompt,
         messages: [{ role: 'user', content: prompt }],
         temperature,
         max_tokens: maxTokens
@@ -212,10 +461,43 @@ export class AIService {
       throw new Error('Custom API URL not provided');
     }
     
+    // Add tool instructions for custom API
+    const enhancedPrompt = `[INSTRUCTIONS FOR AI MODEL]
+You are a helpful assistant that can create REST API endpoints.
+You have access to tools that you can use.
+
+To use a tool, respond with [TOOL:toolName]{...tool parameters as JSON...}
+
+Available tools:
+- createEndpoint: Create a new API endpoint
+  Parameters:
+  {
+    "endpoint": "/path/to/endpoint", (string, required)
+    "method": "POST", (string, required, one of: GET, POST, PUT, DELETE, PATCH)
+    "requestFormat": "{...}", (string, optional, example JSON request)
+    "responseFormat": "{...}", (string, required, example JSON response)
+    "description": "Description of what the endpoint does", (string, required)
+    "implementation": "code that implements the endpoint", (string, required)
+    "authRequired": false, (boolean, optional)
+    "collectionName": "My API Collection", (string, optional - creates or uses existing collection)
+    "collectionPath": ["Parent Collection", "Child Collection"] (array of strings, optional - specify a nested collection path)
+  }
+
+When asked to create an endpoint, please always use the createEndpoint tool.
+When using the tool, provide complete, functional code for the implementation.
+Endpoints are automatically added to collections in the application. You can organize endpoints in three ways:
+1. Default collection: If no collection is specified, endpoints go to "AI Generated Endpoints"
+2. Specific collection: Use collectionName for a top-level collection
+3. Nested collection: Use collectionPath to place the endpoint in a nested folder structure
+   Example: ["API Collection", "User Management", "Authentication"] creates the path API Collection > User Management > Authentication
+
+[USER QUERY]
+${prompt}`;
+    
     const response = await axios.post(
       this.config!.apiUrl,
       {
-        prompt,
+        prompt: enhancedPrompt,
         temperature,
         max_tokens: maxTokens
       },
@@ -236,6 +518,43 @@ export class AIService {
   public clearConfig(): void {
     localStorage.removeItem(AIService.MODEL_CONFIG_KEY);
     this.config = null;
+  }
+
+  /**
+   * Debug method to directly call a tool without going through the AI
+   * This is helpful for testing and debugging the tool functionality
+   */
+  public async directToolCall(toolType: string, parameters: any): Promise<string> {
+    console.log('[AI] Executing direct tool call:', toolType);
+    try {
+      // Create a tool call object
+      const toolCall = { type: toolType, parameters };
+      
+      // Execute the tool
+      const result = await AIToolsService.executeTool(toolType, parameters);
+      
+      // Trigger a UI refresh to show the newly created endpoint
+      if (toolType === 'createEndpoint' && result.success) {
+        // Wait a moment to ensure database operations have completed
+        setTimeout(() => {
+          try {
+            // Use the EventService to notify about collection updates
+            EventService.notifyCollectionsUpdated();
+            console.log('[AI] Triggered UI refresh after endpoint creation');
+          } catch (e) {
+            console.error('[AI] Failed to trigger UI refresh:', e);
+          }
+        }, 500);
+      }
+      
+      // Format the result
+      const formattedResult = AIToolsService.formatToolResult(toolType, result);
+      
+      return formattedResult;
+    } catch (error) {
+      console.error('[AI] Error in direct tool call:', error);
+      return `Error executing ${toolType}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    }
   }
 }
 

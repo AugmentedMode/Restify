@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Folder, ApiRequest } from '../types';
 import { CollectionsService } from '../services/DatabaseService';
+import EventService from '../services/EventService';
 
 // Interface for the hook return value
 export interface UseCollectionsReturn {
@@ -26,31 +27,44 @@ export default function useCollections(initialCollections: Folder[] = []): UseCo
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to fetch collections
+  const fetchCollections = async () => {
+    try {
+      setLoading(true);
+      const loadedCollections = await CollectionsService.getAllCollections();
+      
+      if (loadedCollections && loadedCollections.length > 0) {
+        setCollections(loadedCollections);
+      } else {
+        // Only use initialCollections if we couldn't load from IndexedDB
+        setCollections(initialCollections);
+      }
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load collections:', err);
+      setError('Failed to load collections');
+      setCollections(initialCollections);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load collections from IndexedDB on mount
   useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        setLoading(true);
-        const loadedCollections = await CollectionsService.getAllCollections();
-        
-        if (loadedCollections && loadedCollections.length > 0) {
-          setCollections(loadedCollections);
-        } else {
-          // Only use initialCollections if we couldn't load from IndexedDB
-          setCollections(initialCollections);
-        }
-        setError(null);
-      } catch (err) {
-        console.error('Failed to load collections:', err);
-        setError('Failed to load collections');
-        setCollections(initialCollections);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCollections();
   }, [initialCollections]);
+
+  // Listen for collection update events
+  useEffect(() => {
+    // Set up listener for collection update events
+    const unsubscribe = EventService.onCollectionsUpdated(() => {
+      console.log('[Collections] Received collection update event, refreshing collections');
+      fetchCollections();
+    });
+    
+    // Clean up listener when component unmounts
+    return unsubscribe;
+  }, []);
 
   // Save collections when they change
   useEffect(() => {
