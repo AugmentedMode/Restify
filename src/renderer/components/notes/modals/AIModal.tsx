@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
-import { FaRobot } from 'react-icons/fa';
+import { FaRobot, FaCog } from 'react-icons/fa';
 import aiService from '../../../services/AIService';
+import { useSettings } from '../../../utils/SettingsContext';
 
 const AIPromptContainer = styled.div`
   width: 100%;
@@ -71,19 +72,56 @@ const StatusIndicator = styled.div`
   color: #777;
   font-size: 12px;
   margin-left: 12px;
+  display: flex;
+  align-items: center;
+`;
+
+const ConfigButton = styled.button`
+  background: none;
+  border: none;
+  color: #8b3dff;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: 6px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 interface AIModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInsertContent: (content: string) => void;
+  onOpenSettings?: () => void;
 }
 
-const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onInsertContent }) => {
+const AIModal: React.FC<AIModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onInsertContent,
+  onOpenSettings 
+}) => {
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { settings } = useSettings();
+  
+  // Initialize AI service if needed
+  useEffect(() => {
+    if (settings.ai.apiKey && settings.ai.provider && settings.ai.model && !aiService.isInitialized()) {
+      aiService.initialize({
+        provider: settings.ai.provider,
+        model: settings.ai.model,
+        apiKey: settings.ai.apiKey,
+        apiUrl: settings.ai.apiUrl
+      });
+    }
+  }, [settings.ai]);
   
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -146,10 +184,20 @@ const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onInsertContent }) =
           onKeyDown={handleKeyDown}
           disabled={isLoading}
         />
-        {error && <StatusIndicator>{error}</StatusIndicator>}
+        {error && (
+          <StatusIndicator>
+            {error}
+            {onOpenSettings && (
+              <ConfigButton onClick={onOpenSettings}>
+                <FaCog style={{ marginRight: '4px' }} />
+                Configure
+              </ConfigButton>
+            )}
+          </StatusIndicator>
+        )}
         <GenerateButton 
           onClick={handleGenerateResponse} 
-          disabled={!prompt.trim() || isLoading}
+          disabled={!prompt.trim() || isLoading || !settings.ai.apiKey}
         >
           {isLoading ? 'Generating...' : 'Generate'}
         </GenerateButton>

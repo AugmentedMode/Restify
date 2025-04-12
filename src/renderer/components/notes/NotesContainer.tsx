@@ -20,6 +20,7 @@ const Content = styled.div`
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
 `;
 
 const EditorContainer = styled.div`
@@ -30,6 +31,8 @@ const EditorContainer = styled.div`
   max-width: 900px;
   margin: 0 auto;
   padding: 0 20px;
+  overflow: hidden; /* Contain the scrolling to the BlockEditor */
+  height: 100%; /* Make sure it takes full height */
 `;
 
 interface NotesContainerProps {
@@ -41,6 +44,7 @@ interface NotesContainerProps {
   onDeleteNote?: (noteId: string) => void;
   onDuplicateNote?: (note: Note) => void;
   onExportNote?: (note: Note) => void;
+  onOpenSettings?: () => void;
 }
 
 const NotesContainer: React.FC<NotesContainerProps> = ({
@@ -52,6 +56,7 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
   onDeleteNote = () => {},
   onDuplicateNote,
   onExportNote,
+  onOpenSettings,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [optionsModalNote, setOptionsModalNote] = useState<Note | null>(null);
@@ -146,6 +151,23 @@ const NotesContainer: React.FC<NotesContainerProps> = ({
       updatedAt: Date.now()
     });
   }, [onUpdateNote]);
+
+  // Set up event listener for openAISettings event
+  useEffect(() => {
+    const handleOpenAISettings = () => {
+      if (onOpenSettings) {
+        onOpenSettings();
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('openAISettings', handleOpenAISettings);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('openAISettings', handleOpenAISettings);
+    };
+  }, [onOpenSettings]);
 
   // If no active note, show a placeholder or welcome screen
   if (!activeNote) {

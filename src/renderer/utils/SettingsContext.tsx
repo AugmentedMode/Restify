@@ -23,10 +23,18 @@ interface SecuritySettings {
   storeGitHubToken: boolean;
 }
 
+interface AISettings {
+  apiKey: string;
+  provider: 'openai' | 'anthropic' | 'gemini' | 'mistral' | 'custom';
+  model: string;
+  apiUrl?: string;
+}
+
 export interface AppSettings {
   general: GeneralSettings;
   api: ApiSettings;
   security: SecuritySettings;
+  ai: AISettings;
 }
 
 // Default settings
@@ -49,6 +57,12 @@ const defaultSettings: AppSettings = {
     clearHistoryOnExit: false,
     storeCredentialsSecurely: true,
     storeGitHubToken: true,
+  },
+  ai: {
+    apiKey: '',
+    provider: 'openai',
+    model: 'gpt-3.5-turbo',
+    apiUrl: ''
   }
 };
 
@@ -93,6 +107,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       security: {
         ...defaultSettings.security,
         ...parsedSettings.security
+      },
+      ai: {
+        ...defaultSettings.ai,
+        ...parsedSettings.ai
       }
     };
   });

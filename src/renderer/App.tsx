@@ -916,8 +916,12 @@ function AppContent() {
   }, []);
 
   // Navigate to Settings
-  const navigateToSettings = useCallback(() => {
-    window.history.pushState({}, '', '/settings');
+  const navigateToSettings = useCallback((tab?: string) => {
+    // Navigate to settings page
+    const url = tab ? `/settings?tab=${tab}` : '/settings';
+    window.history.pushState({}, '', url);
+    
+    // Dispatch event to notify the app
     window.dispatchEvent(new Event('popstate'));
   }, []);
 
@@ -1054,6 +1058,7 @@ function AppContent() {
           onDeleteNote={deleteNote}
           onDuplicateNote={duplicateNote}
           onExportNote={exportNote}
+          onOpenSettings={() => navigateToSettings('ai')}
         />;
       } else {
         console.log("Note with ID", activeNote, "not found in notes array");

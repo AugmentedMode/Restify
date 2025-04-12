@@ -5,13 +5,40 @@ import Block from './Block';
 import BlockMenu from './BlockMenu';
 import { BlockData, BlockType, EditorState } from './types';
 import { parseContentToBlocks, serializeBlocksToContent } from './utils';
-import AIModal from '../modals/AIModal';
+import { useSettings } from '../../../utils/SettingsContext';
+import aiService from '../../../services/AIService';
 
 const EditorContainer = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
   padding: 20px 0;
+  height: 100%;
+  overflow-y: auto;
+  
+  /* Improve scrolling experience */
+  scroll-behavior: smooth;
+  
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  /* Track */
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  /* Handle */
+  &::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+  }
+  
+  /* Handle on hover */
+  &::-webkit-scrollbar-thumb:hover {
+    background: #777;
+  }
 `;
 
 const TitleInput = styled.input`
@@ -64,9 +91,12 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
   // Current note ID
   const currentNoteIdRef = useRef(noteId);
   
-  // State for AI modal
-  const [showAIModal, setShowAIModal] = useState(false);
+  // State for active AI block - we'll only use the ID now, not a separate modal flag
   const [activeAIBlockId, setActiveAIBlockId] = useState<string | null>(null);
+  const { settings } = useSettings();
+  
+  // Add loading state to track which block is currently loading
+  const [loadingBlockId, setLoadingBlockId] = useState<string | null>(null);
   
   // Memoize the blocks parsing to avoid unnecessary re-parsing
   const initialBlocks = useMemo(() => {
@@ -272,10 +302,10 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
     const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
     const contentElement = blockElement?.querySelector('[contenteditable="true"]') as HTMLElement;
     
-    // Special handling for AI block
+    // Special handling for AI command
     if (newType === BlockType.AI) {
+      // Set this block as the active AI block for input
       setActiveAIBlockId(blockId);
-      setShowAIModal(true);
       
       // Close the block menu
       setEditorState(prevState => ({
@@ -284,6 +314,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
         menuAnchorBlockId: null
       }));
       
+      // We don't change the block type - just activate AI mode
       return;
     }
     
@@ -398,17 +429,37 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
     }));
   }, []);
 
-  // Handle inserting AI content
-  const handleInsertAIContent = useCallback((content: string) => {
-    if (activeAIBlockId) {
-      // Update the block with AI content
+  // Handle generating AI content from a prompt
+  const handleAIPromptSubmit = useCallback(async (blockId: string, prompt: string) => {
+    // Check if AI service is configured
+    if (!settings.ai.apiKey) {
+      const event = new CustomEvent('openAISettings');
+      window.dispatchEvent(event);
+      return;
+    }
+    
+    try {
+      // Set loading state
+      setLoadingBlockId(blockId);
+      
+      // Initialize AI service if needed
+      if (!aiService.isInitialized()) {
+        aiService.initialize({
+          provider: settings.ai.provider,
+          model: settings.ai.model,
+          apiKey: settings.ai.apiKey,
+          apiUrl: settings.ai.apiUrl
+        });
+      }
+      
+      // Show a loading state directly in the block
       setEditorState(prevState => {
         const newBlocks = prevState.blocks.map(block => {
-          if (block.id === activeAIBlockId) {
+          if (block.id === blockId) {
             return { 
               ...block, 
-              type: BlockType.AI,
-              content 
+              type: BlockType.Paragraph,
+              content: "Generating AI response..."
             };
           }
           return block;
@@ -420,22 +471,68 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
         };
       });
       
-      // Reset the active AI block
+      // Generate content from AI - specifically request markdown format
+      let enhancedPrompt = `${prompt}\n\nPlease format your response in clean markdown.`;
+      const aiResponse = await aiService.generateCompletion(enhancedPrompt, {
+        temperature: 0.7,
+        maxTokens: 800
+      });
+      
+      // Find the target block
+      const blockIndex = editorState.blocks.findIndex(block => block.id === blockId);
+      if (blockIndex === -1) return;
+      
+      // Parse the AI response as markdown blocks
+      const responseBlocks = parseContentToBlocks(aiResponse);
+      
+      // Update the editor state by replacing the current block with AI-generated blocks
+      setEditorState(prevState => {
+        // Replace the target block with the AI-generated blocks
+        const newBlocks = [
+          ...prevState.blocks.slice(0, blockIndex),
+          ...responseBlocks,
+          ...prevState.blocks.slice(blockIndex + 1)
+        ];
+        
+        return {
+          ...prevState,
+          blocks: newBlocks,
+          selectedBlockId: responseBlocks[responseBlocks.length - 1].id // Select the last generated block
+        };
+      });
+      
+      // Clear active AI block and loading state
       setActiveAIBlockId(null);
+      setLoadingBlockId(null);
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+      
+      // Show error in the block itself
+      setEditorState(prevState => {
+        const newBlocks = prevState.blocks.map(block => {
+          if (block.id === blockId) {
+            return { 
+              ...block, 
+              type: BlockType.Paragraph,
+              content: `Error: ${error instanceof Error ? error.message : 'Failed to generate response'}`
+            };
+          }
+          return block;
+        });
+        
+        return {
+          ...prevState,
+          blocks: newBlocks
+        };
+      });
+      
+      // Clear loading state
+      setLoadingBlockId(null);
+      
+      // Keep the AI block active on error so user can try again
+      setTimeout(() => setActiveAIBlockId(null), 3000); // Clear after 3 seconds
     }
-  }, [activeAIBlockId]);
-
-  // Add handler for regenerating AI content
-  const handleRegenerateAIContent = useCallback((blockId: string) => {
-    // Find the block with the given ID
-    const blockToRegenerate = editorState.blocks.find(block => block.id === blockId);
-    
-    if (blockToRegenerate && blockToRegenerate.type === BlockType.AI) {
-      // Set this block as active for AI regeneration
-      setActiveAIBlockId(blockId);
-      setShowAIModal(true);
-    }
-  }, [editorState.blocks]);
+  }, [settings, editorState.blocks]);
 
   return (
     <EditorContainer>
@@ -444,15 +541,6 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
         onChange={e => setTitle(e.target.value)}
         placeholder="Untitled"
       />
-      
-      {/* AI Input shown at the top when activated */}
-      {showAIModal && (
-        <AIModal 
-          isOpen={showAIModal}
-          onClose={() => setShowAIModal(false)}
-          onInsertContent={handleInsertAIContent}
-        />
-      )}
       
       <BlocksContainer>
         {editorState.blocks.map(block => (
@@ -465,7 +553,9 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
             onDeleteBlock={handleDeleteBlock}
             onOpenBlockMenu={handleOpenBlockMenu}
             onSelect={handleSelectBlock}
-            onRegenerateAI={handleRegenerateAIContent}
+            isActiveAIBlock={block.id === activeAIBlockId}
+            onAIPromptSubmit={handleAIPromptSubmit}
+            isLoading={block.id === loadingBlockId}
             data-block-id={block.id}
           />
         ))}

@@ -16,7 +16,6 @@ import {
   FaPlus,
   FaRobot
 } from 'react-icons/fa';
-import AIBlock from './blocks/AIBlock';
 
 interface BlockContainerProps {
   $isSelected: boolean;
@@ -242,6 +241,88 @@ const NumberIndicator = styled.div`
   font-size: 0.9rem;
 `;
 
+// Add styled component for AI prompt input
+const AIPromptContainer = styled.div`
+  display: flex;
+  align-items: center;
+  background-color: #121212;
+  border-radius: 6px;
+  border: 1px solid #333;
+  margin: 4px 0;
+  padding: 10px 12px;
+`;
+
+const RobotIcon = styled.div`
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+  color: #8b3dff;
+  
+  svg {
+    font-size: 18px;
+  }
+`;
+
+const AIPromptInput = styled.input`
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 6px 0;
+  color: #eee;
+  font-size: 16px;
+  
+  &:focus {
+    outline: none;
+  }
+  
+  &::placeholder {
+    color: #777;
+  }
+`;
+
+const GenerateButton = styled.button`
+  background-color: #8b3dff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 12px;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #7a35e0;
+  }
+  
+  &:disabled {
+    background-color: #444;
+    cursor: not-allowed;
+  }
+`;
+
+// Add a loading indicator component
+const LoadingIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  color: #8b3dff;
+  font-size: 14px;
+  margin-left: 8px;
+  
+  &:after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+    
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60% { content: '...'; }
+      80%, 100% { content: ''; }
+    }
+  }
+`;
+
 interface BlockProps {
   block: BlockData;
   isSelected: boolean;
@@ -251,6 +332,9 @@ interface BlockProps {
   onOpenBlockMenu: (blockId: string, position: { x: number; y: number }, initialFilterText: string) => void;
   onSelect: (blockId: string) => void;
   onRegenerateAI?: (blockId: string) => void;
+  isActiveAIBlock?: boolean;
+  onAIPromptSubmit?: (blockId: string, prompt: string) => void;
+  isLoading?: boolean;
 }
 
 const Block: React.FC<BlockProps> = ({
@@ -261,7 +345,10 @@ const Block: React.FC<BlockProps> = ({
   onDeleteBlock,
   onOpenBlockMenu,
   onSelect,
-  onRegenerateAI
+  onRegenerateAI,
+  isActiveAIBlock = false,
+  onAIPromptSubmit,
+  isLoading = false
 }) => {
   const [content, setContent] = useState(block.content);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -271,6 +358,31 @@ const Block: React.FC<BlockProps> = ({
   const slashCommandSelectionRef = useRef<number | null>(null);
   const previousContentRef = useRef(content);
   const isUpdatingFromParent = useRef(false);
+  const [aiPrompt, setAIPrompt] = useState('');
+  const aiPromptInputRef = useRef<HTMLInputElement>(null);
+  
+  // Focus the AI input when this block becomes the active AI block
+  useEffect(() => {
+    if (isActiveAIBlock && aiPromptInputRef.current) {
+      aiPromptInputRef.current.focus();
+    }
+  }, [isActiveAIBlock]);
+  
+  // Handle submission of AI prompt
+  const handleSubmitAIPrompt = () => {
+    if (aiPrompt.trim() && onAIPromptSubmit) {
+      onAIPromptSubmit(block.id, aiPrompt);
+      setAIPrompt('');
+    }
+  };
+  
+  // Handle keyboard events for AI prompt input
+  const handleAIPromptKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmitAIPrompt();
+    }
+  };
   
   // Update parent when content changes, but prevent infinite loop
   useEffect(() => {
@@ -722,11 +834,25 @@ const Block: React.FC<BlockProps> = ({
       onClick={() => onSelect(block.id)}
       data-block-id={block.id}
     >
-      {block.type === BlockType.AI ? (
-        <AIBlock 
-          block={block} 
-          onRegenerateClick={onRegenerateAI}
-        />
+      {isActiveAIBlock ? (
+        <AIPromptContainer>
+          <RobotIcon>
+            <FaRobot />
+          </RobotIcon>
+          <AIPromptInput
+            ref={aiPromptInputRef}
+            value={aiPrompt}
+            onChange={(e) => setAIPrompt(e.target.value)}
+            placeholder="Tell the AI what to write..."
+            onKeyDown={handleAIPromptKeyDown}
+          />
+          <GenerateButton 
+            onClick={handleSubmitAIPrompt} 
+            disabled={!aiPrompt.trim() || isLoading}
+          >
+            {isLoading ? 'Generating' : 'Generate'}
+          </GenerateButton>
+        </AIPromptContainer>
       ) : (
         <BlockContent $blockType={block.type}>
           {block.type === BlockType.ToDo && (
@@ -750,11 +876,12 @@ const Block: React.FC<BlockProps> = ({
           <BlockInput
             ref={contentRef}
             $blockType={block.type}
-            contentEditable
+            contentEditable={!isLoading}
             suppressContentEditableWarning
             onInput={handleContentChange}
             onKeyDown={handleKeyDown}
           />
+          {isLoading && <LoadingIndicator>Generating</LoadingIndicator>}
         </BlockContent>
       )}
     </BlockContainer>

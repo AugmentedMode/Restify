@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { 
   FaTimes, 
@@ -13,13 +13,16 @@ import {
   FaSun,
   FaArrowLeft,
   FaTrash,
-  FaFileImport
+  FaFileImport,
+  FaRobot,
+  FaKey
 } from 'react-icons/fa';
 import { useSettings } from '../../utils/SettingsContext';
 import { db, NotesService, CollectionsService, HistoryService, ResponsesService, EnvironmentsService, SettingsService } from '../../services/DatabaseService';
 import ImportFileModal from '../modals/ImportFileModal';
 import DeleteConfirmationModal from '../modals/DeleteConfirmationModal';
 import { ImportService } from '../../services/ImportService';
+import aiService from '../../services/AIService';
 
 // Theme colors for consistency
 const theme = {
@@ -47,7 +50,7 @@ const theme = {
 };
 
 // Define setting categories
-type SettingCategory = 'general' | 'api' | 'security' | 'shortcuts' | 'export' | 'about';
+type SettingCategory = 'general' | 'api' | 'security' | 'shortcuts' | 'export' | 'about' | 'ai';
 
 // Define settings types
 interface GeneralSettings {
@@ -337,13 +340,48 @@ const ActionButton = styled.button`
   }
 `;
 
+// TextInput component for API keys and other text fields
+const TextInput = styled.input`
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid ${theme.controls.inactive};
+  background-color: ${theme.background.tertiary};
+  color: ${theme.text.primary};
+  font-size: 14px;
+  width: 300px;
+  
+  &:focus {
+    border-color: ${theme.brand.primary};
+    outline: none;
+  }
+`;
+
+// Password input specifically for API keys
+const PasswordInput = styled(TextInput).attrs({ type: 'password' })`
+  font-family: monospace;
+`;
+
 interface SettingsManagerProps {
   onReturn: () => void;
 }
 
 const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
-  // State for active category
-  const [activeCategory, setActiveCategory] = useState<SettingCategory>('general');
+  // Get tab from URL search params if available
+  const [activeCategory, setActiveCategory] = useState<SettingCategory>(() => {
+    // If URL has a tab parameter, use it
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      
+      // Check if the tab param is a valid category
+      if (tabParam && ['general', 'api', 'security', 'shortcuts', 'export', 'about', 'ai'].includes(tabParam)) {
+        return tabParam as SettingCategory;
+      }
+    }
+    
+    // Default to general if no valid tab param
+    return 'general';
+  });
   
   // State for modals
   const [showImportModal, setShowImportModal] = useState(false);
@@ -508,11 +546,29 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
     }
   };
   
+  // Initialize AI service when settings change
+  useEffect(() => {
+    if (settings.ai.apiKey && settings.ai.provider && settings.ai.model) {
+      aiService.initialize({
+        provider: settings.ai.provider,
+        model: settings.ai.model,
+        apiKey: settings.ai.apiKey,
+        apiUrl: settings.ai.apiUrl
+      });
+    }
+  }, [settings.ai]);
+  
+  // Save API key change in a secure way
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateSettings('ai', 'apiKey', e.target.value);
+  };
+  
   // Render sidebar categories
   const renderCategories = () => {
     const categories: { id: SettingCategory; icon: JSX.Element; name: string }[] = [
       { id: 'general', icon: <FaPalette />, name: 'General' },
       { id: 'api', icon: <FaGlobe />, name: 'API' },
+      { id: 'ai', icon: <FaRobot />, name: 'AI Assistant' },
       { id: 'security', icon: <FaShieldAlt />, name: 'Security' },
       { id: 'shortcuts', icon: <FaKeyboard />, name: 'Shortcuts' },
       { id: 'export', icon: <FaFileExport />, name: 'Export/Import' },
@@ -770,6 +826,127 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
     </SettingsPanel>
   );
   
+  // Render AI settings
+  const renderAISettings = () => (
+    <SettingsPanel>
+      <SettingSection>
+        <SectionTitle>AI Assistant Configuration</SectionTitle>
+        <SettingRow>
+          <div>
+            <SettingLabel>API Provider</SettingLabel>
+            <SettingDescription>Select your AI service provider</SettingDescription>
+          </div>
+          <SelectInput 
+            value={settings.ai.provider}
+            onChange={(e) => updateSettings('ai', 'provider', e.target.value)}
+          >
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="mistral">Mistral AI</option>
+            <option value="custom">Custom API</option>
+          </SelectInput>
+        </SettingRow>
+        
+        <SettingRow>
+          <div>
+            <SettingLabel>Model</SettingLabel>
+            <SettingDescription>Select the AI model to use</SettingDescription>
+          </div>
+          {settings.ai.provider === 'openai' ? (
+            <SelectInput 
+              value={settings.ai.model}
+              onChange={(e) => updateSettings('ai', 'model', e.target.value)}
+            >
+              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              <option value="gpt-4">GPT-4</option>
+              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+              <option value="gpt-4o">GPT-4o</option>
+            </SelectInput>
+          ) : settings.ai.provider === 'anthropic' ? (
+            <SelectInput 
+              value={settings.ai.model}
+              onChange={(e) => updateSettings('ai', 'model', e.target.value)}
+            >
+              <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+              <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+              <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+            </SelectInput>
+          ) : (
+            <TextInput 
+              value={settings.ai.model}
+              onChange={(e) => updateSettings('ai', 'model', e.target.value)}
+              placeholder="Enter model name"
+            />
+          )}
+        </SettingRow>
+        
+        <SettingRow>
+          <div>
+            <SettingLabel><FaKey style={{ marginRight: '8px', color: theme.brand.primary }} /> API Key</SettingLabel>
+            <SettingDescription>Enter your API key for the selected provider</SettingDescription>
+          </div>
+          <PasswordInput 
+            value={settings.ai.apiKey}
+            onChange={handleApiKeyChange}
+            placeholder="Enter your API key"
+          />
+        </SettingRow>
+        
+        {settings.ai.provider === 'custom' && (
+          <SettingRow>
+            <div>
+              <SettingLabel>Custom API URL</SettingLabel>
+              <SettingDescription>Enter the URL for your custom API endpoint</SettingDescription>
+            </div>
+            <TextInput 
+              value={settings.ai.apiUrl || ''}
+              onChange={(e) => updateSettings('ai', 'apiUrl', e.target.value)}
+              placeholder="https://api.example.com/v1/chat/completions"
+            />
+          </SettingRow>
+        )}
+        
+        <SettingRow>
+          <div>
+            <SettingLabel>Test Connection</SettingLabel>
+            <SettingDescription>Verify your API settings are working correctly</SettingDescription>
+          </div>
+          <ActionButton 
+            onClick={async () => {
+              try {
+                if (!settings.ai.apiKey) {
+                  alert("Please enter an API key first");
+                  return;
+                }
+                
+                // Initialize the service with current settings
+                aiService.initialize({
+                  provider: settings.ai.provider,
+                  model: settings.ai.model,
+                  apiKey: settings.ai.apiKey,
+                  apiUrl: settings.ai.apiUrl
+                });
+                
+                // Test with a simple prompt
+                const response = await aiService.generateCompletion(
+                  "Hello! Please respond with a simple 'Connection successful' message."
+                );
+                
+                alert("API connection successful!");
+              } catch (error) {
+                console.error("API connection failed:", error);
+                alert(`API connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+            }}
+          >
+            Test Connection
+          </ActionButton>
+        </SettingRow>
+      </SettingSection>
+    </SettingsPanel>
+  );
+  
   // Render content based on active category
   const renderContent = () => {
     switch (activeCategory) {
@@ -785,6 +962,8 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
         return renderExportSettings();
       case 'about':
         return renderAboutSettings();
+      case 'ai':
+        return renderAISettings();
       default:
         return renderGeneralSettings();
     }
