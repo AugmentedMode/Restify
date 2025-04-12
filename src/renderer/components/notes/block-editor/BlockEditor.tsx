@@ -5,6 +5,7 @@ import Block from './Block';
 import BlockMenu from './BlockMenu';
 import { BlockData, BlockType, EditorState } from './types';
 import { parseContentToBlocks, serializeBlocksToContent } from './utils';
+import AIModal from '../modals/AIModal';
 
 const EditorContainer = styled.div`
   display: flex;
@@ -62,6 +63,10 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
   
   // Current note ID
   const currentNoteIdRef = useRef(noteId);
+  
+  // State for AI modal
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [activeAIBlockId, setActiveAIBlockId] = useState<string | null>(null);
   
   // Memoize the blocks parsing to avoid unnecessary re-parsing
   const initialBlocks = useMemo(() => {
@@ -267,6 +272,21 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
     const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
     const contentElement = blockElement?.querySelector('[contenteditable="true"]') as HTMLElement;
     
+    // Special handling for AI block
+    if (newType === BlockType.AI) {
+      setActiveAIBlockId(blockId);
+      setShowAIModal(true);
+      
+      // Close the block menu
+      setEditorState(prevState => ({
+        ...prevState,
+        menuOpen: false,
+        menuAnchorBlockId: null
+      }));
+      
+      return;
+    }
+    
     // Get the current text content and remove the slash command text
     if (contentElement) {
       const text = contentElement.textContent || '';
@@ -378,6 +398,45 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
     }));
   }, []);
 
+  // Handle inserting AI content
+  const handleInsertAIContent = useCallback((content: string) => {
+    if (activeAIBlockId) {
+      // Update the block with AI content
+      setEditorState(prevState => {
+        const newBlocks = prevState.blocks.map(block => {
+          if (block.id === activeAIBlockId) {
+            return { 
+              ...block, 
+              type: BlockType.AI,
+              content 
+            };
+          }
+          return block;
+        });
+        
+        return {
+          ...prevState,
+          blocks: newBlocks
+        };
+      });
+      
+      // Reset the active AI block
+      setActiveAIBlockId(null);
+    }
+  }, [activeAIBlockId]);
+
+  // Add handler for regenerating AI content
+  const handleRegenerateAIContent = useCallback((blockId: string) => {
+    // Find the block with the given ID
+    const blockToRegenerate = editorState.blocks.find(block => block.id === blockId);
+    
+    if (blockToRegenerate && blockToRegenerate.type === BlockType.AI) {
+      // Set this block as active for AI regeneration
+      setActiveAIBlockId(blockId);
+      setShowAIModal(true);
+    }
+  }, [editorState.blocks]);
+
   return (
     <EditorContainer>
       <TitleInput
@@ -385,6 +444,15 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
         onChange={e => setTitle(e.target.value)}
         placeholder="Untitled"
       />
+      
+      {/* AI Input shown at the top when activated */}
+      {showAIModal && (
+        <AIModal 
+          isOpen={showAIModal}
+          onClose={() => setShowAIModal(false)}
+          onInsertContent={handleInsertAIContent}
+        />
+      )}
       
       <BlocksContainer>
         {editorState.blocks.map(block => (
@@ -397,6 +465,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({
             onDeleteBlock={handleDeleteBlock}
             onOpenBlockMenu={handleOpenBlockMenu}
             onSelect={handleSelectBlock}
+            onRegenerateAI={handleRegenerateAIContent}
             data-block-id={block.id}
           />
         ))}

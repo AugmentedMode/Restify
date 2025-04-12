@@ -13,8 +13,10 @@ import {
   FaImage, 
   FaExclamationCircle,
   FaCaretRight,
-  FaPlus
+  FaPlus,
+  FaRobot
 } from 'react-icons/fa';
+import AIBlock from './blocks/AIBlock';
 
 interface BlockContainerProps {
   $isSelected: boolean;
@@ -248,6 +250,7 @@ interface BlockProps {
   onDeleteBlock: (blockId: string) => void;
   onOpenBlockMenu: (blockId: string, position: { x: number; y: number }, initialFilterText: string) => void;
   onSelect: (blockId: string) => void;
+  onRegenerateAI?: (blockId: string) => void;
 }
 
 const Block: React.FC<BlockProps> = ({
@@ -257,7 +260,8 @@ const Block: React.FC<BlockProps> = ({
   onAddBlock,
   onDeleteBlock,
   onOpenBlockMenu,
-  onSelect
+  onSelect,
+  onRegenerateAI
 }) => {
   const [content, setContent] = useState(block.content);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -353,6 +357,8 @@ const Block: React.FC<BlockProps> = ({
         return <FaExclamationCircle />;
       case BlockType.Toggle:
         return <FaCaretRight />;
+      case BlockType.AI:
+        return <FaRobot />;
       case BlockType.Paragraph:
       default:
         return <FaParagraph />;
@@ -716,34 +722,41 @@ const Block: React.FC<BlockProps> = ({
       onClick={() => onSelect(block.id)}
       data-block-id={block.id}
     >
-      <BlockContent $blockType={block.type}>
-        {block.type === BlockType.ToDo && (
-          <TodoCheckbox 
-            $checked={!!block.checked} 
-            onClick={handleTodoToggle}
-          >
-            {block.checked && <FaCheck size={12} />}
-          </TodoCheckbox>
-        )}
-        {block.type === BlockType.BulletList && (
-          <BulletIndicator>
-            <span>•</span>
-          </BulletIndicator>
-        )}
-        {block.type === BlockType.NumberedList && (
-          <NumberIndicator>
-            <span>1.</span>
-          </NumberIndicator>
-        )}
-        <BlockInput
-          ref={contentRef}
-          $blockType={block.type}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={handleContentChange}
-          onKeyDown={handleKeyDown}
+      {block.type === BlockType.AI ? (
+        <AIBlock 
+          block={block} 
+          onRegenerateClick={onRegenerateAI}
         />
-      </BlockContent>
+      ) : (
+        <BlockContent $blockType={block.type}>
+          {block.type === BlockType.ToDo && (
+            <TodoCheckbox 
+              $checked={!!block.checked} 
+              onClick={handleTodoToggle}
+            >
+              {block.checked && <FaCheck size={12} />}
+            </TodoCheckbox>
+          )}
+          {block.type === BlockType.BulletList && (
+            <BulletIndicator>
+              <span>•</span>
+            </BulletIndicator>
+          )}
+          {block.type === BlockType.NumberedList && (
+            <NumberIndicator>
+              <span>1.</span>
+            </NumberIndicator>
+          )}
+          <BlockInput
+            ref={contentRef}
+            $blockType={block.type}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={handleContentChange}
+            onKeyDown={handleKeyDown}
+          />
+        </BlockContent>
+      )}
     </BlockContainer>
   );
 };

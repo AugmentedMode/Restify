@@ -75,6 +75,14 @@ export const parseContentToBlocks = (markdown: string): BlockData[] => {
         checked: false
       });
     }
+    // AI content
+    else if (firstLine.startsWith('> **AI:**')) {
+      blocks.push({
+        id: uuidv4(),
+        type: BlockType.AI,
+        content: blockContent.substring(9).trim()
+      });
+    }
     // Bullet list
     else if (firstLine.startsWith('- ') || firstLine.startsWith('* ')) {
       blocks.push({
@@ -194,6 +202,8 @@ export const serializeBlocksToContent = (blocks: BlockData[]): string => {
         return `<details>\n<summary>${block.content}</summary>\n\n</details>`;
       case BlockType.Image:
         return block.url ? `![${block.content}](${block.url})` : '';
+      case BlockType.AI:
+        return `> **AI:** ${block.content}`;
       case BlockType.Paragraph:
       default:
         return block.content;

@@ -11,7 +11,8 @@ export enum BlockType {
   Divider = 'divider',
   Image = 'image',
   Callout = 'callout',
-  Toggle = 'toggle'
+  Toggle = 'toggle',
+  AI = 'ai'
 }
 
 export interface BlockData {

@@ -13,7 +13,8 @@ import {
   FaImage, 
   FaExclamationCircle,
   FaCaretRight,
-  FaSearch
+  FaSearch,
+  FaRobot
 } from 'react-icons/fa';
 
 const MenuContainer = styled.div<{ position: Position }>`
@@ -208,6 +209,12 @@ const BlockMenu: React.FC<BlockMenuProps> = ({
       type: BlockType.Image,
       label: 'Image',
       icon: <FaImage />
+    },
+    {
+      type: BlockType.AI,
+      label: 'AI Assistant',
+      icon: <FaRobot />,
+      shortcut: '/ai'
     }
   ];
   
