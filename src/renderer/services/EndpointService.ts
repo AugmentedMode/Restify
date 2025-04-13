@@ -8,9 +8,12 @@ import { parseCurlCommand } from '../utils/curlParser';
 import { CollectionsService } from './DatabaseService';
 import EventService from './EventService';
 
+// Type definitions
+export type HttpMethodType = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
 export interface EndpointConfig {
   path: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method: HttpMethodType;
   code: string;
   description?: string;
   requiresAuth?: boolean;
@@ -30,13 +33,13 @@ export interface EndpointCreationResponse {
     requestExample?: string;
     responseExample?: string;
     curl?: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   };
 }
 
 export interface AIEndpointSchema {
   endpoint: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method: HttpMethodType;
   requestFormat?: string;
   responseFormat: string;
   description: string;
@@ -62,9 +65,27 @@ interface AIFolder extends Omit<Folder, 'items'> {
   updatedAt: string;
 }
 
+// Custom error types for better error handling
+export class EndpointError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EndpointError';
+  }
+}
+
+export class EndpointValidationError extends EndpointError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EndpointValidationError';
+  }
+}
+
+/**
+ * Service for managing API endpoints
+ */
 export class EndpointService {
   private static readonly ENDPOINT_STORAGE_KEY = 'user_created_endpoints';
-  private static readonly COLLECTIONS_STORAGE_KEY = 'api_collections';
+  private static readonly DEFAULT_COLLECTION_NAME = 'AI Generated Endpoints';
   
   /**
    * Create a new API endpoint based on provided code
@@ -75,11 +96,6 @@ export class EndpointService {
       // Validate the endpoint configuration
       this.validateEndpointConfig(config);
       
-      // In a real implementation, this would:
-      // 1. Send the code to a secure backend service
-      // 2. Create a serverless function or API endpoint
-      // 3. Return the URL and details for accessing it
-      
       // For demo purposes, we'll simulate the endpoint creation
       const endpointId = `endpoint_${Date.now()}`;
       const url = `https://api.example.com/custom/${config.path}`;
@@ -89,17 +105,19 @@ export class EndpointService {
       const apiRequest = this.createApiRequest(requestId, config, url);
       
       // Store the endpoint in collections structure
-      const collectionId = config.collectionId || await this.addToCollection(apiRequest, "AI Generated Endpoints");
+      const collectionId = config.collectionId || 
+        await this.addToCollection(apiRequest, this.DEFAULT_COLLECTION_NAME);
       
       // Store the endpoint information for legacy support
-      this.storeEndpoint({
+      const endpointData = {
         id: endpointId,
         requestId,
         collectionId,
         url,
         ...config,
         createdAt: new Date().toISOString()
-      });
+      };
+      this.storeEndpoint(endpointData);
       
       // Return success response
       return {
@@ -127,24 +145,22 @@ export class EndpointService {
       console.log('[Endpoint] Creating AI-driven endpoint', schema.endpoint);
       
       // Enhanced validation for AI-produced schemas
-      if (!schema.endpoint || !schema.method || !schema.implementation || !schema.responseFormat) {
-        throw new Error('Invalid endpoint schema: missing required fields');
-      }
+      this.validateAIEndpointSchema(schema);
       
       // Sanitize the endpoint path
-      const path = schema.endpoint.startsWith('/') ? schema.endpoint.substring(1) : schema.endpoint;
+      const path = this.sanitizePath(schema.endpoint);
       
       // Process and enhance the implementation code if needed
       const enhancedCode = this.processImplementationCode(schema.implementation, schema.method);
       
       // Create the endpoint with enhanced metadata
       const endpointId = `ai_endpoint_${Date.now()}`;
-      const url = `https://api.example.com/custom/${path}`;
+      
+      // Generate proper URL for the endpoint (handles both paths and full URLs)
+      const url = this.generateEndpointUrl(schema.endpoint);
       
       // Generate a name for the endpoint
-      const name = schema.description ? 
-        schema.description.split('.')[0].trim() : 
-        `${schema.method} ${schema.endpoint}`;
+      const name = this.generateEndpointName(schema);
       
       // Generate curl command for the endpoint
       const curlCommand = this.generateCurlCommand(
@@ -164,51 +180,26 @@ export class EndpointService {
         ...parsedRequest,
         implementation: enhancedCode,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        name // Use the generated name
       };
       
-      // Update the request name with a more descriptive one
-      apiRequest.name = name;
-      
       // Handle collection path if provided
-      let collectionId: string;
-      let collectionPathString = '';
+      const { collectionId, collectionPathString } = await this.handleCollectionPlacement(apiRequest, schema);
       
-      if (schema.collectionPath && schema.collectionPath.length > 0) {
-        // Build nested collection path
-        collectionId = await this.addToNestedCollection(
-          apiRequest, 
-          schema.collectionPath
-        );
-        collectionPathString = schema.collectionPath.join(' > ');
-      } else if (schema.collectionName) {
-        // Use simple named collection
-        collectionId = await this.addToCollection(apiRequest, schema.collectionName);
-      } else {
-        // Default collection
-        collectionId = await this.addToCollection(apiRequest, "AI Generated Endpoints");
-      }
-      
+      // Get collection name for response
       const collection = await this.getCollectionById(collectionId);
       
       // Additional metadata for AI-created endpoints
-      const metadata = {
-        id: endpointId,
-        requestId: apiRequest.id,
-        collectionId,
-        collectionPath: schema.collectionPath,
-        url,
-        path,
-        method: schema.method,
-        code: enhancedCode,
-        description: schema.description,
-        requestFormat: schema.requestFormat || null,
-        responseFormat: schema.responseFormat,
-        authRequired: schema.authRequired || false,
-        source: 'ai-assistant',
-        createdAt: new Date().toISOString(),
-        status: 'active'
-      };
+      const metadata = this.createEndpointMetadata(
+        endpointId, 
+        apiRequest.id, 
+        collectionId, 
+        schema, 
+        path, 
+        url, 
+        enhancedCode
+      );
       
       // Store with enhanced metadata for legacy support
       this.storeEndpoint(metadata);
@@ -220,7 +211,7 @@ export class EndpointService {
         endpointId,
         requestId: apiRequest.id,
         collectionId,
-        collectionName: collection?.name || schema.collectionName || "AI Generated Endpoints",
+        collectionName: collection?.name || schema.collectionName || this.DEFAULT_COLLECTION_NAME,
         collectionPath: collectionPathString || undefined,
         // Additional data to help the AI format its response
         additionalData: {
@@ -239,6 +230,117 @@ export class EndpointService {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+  
+  /**
+   * Validate AI endpoint schema
+   */
+  private static validateAIEndpointSchema(schema: AIEndpointSchema): void {
+    if (!schema.endpoint) {
+      throw new EndpointValidationError('Endpoint path is required');
+    }
+    
+    if (!schema.method) {
+      throw new EndpointValidationError('HTTP method is required');
+    }
+    
+    if (!schema.implementation) {
+      throw new EndpointValidationError('Endpoint implementation is required');
+    }
+    
+    if (!schema.responseFormat) {
+      throw new EndpointValidationError('Response format is required');
+    }
+  }
+  
+  /**
+   * Sanitize the endpoint path
+   */
+  private static sanitizePath(path: string): string {
+    return path.startsWith('/') ? path.substring(1) : path;
+  }
+  
+  /**
+   * Generate a proper URL for the endpoint
+   * Handles both relative paths and fully qualified URLs
+   */
+  private static generateEndpointUrl(endpoint: string): string {
+    // Check if the endpoint is already a full URL
+    if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+      return endpoint;
+    }
+    
+    // Otherwise, treat it as a path and append to the base URL
+    const path = this.sanitizePath(endpoint);
+    return `https://api.example.com/custom/${path}`;
+  }
+  
+  /**
+   * Generate a name for the endpoint based on schema
+   */
+  private static generateEndpointName(schema: AIEndpointSchema): string {
+    return schema.description ? 
+      schema.description.split('.')[0].trim() : 
+      `${schema.method} ${schema.endpoint}`;
+  }
+  
+  /**
+   * Create endpoint metadata object
+   */
+  private static createEndpointMetadata(
+    endpointId: string,
+    requestId: string,
+    collectionId: string,
+    schema: AIEndpointSchema,
+    path: string,
+    url: string,
+    code: string
+  ): Record<string, unknown> {
+    return {
+      id: endpointId,
+      requestId,
+      collectionId,
+      collectionPath: schema.collectionPath,
+      url,
+      path,
+      method: schema.method,
+      code,
+      description: schema.description,
+      requestFormat: schema.requestFormat || null,
+      responseFormat: schema.responseFormat,
+      authRequired: schema.authRequired || false,
+      source: 'ai-assistant',
+      createdAt: new Date().toISOString(),
+      status: 'active'
+    };
+  }
+  
+  /**
+   * Handle placement of endpoint in collection structure
+   */
+  private static async handleCollectionPlacement(
+    apiRequest: ApiEndpointRequest, 
+    schema: AIEndpointSchema
+  ): Promise<{ collectionId: string; collectionPathString: string }> {
+    let collectionId: string;
+    let collectionPathString = '';
+    
+    if (schema.collectionPath && schema.collectionPath.length > 0) {
+      // Build nested collection path
+      collectionId = await this.addToNestedCollection(
+        apiRequest, 
+        schema.collectionPath
+      );
+      collectionPathString = schema.collectionPath.join(' > ');
+    } else if (schema.collectionName) {
+      // Use simple named collection
+      collectionId = await this.addToCollection(apiRequest, schema.collectionName);
+    } else {
+      // Default collection
+      collectionId = await this.addToCollection(apiRequest, this.DEFAULT_COLLECTION_NAME);
+    }
+    
+    return { collectionId, collectionPathString };
   }
   
   /**
@@ -290,14 +392,7 @@ export class EndpointService {
     
     // Create AI collection if it doesn't exist
     if (!aiCollection) {
-      aiCollection = {
-        id: uuidv4(),
-        name: collectionName,
-        items: [],
-        parentPath: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+      aiCollection = this.createNewCollection(collectionName);
       collections.push(aiCollection);
     }
     
@@ -311,6 +406,85 @@ export class EndpointService {
     await this.saveCollections(collections);
     
     return aiCollection?.id || '';
+  }
+  
+  /**
+   * Create a new collection with the specified name
+   */
+  private static createNewCollection(name: string): AIFolder {
+    return {
+      id: uuidv4(),
+      name,
+      items: [],
+      parentPath: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+  
+  /**
+   * Add a request to a nested collection path
+   * Creates collections in the path if they don't exist
+   */
+  private static async addToNestedCollection(
+    request: ApiEndpointRequest, 
+    collectionPath: string[]
+  ): Promise<string> {
+    if (!collectionPath || collectionPath.length === 0) {
+      throw new EndpointValidationError('Collection path cannot be empty');
+    }
+    
+    const collections = await this.getCollections();
+    let currentLevel = collections;
+    let currentFolder: AIFolder | undefined;
+    let parentPath: string[] = [];
+    
+    // Create or navigate to each level of the path
+    for (let i = 0; i < collectionPath.length; i++) {
+      const folderName = collectionPath[i];
+      parentPath = collectionPath.slice(0, i);
+      
+      // Look for existing folder at this level
+      let folder = currentLevel.find(item => item.name === folderName) as AIFolder;
+      
+      if (!folder) {
+        // Create folder if it doesn't exist
+        folder = {
+          id: uuidv4(),
+          name: folderName,
+          items: [],
+          parentPath: [...parentPath],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        currentLevel.push(folder);
+      }
+      
+      currentFolder = folder;
+      
+      // Set up for next level
+      if (i < collectionPath.length - 1) {
+        // Ensure items is initialized
+        if (!folder.items) {
+          folder.items = [];
+        }
+        currentLevel = folder.items as AIFolder[];
+      }
+    }
+    
+    // Add the request to the final folder
+    if (currentFolder) {
+      currentFolder.items.push(request);
+      currentFolder.updatedAt = new Date().toISOString();
+      
+      // Save the updated collections
+      await this.saveCollections(collections);
+      
+      return currentFolder.id;
+    }
+    
+    throw new EndpointError('Failed to create or find the specified collection path');
   }
   
   /**
@@ -353,6 +527,7 @@ export class EndpointService {
       EventService.notifyCollectionsUpdated();
     } catch (error) {
       console.error('[Endpoint] Error saving collections:', error);
+      throw new EndpointError(`Failed to save collections: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
   
@@ -411,15 +586,15 @@ export class EndpointService {
    */
   private static validateEndpointConfig(config: EndpointConfig): void {
     if (!config.path) {
-      throw new Error('Endpoint path is required');
+      throw new EndpointValidationError('Endpoint path is required');
     }
     
     if (!config.method) {
-      throw new Error('HTTP method is required');
+      throw new EndpointValidationError('HTTP method is required');
     }
     
     if (!config.code || config.code.trim() === '') {
-      throw new Error('Endpoint code is required');
+      throw new EndpointValidationError('Endpoint code is required');
     }
     
     // Additional validation could be done here
@@ -431,7 +606,7 @@ export class EndpointService {
   /**
    * Store endpoint information for later retrieval
    */
-  private static storeEndpoint(endpoint: any): void {
+  private static storeEndpoint(endpoint: Record<string, unknown>): void {
     const storedEndpoints = this.getStoredEndpoints();
     storedEndpoints.push(endpoint);
     
@@ -444,7 +619,7 @@ export class EndpointService {
   /**
    * Get all stored endpoints
    */
-  public static getStoredEndpoints(): any[] {
+  public static getStoredEndpoints(): Record<string, unknown>[] {
     const storedEndpoints = localStorage.getItem(this.ENDPOINT_STORAGE_KEY);
     if (!storedEndpoints) return [];
     
@@ -473,71 +648,6 @@ export class EndpointService {
     );
     
     return true;
-  }
-  
-  /**
-   * Add a request to a nested collection path
-   * Creates collections in the path if they don't exist
-   */
-  private static async addToNestedCollection(
-    request: ApiEndpointRequest, 
-    collectionPath: string[]
-  ): Promise<string> {
-    if (!collectionPath || collectionPath.length === 0) {
-      throw new Error('Collection path cannot be empty');
-    }
-    
-    const collections = await this.getCollections();
-    let currentLevel = collections;
-    let currentFolder: AIFolder | undefined;
-    let parentPath: string[] = [];
-    
-    // Create or navigate to each level of the path
-    for (let i = 0; i < collectionPath.length; i++) {
-      const folderName = collectionPath[i];
-      parentPath = collectionPath.slice(0, i);
-      
-      // Look for existing folder at this level
-      let folder = currentLevel.find(item => item.name === folderName) as AIFolder;
-      
-      if (!folder) {
-        // Create folder if it doesn't exist
-        folder = {
-          id: uuidv4(),
-          name: folderName,
-          items: [],
-          parentPath: [...parentPath],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        
-        currentLevel.push(folder);
-      }
-      
-      currentFolder = folder;
-      
-      // Set up for next level
-      if (i < collectionPath.length - 1) {
-        // Ensure items is initialized
-        if (!folder.items) {
-          folder.items = [];
-        }
-        currentLevel = folder.items as AIFolder[];
-      }
-    }
-    
-    // Add the request to the final folder
-    if (currentFolder) {
-      currentFolder.items.push(request);
-      currentFolder.updatedAt = new Date().toISOString();
-      
-      // Save the updated collections
-      await this.saveCollections(collections);
-      
-      return currentFolder.id;
-    }
-    
-    throw new Error('Failed to create or find the specified collection path');
   }
   
   /**
