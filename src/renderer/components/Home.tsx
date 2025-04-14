@@ -133,7 +133,7 @@ const WelcomeSubtitle = styled.p`
 `;
 
 const QuickLinksSection = styled.div`
-  margin-top: 20px;
+  margin-top: 0px;
 `;
 
 const SectionTitle = styled.h2`
@@ -150,51 +150,64 @@ const SectionTitle = styled.h2`
 `;
 
 const QuickLinksGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
 `;
 
 const QuickLinkCard = styled.div`
   background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 8px;
+  padding: 12px 16px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(50% - 8px);
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    background-color: rgba(255, 56, 92, 0.1);
+    border-color: #FF385C;
+  }
+  
+  @media (min-width: 768px) {
+    width: calc(33.333% - 11px);
   }
 `;
 
 const QuickLinkIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   background-color: rgba(255, 56, 92, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  flex-shrink: 0;
   
   svg {
-    font-size: 24px;
+    font-size: 16px;
     color: #FF385C;
   }
 `;
 
+const QuickLinkContent = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
 const QuickLinkTitle = styled.h3`
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
-  margin-bottom: 8px;
+  margin: 0;
 `;
 
 const QuickLinkDescription = styled.p`
-  font-size: 14px;
+  font-size: 12px;
   color: #BBBBBB;
-  line-height: 1.5;
+  margin: 4px 0 0 0;
+  line-height: 1.4;
 `;
 
 const FeaturedSection = styled.div`
@@ -316,10 +329,12 @@ const Home: React.FC<HomeProps> = ({
               <QuickLinkIcon>
                 <FaPlus />
               </QuickLinkIcon>
-              <QuickLinkTitle>Create Collection</QuickLinkTitle>
-              <QuickLinkDescription>
-                Create a new API collection to organize your requests and workflows.
-              </QuickLinkDescription>
+              <QuickLinkContent>
+                <QuickLinkTitle>Create Collection</QuickLinkTitle>
+                <QuickLinkDescription>
+                  Organize your requests and workflows
+                </QuickLinkDescription>
+              </QuickLinkContent>
             </QuickLinkCard>
             
             {onImportFromFile && (
@@ -327,10 +342,12 @@ const Home: React.FC<HomeProps> = ({
                 <QuickLinkIcon>
                   <FaFileImport />
                 </QuickLinkIcon>
-                <QuickLinkTitle>Import Collection</QuickLinkTitle>
-                <QuickLinkDescription>
-                  Import existing collections from Postman, Insomnia, or other tools.
-                </QuickLinkDescription>
+                <QuickLinkContent>
+                  <QuickLinkTitle>Import Collection</QuickLinkTitle>
+                  <QuickLinkDescription>
+                    From Postman, Insomnia, or other tools
+                  </QuickLinkDescription>
+                </QuickLinkContent>
               </QuickLinkCard>
             )}
             
@@ -338,10 +355,12 @@ const Home: React.FC<HomeProps> = ({
               <QuickLinkIcon>
                 <FaBookmark />
               </QuickLinkIcon>
-              <QuickLinkTitle>Saved Collections</QuickLinkTitle>
-              <QuickLinkDescription>
-                Access your previously saved API collections and environments.
-              </QuickLinkDescription>
+              <QuickLinkContent>
+                <QuickLinkTitle>Saved Collections</QuickLinkTitle>
+                <QuickLinkDescription>
+                  Access your API collections and environments
+                </QuickLinkDescription>
+              </QuickLinkContent>
             </QuickLinkCard>
             
             {onNavigateToSecrets && (
@@ -349,10 +368,12 @@ const Home: React.FC<HomeProps> = ({
                 <QuickLinkIcon>
                   <FaKey />
                 </QuickLinkIcon>
-                <QuickLinkTitle>Secrets Manager</QuickLinkTitle>
-                <QuickLinkDescription>
-                  Securely store and manage API keys, tokens, and credentials.
-                </QuickLinkDescription>
+                <QuickLinkContent>
+                  <QuickLinkTitle>Secrets Manager</QuickLinkTitle>
+                  <QuickLinkDescription>
+                    Manage API keys, tokens, and credentials
+                  </QuickLinkDescription>
+                </QuickLinkContent>
               </QuickLinkCard>
             )}
             
@@ -361,10 +382,12 @@ const Home: React.FC<HomeProps> = ({
                 <QuickLinkIcon>
                   <FaColumns />
                 </QuickLinkIcon>
-                <QuickLinkTitle>Project Board</QuickLinkTitle>
-                <QuickLinkDescription>
-                  Track your API development tasks and manage your workflow.
-                </QuickLinkDescription>
+                <QuickLinkContent>
+                  <QuickLinkTitle>Project Board</QuickLinkTitle>
+                  <QuickLinkDescription>
+                    Track tasks and manage workflow
+                  </QuickLinkDescription>
+                </QuickLinkContent>
               </QuickLinkCard>
             )}
             
@@ -372,10 +395,12 @@ const Home: React.FC<HomeProps> = ({
               <QuickLinkIcon>
                 <FaStickyNote />
               </QuickLinkIcon>
-              <QuickLinkTitle>Notes</QuickLinkTitle>
-              <QuickLinkDescription>
-                Create and organize notes related to your API projects.
-              </QuickLinkDescription>
+              <QuickLinkContent>
+                <QuickLinkTitle>Notes</QuickLinkTitle>
+                <QuickLinkDescription>
+                  Organize notes for your API projects
+                </QuickLinkDescription>
+              </QuickLinkContent>
             </QuickLinkCard>
           </QuickLinksGrid>
         </QuickLinksSection>

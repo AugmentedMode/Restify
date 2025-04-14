@@ -1197,6 +1197,14 @@ function AppContent() {
     moveItem(itemId, targetPath);
   };
 
+  // Adapter function to handle deleting different item types
+  const deleteItemAdapter = (id: string, isFolder: boolean) => {
+    // Call the deleteItem function with the item ID 
+    // The updated deleteItem function in useCollections will correctly handle 
+    // folders/collections vs regular requests
+    deleteItem(id);
+  };
+
   // Secrets Manager Handlers
   const handleSelectSecretsProfile = useCallback((profile: SecretsProfile) => {
     setActiveSecretsProfile(profile.id);
@@ -1364,7 +1372,7 @@ function AppContent() {
           onAddFolder={addFolder}
           onAddRequest={addRequestAdapter}
           onRenameItem={renameItem}
-          onDeleteItem={deleteItem}
+          onDeleteItem={deleteItemAdapter}
           onMoveItem={moveItemAdapter}
           onDuplicateRequest={duplicateRequest}
           onImportFromCurl={handleImportFromCurl}

@@ -185,21 +185,78 @@ export default function useCollections(initialCollections: Folder[] = []): UseCo
 
   // Delete a collection or request
   const deleteItem = useCallback((id: string) => {
-    setCollections(prevCollections => {
-      // Handle deleting a top-level collection
-      const filteredCollections = prevCollections.filter(collection => collection.id !== id);
+    // First, check if the item is a top-level collection
+    const isTopLevelCollection = collections.some(collection => collection.id === id);
+    
+    // If it's a top-level collection, delete it from the database directly
+    if (isTopLevelCollection) {
+      CollectionsService.deleteCollection(id)
+        .then(() => {
+          // Then update the state
+          setCollections(prevCollections => 
+            prevCollections.filter(collection => collection.id !== id)
+          );
+        })
+        .catch(error => {
+          console.error('Failed to delete collection:', error);
+        });
+    } else {
+      // For nested items, we need to find where the item is located
+      // and check if it's a folder (has 'items' property)
+      let isFolder = false;
+      let foundItem: Folder | ApiRequest | null = null;
       
-      if (filteredCollections.length < prevCollections.length) {
-        return filteredCollections;
+      // Helper function to find an item in the collections
+      const findItem = (items: (Folder | ApiRequest)[]): (Folder | ApiRequest) | null => {
+        for (const item of items) {
+          if (item.id === id) {
+            return item;
+          }
+          if ('items' in item) {
+            const foundInSubfolder = findItem(item.items);
+            if (foundInSubfolder) {
+              return foundInSubfolder;
+            }
+          }
+        }
+        return null;
+      };
+      
+      // Search for the item in the collections
+      for (const collection of collections) {
+        foundItem = findItem(collection.items);
+        if (foundItem) {
+          isFolder = 'items' in foundItem;
+          break;
+        }
       }
-
-      // Handle deleting a nested item
-      return prevCollections.map(collection => ({
-        ...collection,
-        items: deleteItemFromFolder(collection.items, id),
-      }));
-    });
-  }, []);
+      
+      // If it's a folder, delete it from the database
+      if (isFolder) {
+        CollectionsService.deleteCollection(id)
+          .then(() => {
+            // Then update the state
+            setCollections(prevCollections => {
+              return prevCollections.map(collection => ({
+                ...collection,
+                items: deleteItemFromFolder(collection.items, id),
+              }));
+            });
+          })
+          .catch(error => {
+            console.error('Failed to delete folder:', error);
+          });
+      } else {
+        // For regular items (not folders), just update the state
+        setCollections(prevCollections => {
+          return prevCollections.map(collection => ({
+            ...collection,
+            items: deleteItemFromFolder(collection.items, id),
+          }));
+        });
+      }
+    }
+  }, [collections]);
 
   // Helper function to delete an item from a nested structure
   const deleteItemFromFolder = (items: (Folder | ApiRequest)[], id: string): (Folder | ApiRequest)[] => {
