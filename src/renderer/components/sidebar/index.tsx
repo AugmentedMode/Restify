@@ -18,8 +18,7 @@ import {
   FaTimes,
   FaCog,
   FaGithub,
-  FaRobot,
-  FaLightbulb
+  FaRobot
 } from 'react-icons/fa';
 import { 
   Sidebar as SidebarContainer, 
@@ -44,7 +43,6 @@ import EnvironmentManager from '../EnvironmentManager';
 import SecretsSection from './sections/SecretsSection';
 import GitHubSection from './sections/GitHubSection';
 import AISection from '../sidebar/sections/AISection';
-import AIPromptsSection from '../sidebar/sections/AIPromptsSection';
 
 // Dynamically load the SettingsSection with an import() to avoid errors
 // when the file hasn't been created yet
@@ -113,7 +111,6 @@ interface SidebarProps {
   onExportSecrets?: (profileId: string) => void;
   onOpenSettings?: () => void;
   onNavigateToNotes?: () => void;
-  onNavigateToAIPrompts?: () => void;
 }
 
 function Sidebar({
@@ -153,7 +150,6 @@ function Sidebar({
   onExportSecrets = () => {},
   onOpenSettings = () => {},
   onNavigateToNotes = () => {},
-  onNavigateToAIPrompts = () => {},
 }: SidebarProps) {
   // Get settings from context
   const { settings } = useSettings();
@@ -374,26 +370,27 @@ function Sidebar({
         </NavTooltip>
       )}
 
-      {/* AI Prompts */}
-      <NavTooltip title="AI Prompts" isCollapsed={isSidebarCollapsed}>
+      {/* AI Assistant */}
+      <NavTooltip title="AI Assistant" isCollapsed={isSidebarCollapsed}>
         <div
           style={{
             cursor: 'pointer',
             padding: '8px',
             borderRadius: '8px',
-            backgroundColor: expandedSections.aiPrompts
+            backgroundColor: expandedSections.ai
               ? 'rgba(255, 56, 92, 0.1)'
               : 'transparent',
-            color: expandedSections.aiPrompts ? '#FF385C' : 'inherit',
+            color: expandedSections.ai ? '#FF385C' : 'inherit',
             transition: 'all 0.2s',
           }}
           onClick={() => {
-            toggleSection('aiPrompts');
-            onNavigateToAIPrompts();
+            toggleSection('ai');
+            window.history.pushState({}, '', '/ai');
+            window.dispatchEvent(new Event('popstate'));
           }}
           className="nav-item"
         >
-          <FaLightbulb size={20} />
+          <FaRobot size={20} />
         </div>
       </NavTooltip>
 
@@ -563,17 +560,6 @@ function Sidebar({
     }
   };
 
-  // Add a function to navigate to AI Prompts
-  const navigateToAIPrompts = () => {
-    // Navigate to the ai-prompts route
-    if (window.location.pathname !== '/ai-prompts') {
-      window.history.pushState({}, '', '/ai-prompts');
-      
-      // Dispatch a custom event to notify the App component
-      window.dispatchEvent(new Event('popstate'));
-    }
-  };
-
   return (
     <motion.div
       variants={sidebarVariants}
@@ -630,13 +616,6 @@ function Sidebar({
                       filter={filter}
                     />
                   )}
-
-                  {/* Add AI Prompts Section */}
-                  <AIPromptsSection
-                    expanded={expandedSections.aiPrompts}
-                    toggleSection={() => toggleSection('aiPrompts')}
-                    onNavigateToAIPrompts={onNavigateToAIPrompts}
-                  />
 
                   {/* Add AI Section */}
                   {/* <AISection
