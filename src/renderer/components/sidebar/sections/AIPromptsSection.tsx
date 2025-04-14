@@ -22,7 +22,6 @@ const SectionHeader = styled.div`
   
   svg {
     margin-right: 8px;
-    color: #FF385C;
   }
 `;
 
@@ -65,6 +64,12 @@ const ItemText = styled.div`
   text-overflow: ellipsis;
 `;
 
+const IconWrapper = styled.div`
+  color: inherit;
+  display: flex;
+  align-items: center;
+`;
+
 interface AIPromptsSectionProps {
   expanded: boolean;
   toggleSection: () => void;
@@ -79,7 +84,9 @@ const AIPromptsSection: React.FC<AIPromptsSectionProps> = ({
   return (
     <Section>
       <SectionHeader onClick={toggleSection}>
-        <FaLightbulb size={16} />
+        <IconWrapper>
+          <FaLightbulb size={18} />
+        </IconWrapper>
         <SectionTitle>AI Prompts</SectionTitle>
         {expanded ? '−' : '+'}
       </SectionHeader>

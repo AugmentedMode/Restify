@@ -8,6 +8,7 @@ interface GeneralSettings {
   showBoards: boolean;
   showNotes: boolean;
   showGitHub: boolean;
+  showAIPrompts: boolean;
   defaultResponseView: string;
 }
 
@@ -44,8 +45,9 @@ const defaultSettings: AppSettings = {
     showHistory: true,
     showSecretsManager: true,
     showBoards: true,
-    showNotes: false,
+    showNotes: true,
     showGitHub: true,
+    showAIPrompts: true,
     defaultResponseView: 'pretty',
   },
   api: {

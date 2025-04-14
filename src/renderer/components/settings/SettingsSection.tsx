@@ -23,6 +23,7 @@ interface GeneralSettings {
   showSecretsManager: boolean;
   showBoards: boolean;
   showNotes: boolean;
+  showAIPrompts: boolean;
   defaultResponseView: string;
 }
 
@@ -247,6 +248,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ onClose }) => {
       showSecretsManager: true,
       showBoards: true,
       showNotes: false,
+      showAIPrompts: true,
       defaultResponseView: 'pretty',
     },
     api: {

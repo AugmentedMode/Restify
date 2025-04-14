@@ -375,27 +375,29 @@ function Sidebar({
       )}
 
       {/* AI Prompts */}
-      <NavTooltip title="AI Prompts" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: expandedSections.aiPrompts
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: expandedSections.aiPrompts ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
-          }}
-          onClick={() => {
-            toggleSection('aiPrompts');
-            onNavigateToAIPrompts();
-          }}
-          className="nav-item"
-        >
-          <FaLightbulb size={20} />
-        </div>
-      </NavTooltip>
+      {settings.general.showAIPrompts && (
+        <NavTooltip title="AI Prompts" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: expandedSections.aiPrompts
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: expandedSections.aiPrompts ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onClick={() => {
+              toggleSection('aiPrompts');
+              onNavigateToAIPrompts();
+            }}
+            className="nav-item"
+          >
+            <FaLightbulb size={20} />
+          </div>
+        </NavTooltip>
+      )}
 
       {settings.general.showBoards && (
         <NavTooltip title="Kanban Board" isCollapsed={isSidebarCollapsed}>
@@ -631,13 +633,6 @@ function Sidebar({
                     />
                   )}
 
-                  {/* Add AI Prompts Section */}
-                  <AIPromptsSection
-                    expanded={expandedSections.aiPrompts}
-                    toggleSection={() => toggleSection('aiPrompts')}
-                    onNavigateToAIPrompts={onNavigateToAIPrompts}
-                  />
-
                   {/* Add AI Section */}
                   {/* <AISection
                     expanded={expandedSections.ai}
@@ -688,6 +683,15 @@ function Sidebar({
                       onOpenNoteOptions={setNoteOptionsModal}
                       filter={filter}
                       onNavigateToNotes={onNavigateToNotes}
+                    />
+                  )}
+
+                  {/* Add AI Prompts Section */}
+                  {settings.general.showAIPrompts && (
+                    <AIPromptsSection
+                      expanded={expandedSections.aiPrompts}
+                      toggleSection={() => toggleSection('aiPrompts')}
+                      onNavigateToAIPrompts={onNavigateToAIPrompts}
                     />
                   )}
 

@@ -59,6 +59,7 @@ interface GeneralSettings {
   showSecretsManager: boolean;
   showBoards: boolean;
   showNotes: boolean;
+  showAIPrompts: boolean;
   defaultResponseView: string;
   showGitHub: boolean;
 }
@@ -519,6 +520,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
           showBoards: true,
           showNotes: true,
           showGitHub: true,
+          showAIPrompts: true,
           defaultResponseView: 'pretty',
         },
         api: {
@@ -629,6 +631,16 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
           <ToggleButton 
             isActive={settings.general.showNotes}
             onClick={() => toggleSetting('general', 'showNotes')}
+          />
+        </SettingRow>
+        <SettingRow>
+          <div>
+            <SettingLabel>Show AI Prompts</SettingLabel>
+            <SettingDescription>Show AI prompts section in sidebar</SettingDescription>
+          </div>
+          <ToggleButton 
+            isActive={settings.general.showAIPrompts}
+            onClick={() => toggleSetting('general', 'showAIPrompts')}
           />
         </SettingRow>
         <SettingRow>
