@@ -618,14 +618,14 @@ function Sidebar({
                   )}
 
                   {/* Add AI Section */}
-                  <AISection
+                  {/* <AISection
                     expanded={expandedSections.ai}
                     toggleSection={() => toggleSection('ai')}
                     onNavigateToAI={() => {
                       window.history.pushState({}, '', '/ai');
                       window.dispatchEvent(new Event('popstate'));
                     }}
-                  />
+                  /> */}
 
                   {settings.general.showGitHub && (
                     <GitHubSection
