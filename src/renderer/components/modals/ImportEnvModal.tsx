@@ -18,7 +18,7 @@ const StyledModal = styled(Modal)`
 `;
 
 const AirbnbModalContent = styled(ModalContent)`
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   max-width: 620px;
@@ -77,9 +77,9 @@ const IconContainer = styled.div`
   justify-content: center;
   width: 36px;
   height: 36px;
-  background-color: #3290ff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(50, 144, 255, 0.3);
+  background-color: #FF385C;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(255, 56, 92, 0.3);
 `;
 
 const EnvTextArea = styled.textarea`
@@ -99,8 +99,8 @@ const EnvTextArea = styled.textarea`
   
   &:focus {
     outline: none;
-    border-color: rgba(50, 144, 255, 0.5);
-    box-shadow: 0 0 0 2px rgba(50, 144, 255, 0.2);
+    border-color: rgba(255, 56, 92, 0.5);
+    box-shadow: 0 0 0 2px rgba(255, 56, 92, 0.2);
   }
   
   &::placeholder {
@@ -132,8 +132,8 @@ const Input = styled.input`
   
   &:focus {
     outline: none;
-    border-color: rgba(50, 144, 255, 0.5);
-    box-shadow: 0 0 0 2px rgba(50, 144, 255, 0.2);
+    border-color: rgba(255, 56, 92, 0.5);
+    box-shadow: 0 0 0 2px rgba(255, 56, 92, 0.2);
   }
   
   &::placeholder {
@@ -170,7 +170,7 @@ const FormatTag = styled.span`
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 56, 92, 0.1);
   border-radius: 12px;
   font-size: 12px;
 `;
@@ -208,21 +208,21 @@ const ImportButton = styled(SendButton)`
   padding: 14px 24px;
   font-size: 16px;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
-  background-color: #3290ff;
+  background-color: #FF385C;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
   
   &:hover:not(:disabled) {
-    background-color: #2574d9;
+    background-color: #E93455;
     transform: translateY(-1px);
   }
   
   &:disabled {
-    background-color: rgba(50, 144, 255, 0.5);
+    background-color: rgba(255, 56, 92, 0.5);
     cursor: not-allowed;
   }
 `;
@@ -232,17 +232,19 @@ const FileUploadContainer = styled.div<{ isDragActive: boolean; hasFile: boolean
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 72px;
-  border: 2px dashed ${props => props.isDragActive ? 'rgba(50, 144, 255, 0.7)' : props.hasFile ? 'rgba(92, 184, 92, 0.7)' : 'rgba(255, 255, 255, 0.2)'};
-  border-radius: 10px;
+  height: 80px;
+  border: 2px dashed ${props => props.isDragActive ? 'rgba(255, 56, 92, 0.7)' : props.hasFile ? 'rgba(92, 184, 92, 0.7)' : 'rgba(255, 255, 255, 0.2)'};
+  border-radius: 12px;
   margin-bottom: 20px;
   cursor: pointer;
   transition: all 0.2s;
-  background-color: ${props => props.isDragActive ? 'rgba(50, 144, 255, 0.08)' : props.hasFile ? 'rgba(92, 184, 92, 0.08)' : 'transparent'};
+  background-color: ${props => props.isDragActive ? 'rgba(255, 56, 92, 0.08)' : props.hasFile ? 'rgba(92, 184, 92, 0.08)' : 'transparent'};
   
   &:hover {
-    border-color: ${props => props.hasFile ? 'rgba(92, 184, 92, 0.7)' : 'rgba(50, 144, 255, 0.5)'};
-    background-color: ${props => props.hasFile ? 'rgba(92, 184, 92, 0.08)' : 'rgba(50, 144, 255, 0.05)'};
+    border-color: ${props => props.hasFile ? 'rgba(92, 184, 92, 0.7)' : 'rgba(255, 56, 92, 0.5)'};
+    background-color: ${props => props.hasFile ? 'rgba(92, 184, 92, 0.08)' : 'rgba(255, 56, 92, 0.05)'};
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
   }
 `;
 
@@ -260,8 +262,8 @@ const HiddenFileInput = styled.input`
 `;
 
 const InfoBox = styled.div`
-  background-color: rgba(50, 144, 255, 0.1);
-  border-left: 4px solid #3290ff;
+  background-color: rgba(255, 56, 92, 0.1);
+  border-left: 4px solid #FF385C;
   border-radius: 4px;
   padding: 12px 16px;
   margin: 16px 0;
@@ -274,7 +276,7 @@ const InfoBox = styled.div`
 
 const InfoIcon = styled.div`
   margin-top: 2px;
-  color: #3290ff;
+  color: #FF385C;
 `;
 
 interface ImportEnvModalProps {

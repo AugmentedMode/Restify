@@ -347,12 +347,12 @@ const StyledInput = styled(Input)`
 
 const AddButton = styled(ActionButton)`
   padding: 10px 16px;
-  background: linear-gradient(90deg, rgba(50, 144, 255, 0.7), rgba(32, 129, 240, 0.7));
-  border-color: rgba(50, 144, 255, 0.3);
+  background: linear-gradient(90deg, rgba(255, 56, 92, 0.7), rgba(220, 40, 70, 0.7));
+  border-color: rgba(255, 56, 92, 0.3);
   
   &:hover:not(:disabled) {
-    background: linear-gradient(90deg, rgba(60, 154, 255, 0.8), rgba(42, 139, 250, 0.8));
-    border-color: rgba(50, 144, 255, 0.5);
+    background: linear-gradient(90deg, rgba(255, 56, 92, 0.8), rgba(230, 50, 80, 0.8));
+    border-color: rgba(255, 56, 92, 0.5);
   }
   
   &:disabled {
@@ -378,12 +378,12 @@ const SecurityNoticeContainer = styled(motion.div)`
   border-radius: 10px;
   overflow: hidden;
   background: linear-gradient(135deg, rgba(25, 25, 25, 0.8), rgba(20, 20, 20, 0.9));
-  border: 1px solid rgba(98, 218, 130, 0.3);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(98, 218, 130, 0.1);
+  border: 1px solid rgba(255, 56, 92, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 56, 92, 0.1);
 `;
 
 const SecurityHeader = styled.div`
-  background: linear-gradient(90deg, rgba(54, 144, 97, 0.8), rgba(32, 80, 54, 0.8));
+  background: linear-gradient(90deg, rgba(255, 56, 92, 0.8), rgba(200, 40, 70, 0.8));
   padding: 12px 20px;
   display: flex;
   align-items: center;
@@ -457,7 +457,7 @@ const IconWrapper = styled(motion.div)`
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(54, 144, 97, 0.7), rgba(32, 80, 54, 0.7));
+  background: linear-gradient(135deg, rgba(255, 56, 92, 0.7), rgba(200, 40, 70, 0.7));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 `;
 
@@ -487,6 +487,48 @@ const Toast = styled.div<{ type: 'success' | 'error' }>`
       opacity: 1;
       transform: translateY(0);
     }
+  }
+`;
+
+// Add these styled components before using them in the EncryptModal
+const CancelButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #dddddd;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+  }
+`;
+
+const ActionPinkButton = styled.button<{ disabled?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background: #FF385C;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s;
+  opacity: ${props => props.disabled ? 0.6 : 1};
+  
+  &:hover:not(:disabled) {
+    background: #E93455;
+    transform: translateY(-1px);
   }
 `;
 
@@ -695,13 +737,13 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               style={{
-                background: 'linear-gradient(135deg, rgba(50, 144, 255, 0.1), rgba(25, 25, 25, 0.3))',
+                background: 'linear-gradient(135deg, rgba(255, 56, 92, 0.1), rgba(25, 25, 25, 0.3))',
                 borderRadius: '16px',
                 padding: '40px',
                 maxWidth: '600px',
                 width: '100%',
-                border: '1px solid rgba(50, 144, 255, 0.2)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2), 0 0 30px rgba(50, 144, 255, 0.1)',
+                border: '1px solid rgba(255, 56, 92, 0.2)',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2), 0 0 30px rgba(255, 56, 92, 0.1)',
                 textAlign: 'center',
               }}
             >
@@ -720,22 +762,22 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
                   width: '100px',
                   height: '100px',
                   borderRadius: '50%',
-                  backgroundColor: 'rgba(50, 144, 255, 0.1)',
+                  backgroundColor: 'rgba(255, 56, 92, 0.1)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 24px',
-                  border: '1px dashed rgba(50, 144, 255, 0.3)',
+                  border: '1px dashed rgba(255, 56, 92, 0.3)',
                 }}
               >
-                <FaKey size={40} color="rgba(50, 144, 255, 0.8)" />
+                <FaKey size={40} color="rgba(255, 56, 92, 0.8)" />
               </motion.div>
               
               <h2 style={{ 
                 fontSize: '28px', 
                 marginBottom: '16px', 
                 fontWeight: 600,
-                background: 'linear-gradient(120deg, #ffffff, #3290ff)',
+                background: 'linear-gradient(120deg, #ffffff, #FF385C)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}>
@@ -762,13 +804,13 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
                     alignItems: 'center',
                     gap: '10px',
                     padding: '12px 20px',
-                    background: 'linear-gradient(90deg, #3290ff, #1a7deb)',
+                    background: 'linear-gradient(90deg, #FF385C, #D02A49)',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '10px',
                     color: 'white',
                     fontWeight: 500,
                     cursor: 'pointer',
-                    boxShadow: '0 4px 10px rgba(50, 144, 255, 0.3)',
+                    boxShadow: '0 4px 10px rgba(255, 56, 92, 0.3)',
                     transition: 'all 0.2s',
                   }}
                 >
@@ -779,18 +821,7 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
                 <motion.button
                   whileHover={{ y: -3, boxShadow: '0 6px 12px rgba(0, 0, 0, 0.2)' }}
                   whileTap={{ y: 0 }}
-                  onClick={() => {
-                    const defaultProfile = {
-                      id: uuidv4(),
-                      name: 'New Profile',
-                      description: '',
-                      secrets: [],
-                      isEncrypted: false,
-                      createdAt: Date.now(),
-                      updatedAt: Date.now()
-                    };
-                    onUpdateProfile(defaultProfile);
-                  }}
+                  onClick={onImportSecrets}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -798,7 +829,7 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
                     padding: '12px 20px',
                     background: 'rgba(255, 255, 255, 0.08)',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '8px',
+                    borderRadius: '10px',
                     color: 'white',
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -821,7 +852,7 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 maxWidth: 'fit-content'
               }}>
-                <FaLock size={14} color="rgba(255, 255, 255, 0.6)" />
+                <FaLock size={14} color="rgba(255, 56, 92, 0.6)" />
                 <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
                   Your secrets stay local and are never sent to any server
                 </span>
@@ -837,13 +868,14 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
     <Container>
       <HeaderContainer>
         <HeaderTitle>
-          {activeProfile.isEncrypted ? <FaLock size={18} /> : <FaKey size={18} />}
+          {activeProfile.isEncrypted ? <FaLock size={18} color="#FF385C" /> : <FaKey size={18} color="#FF385C" />}
           {activeProfile.name}
         </HeaderTitle>
         <div style={{ display: 'flex', gap: '12px' }}>
           <ActionButton 
             onClick={() => setShowEncryptModal(true)}
             title={activeProfile.isEncrypted ? "Decrypt Profile" : "Encrypt Profile"}
+            style={{ borderColor: 'rgba(255, 56, 92, 0.3)' }}
           >
             {activeProfile.isEncrypted ? <FaUnlock size={12} /> : <FaLock size={12} />}
             {activeProfile.isEncrypted ? "Decrypt" : "Encrypt"}
@@ -852,6 +884,7 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
             onClick={handleExportSecrets}
             title="Export as .env file"
             disabled={activeProfile.isEncrypted}
+            style={{ borderColor: 'rgba(255, 56, 92, 0.3)' }}
           >
             <FaFileExport size={12} /> Export
           </ActionButton>
@@ -1090,76 +1123,114 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
           right: 0,
           bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(5px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
         }}>
           <div style={{
-            width: '400px',
+            width: '450px',
             backgroundColor: '#1a1a1a',
-            borderRadius: '8px',
-            padding: '20px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+            borderRadius: '16px',
+            padding: '28px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.35), 0 0 30px rgba(255, 56, 92, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.07)',
           }}>
-            <h3>
-              {activeProfile.isEncrypted ? "Decrypt Profile" : "Encrypt Profile"}
+            <h3 style={{
+              fontSize: '22px',
+              fontWeight: 600,
+              marginBottom: '10px',
+              marginTop: 0,
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+            }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                backgroundColor: '#FF385C',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(255, 56, 92, 0.3)',
+              }}>
+                {activeProfile?.isEncrypted ? <FaUnlock size={18} color="white" /> : <FaLock size={18} color="white" />}
+              </div>
+              {activeProfile?.isEncrypted ? "Decrypt Profile" : "Encrypt Profile"}
             </h3>
-            <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '16px' }}>
-              {activeProfile.isEncrypted 
+            <p style={{ 
+              fontSize: '14px', 
+              color: 'rgba(255, 255, 255, 0.7)', 
+              margin: '0 0 20px 0',
+              lineHeight: 1.5 
+            }}>
+              {activeProfile?.isEncrypted 
                 ? "Enter your password to decrypt this profile." 
                 : "Enter a password to encrypt this profile with AES-256 encryption. Make sure to remember this password, as there's no way to recover your secrets if you forget it."}
             </p>
             
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              style={{ width: '100%', marginBottom: '16px' }}
-            />
-            
-            {!activeProfile.isEncrypted && (
-              <Input
+            <div style={{ marginBottom: '16px' }}>
+              <InputLabel htmlFor="encrypt-password">Password</InputLabel>
+              <StyledInput
+                id="encrypt-password"
                 type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-                style={{ width: '100%', marginBottom: '16px' }}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                style={{ width: '100%' }}
               />
+            </div>
+            
+            {!activeProfile?.isEncrypted && (
+              <div style={{ marginBottom: '16px' }}>
+                <InputLabel htmlFor="confirm-password">Confirm Password</InputLabel>
+                <StyledInput
+                  id="confirm-password"
+                  type="password"
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+              </div>
             )}
             
             {error && (
               <div style={{ 
-                padding: '8px 12px', 
+                padding: '12px 16px', 
                 backgroundColor: 'rgba(244, 67, 54, 0.1)', 
-                borderLeft: '3px solid #f44336',
-                marginBottom: '16px',
+                borderLeft: '4px solid #f44336',
+                marginBottom: '20px',
                 fontSize: '14px',
-                color: '#f44336'
+                color: '#f44336',
+                borderRadius: '4px',
               }}>
                 {error}
               </div>
             )}
             
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <ActionButton 
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '20px' }}>
+              <CancelButton 
                 onClick={() => {
                   setShowEncryptModal(false);
                   setPassword('');
                   setConfirmPassword('');
                   setError(null);
                 }}
-                style={{ backgroundColor: 'transparent' }}
               >
                 Cancel
-              </ActionButton>
-              <ActionButton 
+              </CancelButton>
+              <ActionPinkButton 
                 onClick={handleEncryptProfile}
-                disabled={!password || (!activeProfile.isEncrypted && password !== confirmPassword)}
+                disabled={!password || (!activeProfile?.isEncrypted && password !== confirmPassword)}
               >
-                {activeProfile.isEncrypted ? "Decrypt" : "Encrypt"}
-              </ActionButton>
+                {activeProfile?.isEncrypted ? 
+                  <><FaUnlock size={14} style={{ marginRight: '6px' }} /> Decrypt</> : 
+                  <><FaLock size={14} style={{ marginRight: '6px' }} /> Encrypt</>}
+              </ActionPinkButton>
             </div>
           </div>
         </div>
