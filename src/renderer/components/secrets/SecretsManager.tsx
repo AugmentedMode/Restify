@@ -854,7 +854,7 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
               }}>
                 <FaLock size={14} color="rgba(255, 56, 92, 0.6)" />
                 <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                  Your secrets stay local and are never sent to any server
+                  Your secrets stay local and are encrypted with AES-256. 
                 </span>
               </div>
             </motion.div>

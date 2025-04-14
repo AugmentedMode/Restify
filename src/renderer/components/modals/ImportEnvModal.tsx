@@ -19,7 +19,7 @@ const StyledModal = styled(Modal)`
 
 const AirbnbModalContent = styled(ModalContent)`
   border-radius: 16px;
-  padding: 32px;
+  padding: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   max-width: 620px;
   width: 100%;
@@ -47,10 +47,10 @@ const ModalTitle = styled.h2`
     Roboto,
     Helvetica Neue,
     sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   color: #ffffff;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
   letter-spacing: -0.2px;
   display: flex;
   align-items: center;
@@ -64,10 +64,10 @@ const ModalSubtitle = styled.p`
     Roboto,
     Helvetica Neue,
     sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.4;
   color: #dddddd;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   margin-top: 0;
 `;
 
@@ -75,8 +75,8 @@ const IconContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   background-color: #FF385C;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(255, 56, 92, 0.3);
@@ -84,8 +84,8 @@ const IconContainer = styled.div`
 
 const EnvTextArea = styled.textarea`
   width: 100%;
-  min-height: 180px;
-  padding: 16px;
+  min-height: 140px;
+  padding: 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background-color: #1e1e1e;
@@ -94,7 +94,7 @@ const EnvTextArea = styled.textarea`
   font-size: 14px;
   line-height: 1.6;
   resize: vertical;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   transition: all 0.2s ease;
   
   &:focus {
@@ -110,19 +110,19 @@ const EnvTextArea = styled.textarea`
 
 const InputLabel = styled.label`
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #dddddd;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 `;
 
 const InputGroup = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background-color: #1e1e1e;
@@ -144,24 +144,24 @@ const Input = styled.input`
 const SupportedFormatsContainer = styled.div`
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
-  padding: 14px 18px;
-  margin-bottom: 24px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
 `;
 
 const FormatTitle = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #ffffff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 `;
 
 const FormatsList = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.6);
 `;
@@ -169,25 +169,25 @@ const FormatsList = styled.div`
 const FormatTag = styled.span`
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 3px 8px;
   background-color: rgba(255, 56, 92, 0.1);
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 11px;
 `;
 
 const ModalActionsContainer = styled(ModalActions)`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 20px;
-  margin-top: 16px;
+  gap: 16px;
+  margin-top: 12px;
 `;
 
 const CancelText = styled.button`
   background: none;
   border: none;
   padding: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   color: #dddddd;
   cursor: pointer;
@@ -205,8 +205,8 @@ const CancelText = styled.button`
 `;
 
 const ImportButton = styled(SendButton)`
-  padding: 14px 24px;
-  font-size: 16px;
+  padding: 10px 16px;
+  font-size: 14px;
   font-weight: 500;
   border-radius: 10px;
   border: none;
@@ -232,10 +232,10 @@ const FileUploadContainer = styled.div<{ isDragActive: boolean; hasFile: boolean
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 80px;
+  height: 60px;
   border: 2px dashed ${props => props.isDragActive ? 'rgba(255, 56, 92, 0.7)' : props.hasFile ? 'rgba(92, 184, 92, 0.7)' : 'rgba(255, 255, 255, 0.2)'};
   border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   cursor: pointer;
   transition: all 0.2s;
   background-color: ${props => props.isDragActive ? 'rgba(255, 56, 92, 0.08)' : props.hasFile ? 'rgba(92, 184, 92, 0.08)' : 'transparent'};
@@ -251,9 +251,9 @@ const FileUploadContainer = styled.div<{ isDragActive: boolean; hasFile: boolean
 const FileUploadLabel = styled.label<{ hasFile: boolean }>`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   color: ${props => props.hasFile ? 'rgba(92, 184, 92, 0.9)' : 'rgba(255, 255, 255, 0.7)'};
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
 `;
 
@@ -265,13 +265,13 @@ const InfoBox = styled.div`
   background-color: rgba(255, 56, 92, 0.1);
   border-left: 4px solid #FF385C;
   border-radius: 4px;
-  padding: 12px 16px;
-  margin: 16px 0;
-  font-size: 14px;
+  padding: 10px 12px;
+  margin: 10px 0;
+  font-size: 13px;
   color: #f0f0f0;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
 `;
 
 const InfoIcon = styled.div`
@@ -408,7 +408,7 @@ function ImportEnvModal({
       <AirbnbModalContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <ModalTitle>
           <IconContainer>
-            <FaKey size={20} />
+            <FaKey size={18} />
           </IconContainer>
           Import from .env file
         </ModalTitle>
@@ -439,7 +439,7 @@ function ImportEnvModal({
               accept=".env" 
               onChange={handleFileUpload}
             />
-            {fileName ? <FaCheck size={16} /> : <FaUpload size={16} />}
+            {fileName ? <FaCheck size={14} /> : <FaUpload size={14} />}
             {fileName ? `Selected: ${fileName}` : 'Choose a .env file or drag & drop here'}
           </FileUploadLabel>
         </FileUploadContainer>
@@ -455,25 +455,20 @@ function ImportEnvModal({
           />
         </InputGroup>
         
-        <InfoBox>
-          <InfoIcon>
-            <FaLock size={14} />
-          </InfoIcon>
-          <div>
-            Your secrets will be stored locally on your device and never shared with external servers.
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ flex: 1 }}>
+            <InfoBox>
+              <InfoIcon>
+                <FaLock size={12} />
+              </InfoIcon>
+              <div>
+                Secrets are stored locally and never sent to external servers.
+              </div>
+            </InfoBox>
           </div>
-        </InfoBox>
-        
-        <SupportedFormatsContainer>
-          <FormatTitle>
-            <FaFileCode size={14} /> Environment Variables Format
-          </FormatTitle>
-          <FormatsList>
-            <FormatTag>KEY=VALUE format</FormatTag>
-            <FormatTag>Comments with #</FormatTag>
-            <FormatTag>Standard .env syntax</FormatTag>
-          </FormatsList>
-        </SupportedFormatsContainer>
+          
+  
+        </div>
         
         <ModalActionsContainer>
           <CancelText type="button" onClick={onClose}>
@@ -484,7 +479,7 @@ function ImportEnvModal({
             onClick={handleImport}
             disabled={!envContent.trim() || !profileName.trim()}
           >
-            Import <FaChevronRight size={12} />
+            Import <FaChevronRight size={10} />
           </ImportButton>
         </ModalActionsContainer>
       </AirbnbModalContent>
