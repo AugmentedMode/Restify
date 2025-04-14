@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaCode, FaPlus, FaTrash, FaFileImport, FaRobot } from 'react-icons/fa';
+import { FaCode, FaPlus, FaTrash, FaFileImport, FaRobot, FaLightbulb } from 'react-icons/fa';
 import {
   AppContainer,
   MainContent,
@@ -41,6 +41,7 @@ import GitHubPanel from './components/github/GitHubPanel';
 import Home from './components/Home';
 import AIChat from './components/AIChat';
 import AISection from './components/sidebar/sections/AISection';
+import AIPromptsPanel from './components/AIPrompts/AIPromptsPanel';
 import { useExpandedSections } from './components/sidebar/hooks/useExpandedSections';
 
 // Sample initial data for new users
@@ -959,158 +960,114 @@ function AppContent() {
     }
   };
 
+  // Add navigation function for AI Prompts
+  const navigateToAIPrompts = () => {
+    if (window.location.pathname !== '/ai-prompts') {
+      window.history.pushState({}, '', '/ai-prompts');
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
   // Update the renderMainContent function to use Home component
   const renderMainContent = () => {
-    // Home route that overrides active request/note
-    if (currentRoute === '/home') {
-      return (
-        <Home 
-          onCreateCollection={handleOpenAddCollectionModal}
-          onImportFromFile={handleOpenImportFileModal}
-          onNavigateToSettings={navigateToSettings}
-          onNavigateToSecrets={navigateToSecrets}
-          onNavigateToKanban={() => {
-            window.history.pushState({}, '', '/kanban');
-            window.dispatchEvent(new Event('popstate'));
-          }}
-          onNavigateToGitHub={() => {
-            window.history.pushState({}, '', '/github');
-            window.dispatchEvent(new Event('popstate'));
-          }}
-        />
-      );
-    }
-
-    // Route to the AI Chat page
-    if (currentRoute === '/ai') {
-      return <AIChat />;
-    }
-
-    // Route to the kanban page if needed
-    if (currentRoute === '/kanban') {
-      return <TodoKanban />;
-    }
-    
-    // Route to the secrets manager
-    if (currentRoute === '/secrets') {
-      const profile = secretsProfiles.find(p => p.id === activeSecretsProfile);
-      return (
-        <SecretsManager
-          activeProfile={profile || null}
+    // Switch based on the current route
+    switch (currentRoute) {
+      case '/ai-prompts':
+        // Render the AI Prompts Panel
+        return <AIPromptsPanel />;
+      
+      case '/ai':
+        // Render the AI Chat
+        return <AIChat />;
+        
+      case '/github':
+        // Render the GitHub Panel
+        return <GitHubPanel />;
+      
+      case '/kanban':
+        // Render the Kanban Board
+        return <TodoKanban 
+          // Add any necessary props
+        />;
+      
+      case '/secrets':
+        // Render the Secrets Manager
+        return <SecretsManager 
           profiles={secretsProfiles}
+          activeProfileId={activeSecretsProfile}
+          onSelectProfile={handleSelectSecretsProfile}
+          onAddProfile={handleAddSecretsProfile}
+          onUpdateProfile={handleUpdateSecretsProfile}
+          onDeleteProfile={handleDeleteSecretsProfile}
           onAddSecret={handleAddSecret}
           onUpdateSecret={handleUpdateSecret}
           onDeleteSecret={handleDeleteSecret}
-          onUpdateProfile={handleUpdateSecretsProfile}
-          onDeleteProfile={handleDeleteSecretsProfile}
-          onExportSecrets={handleExportSecrets}
-          onImportSecrets={handleImportSecrets}
-          onEncryptProfile={handleEncryptProfile}
-          onDecryptProfile={handleDecryptProfile}
-          onReturn={() => {
-            window.history.pushState({}, '', '/');
-            window.dispatchEvent(new Event('popstate'));
-          }}
-        />
-      );
-    }
-    
-    // Route to settings
-    if (currentRoute === '/settings') {
-      return (
-        <SettingsManager
-          onReturn={() => {
-            window.history.pushState({}, '', '/');
-            window.dispatchEvent(new Event('popstate'));
-          }}
-        />
-      );
-    }
-    
-    // Route to GitHub PRs
-    if (currentRoute === '/github') {
-      return (
-        <GitHubPanel
-          onReturn={() => {
-            window.history.pushState({}, '', '/');
-            window.dispatchEvent(new Event('popstate'));
-          }}
-        />
-      );
-    }
-    
-    // Check for active note first
-    if (activeNote) {
-      console.log("Rendering note with ID:", activeNote);
-      console.log("All Notes:", notes.map(n => ({ id: n.id, title: n.title })));
-      
-      // Ensure proper string comparison for IDs
-      const note = notes.find(n => String(n.id) === String(activeNote));
-      if (note) {
-        console.log("Found note to render:", note);
-
-        return <NotesContainer 
-          notes={notes} 
-          activeNoteId={activeNote} 
-          onAddNote={addNote} 
-          onUpdateNote={updateNote}
-          onRenameNote={renameNote}
-          onDeleteNote={deleteNote}
-          onDuplicateNote={duplicateNote}
-          onExportNote={exportNote}
-          onOpenSettings={() => navigateToSettings('ai')}
         />;
-      } else {
-        console.log("Note with ID", activeNote, "not found in notes array");
-      }
+      
+      case '/settings':
+        // Render the Settings Manager
+        return <SettingsManager />;
+      
+      case '/home':
+        // Render the Home component
+        return <Home />; // Add any needed props
+      
+      default:
+        // Default case - either show a request or notes
+        if (activeNote) {
+          const noteData = notes.find(note => note.id === activeNote);
+          if (noteData) {
+            return <NotesContainer 
+              note={noteData} 
+              onUpdate={updateNote} 
+            />;
+          }
+        }
+        
+        // Only show the request panel if there's at least one request
+        if (collections.length === 0) {
+          return (
+            <EmptyStateView
+              onCreateCollection={handleOpenAddCollectionModal}
+              onImportFromFile={handleOpenImportFileModal}
+            />
+          );
+        }
+        
+        return (
+          <RequestResponseContainer>
+            {activeRequest ? (
+              <>
+                <RequestContainer>
+                  <RequestPanel
+                    request={activeRequest}
+                    onRequestChange={handleRequestChange}
+                    onRequestSend={handleRequestSend}
+                    loading={loading}
+                    lastRequestTime={lastRequestTime}
+                    environments={environments}
+                    currentEnvironment={getCurrentEnvironment()}
+                    secretsProfiles={secretsProfiles}
+                    activeSecretProfile={
+                      secretsProfiles.find(p => p.id === activeSecretsProfile)
+                    }
+                  />
+                </RequestContainer>
+                <ResponsePanel
+                  response={activeResponse}
+                  loading={loading}
+                  request={activeRequest}
+                />
+              </>
+            ) : (
+              <EmptyStateView
+                onCreateCollection={handleOpenAddCollectionModal}
+                onImportFromFile={handleOpenImportFileModal}
+              />
+            )}
+          </RequestResponseContainer>
+        );
     }
-    
-    // If no active note, then check for active request
-    if (!activeRequest) {
-      return (
-        <Home 
-          onCreateCollection={handleOpenAddCollectionModal}
-          onImportFromFile={handleOpenImportFileModal}
-          onNavigateToSettings={navigateToSettings}
-          onNavigateToSecrets={navigateToSecrets}
-          onNavigateToKanban={() => {
-            window.history.pushState({}, '', '/kanban');
-            window.dispatchEvent(new Event('popstate'));
-          }}
-          onNavigateToGitHub={() => {
-            window.history.pushState({}, '', '/github');
-            window.dispatchEvent(new Event('popstate'));
-          }}
-        />
-      );
-    }
-
-    // This means we have an active request
-    return (
-      <RequestResponseContainer>
-        <RequestContainer>
-          <RequestPanel
-            request={activeRequest}
-            onRequestChange={handleRequestChange}
-            onSendRequest={handleRequestSend}
-            isLoading={loading}
-            lastRequestTime={lastRequestTime}
-            currentEnvironment={getCurrentEnvironment()}
-          />
-        </RequestContainer>
-        <ResponsePanel
-          response={activeResponse}
-          request={activeRequest}
-          isLoading={loading}
-          environments={environments}
-          currentEnvironmentId={currentEnvironmentId}
-          onAddEnvironment={addEnvironment}
-          onUpdateEnvironment={updateEnvironment}
-          onDeleteEnvironment={deleteEnvironment}
-          onSelectEnvironment={selectEnvironment}
-        />
-      </RequestResponseContainer>
-    );
   };
 
   // Create empty request template
@@ -1402,6 +1359,7 @@ function AppContent() {
           onExportSecrets={handleExportSecrets}
           onOpenSettings={navigateToSettings}
           onNavigateToNotes={navigateToNotes}
+          onNavigateToAIPrompts={navigateToAIPrompts}
         >
           <AISection 
             expanded={expandedSections.ai} 
