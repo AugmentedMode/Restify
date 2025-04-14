@@ -256,7 +256,8 @@
       "output": "release/build"
     },
     "extraResources": [
-      "./assets/**"
+      "./assets/**",
+      "./.erb/assets/**"
     ],
     "publish": {
       "provider": "github",

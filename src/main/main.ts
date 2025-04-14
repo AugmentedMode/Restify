@@ -290,27 +290,40 @@ const createWindow = async () => {
     ? path.join(process.resourcesPath, 'assets')
     : path.join(__dirname, '../../assets');
 
+  // Define path to iconset directory
+  const ICONSET_PATH = app.isPackaged
+    ? path.join(process.resourcesPath, '.erb/assets/icon.iconset')
+    : path.join(__dirname, '../../.erb/assets/icon.iconset');
+
+  console.log('Icon set path:', ICONSET_PATH);
+  console.log('Icon set exists:', fs.existsSync(ICONSET_PATH));
+
+  // Log available icons in the iconset directory
+  if (fs.existsSync(ICONSET_PATH)) {
+    console.log('Iconset directory contents:', fs.readdirSync(ICONSET_PATH));
+  }
+
   const getAssetPath = (...paths: string[]): string => {
     return path.join(RESOURCES_PATH, ...paths);
   };
 
-  // IMPORTANT: Force-use our custom icon instead of default Electron icon
-  // Use icon-custom.png directly instead of the standard icon names that might be cached
-  const iconPath = path.join(RESOURCES_PATH, 'icon-custom.png');
-  console.log('Using custom icon path:', iconPath);
-  console.log('Icon exists:', fs.existsSync(iconPath));
-  
-  // Debug log all files in the assets directory to check for available icons
-  console.log('Assets directory:', RESOURCES_PATH);
-  if (fs.existsSync(RESOURCES_PATH)) {
-    console.log('Assets directory contents:', fs.readdirSync(RESOURCES_PATH));
-    
-    // Check the icons subdirectory if it exists
-    const iconsDir = path.join(RESOURCES_PATH, 'icons');
-    if (fs.existsSync(iconsDir)) {
-      console.log('Icons directory contents:', fs.readdirSync(iconsDir));
+  // Get appropriate icon based on platform
+  const getIconPath = (): string => {
+    if (process.platform === 'darwin') {
+      // On macOS, use the 512x512@2x icon for best quality
+      return path.join(ICONSET_PATH, 'icon_512x512@2x.png');
+    } else if (process.platform === 'win32') {
+      // On Windows, use the largest icon available
+      return path.join(ICONSET_PATH, 'icon_256x256.png');
+    } else {
+      // On Linux or other platforms
+      return path.join(ICONSET_PATH, 'icon_512x512.png');
     }
-  }
+  };
+
+  const iconPath = getIconPath();
+  console.log('Using icon path:', iconPath);
+  console.log('Icon exists:', fs.existsSync(iconPath));
 
   mainWindow = new BrowserWindow({
     show: false,
@@ -318,7 +331,7 @@ const createWindow = async () => {
     height: 800,
     minWidth: 770,
     minHeight: 660,
-    icon: iconPath, // Use our custom icon directly
+    icon: iconPath,
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
@@ -357,10 +370,12 @@ const createWindow = async () => {
 
   // Set dock icon explicitly for macOS
   if (process.platform === 'darwin') {
-    const restifyIconPath = path.join(RESOURCES_PATH, 'icon.icns');
-    console.log('Setting dock icon path:', restifyIconPath);
-    console.log('Dock icon exists:', fs.existsSync(restifyIconPath));
-    app.dock.setIcon(restifyIconPath);
+    const macOSIconPath = path.join(ICONSET_PATH, 'icon_512x512@2x.png');
+    console.log('Setting dock icon path:', macOSIconPath);
+    console.log('Dock icon exists:', fs.existsSync(macOSIconPath));
+    if (fs.existsSync(macOSIconPath)) {
+      app.dock.setIcon(macOSIconPath);
+    }
   }
 };
 
@@ -380,17 +395,19 @@ app
   .whenReady()
   .then(() => {
     // Set app icon explicitly for all platforms
-    const RESOURCES_PATH = app.isPackaged
-      ? path.join(process.resourcesPath, 'assets')
-      : path.join(__dirname, '../../assets');
+    const ICONSET_PATH = app.isPackaged
+      ? path.join(process.resourcesPath, '.erb/assets/icon.iconset')
+      : path.join(__dirname, '../../.erb/assets/icon.iconset');
         
     if (process.platform === 'darwin') {
-      // Direct path to our custom icon to bypass any caching issues
-      const iconPath = path.join(RESOURCES_PATH, 'icon-custom.png');
+      // Direct path to high-resolution icon
+      const iconPath = path.join(ICONSET_PATH, 'icon_512x512@2x.png');
       console.log('Setting macOS app icon explicitly:', iconPath);
       console.log('Icon exists:', fs.existsSync(iconPath));
       try {
-        app.dock.setIcon(iconPath);
+        if (fs.existsSync(iconPath)) {
+          app.dock.setIcon(iconPath);
+        }
       } catch (error) {
         console.error('Failed to set dock icon:', error);
       }
