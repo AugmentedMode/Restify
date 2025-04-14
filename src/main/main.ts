@@ -290,17 +290,17 @@ const createWindow = async () => {
     ? path.join(process.resourcesPath, 'assets')
     : path.join(__dirname, '../../assets');
 
-  // Define path to iconset directory
-  const ICONSET_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, '.erb/assets/icon.iconset')
-    : path.join(__dirname, '../../.erb/assets/icon.iconset');
+  // Define path to icons directory
+  const ICONS_PATH = app.isPackaged
+    ? path.join(process.resourcesPath, 'assets/icons')
+    : path.join(__dirname, '../../assets/icons');
 
-  console.log('Icon set path:', ICONSET_PATH);
-  console.log('Icon set exists:', fs.existsSync(ICONSET_PATH));
+  console.log('Icons path:', ICONS_PATH);
+  console.log('Icons exists:', fs.existsSync(ICONS_PATH));
 
-  // Log available icons in the iconset directory
-  if (fs.existsSync(ICONSET_PATH)) {
-    console.log('Iconset directory contents:', fs.readdirSync(ICONSET_PATH));
+  // Log available icons in the icons directory
+  if (fs.existsSync(ICONS_PATH)) {
+    console.log('Icons directory contents:', fs.readdirSync(ICONS_PATH));
   }
 
   const getAssetPath = (...paths: string[]): string => {
@@ -311,13 +311,13 @@ const createWindow = async () => {
   const getIconPath = (): string => {
     if (process.platform === 'darwin') {
       // On macOS, use the 512x512@2x icon for best quality
-      return path.join(ICONSET_PATH, 'icon_512x512@2x.png');
+      return path.join(ICONS_PATH, 'icon_512x512@2x.png');
     } else if (process.platform === 'win32') {
       // On Windows, use the largest icon available
-      return path.join(ICONSET_PATH, 'icon_256x256.png');
+      return path.join(ICONS_PATH, 'icon_256x256.png');
     } else {
       // On Linux or other platforms
-      return path.join(ICONSET_PATH, 'icon_512x512.png');
+      return path.join(ICONS_PATH, 'icon_512x512.png');
     }
   };
 
@@ -370,7 +370,7 @@ const createWindow = async () => {
 
   // Set dock icon explicitly for macOS
   if (process.platform === 'darwin') {
-    const macOSIconPath = path.join(ICONSET_PATH, 'icon_512x512@2x.png');
+    const macOSIconPath = path.join(ICONS_PATH, 'icon_512x512@2x.png');
     console.log('Setting dock icon path:', macOSIconPath);
     console.log('Dock icon exists:', fs.existsSync(macOSIconPath));
     if (fs.existsSync(macOSIconPath)) {
@@ -395,13 +395,13 @@ app
   .whenReady()
   .then(() => {
     // Set app icon explicitly for all platforms
-    const ICONSET_PATH = app.isPackaged
-      ? path.join(process.resourcesPath, '.erb/assets/icon.iconset')
-      : path.join(__dirname, '../../.erb/assets/icon.iconset');
+    const ICONS_PATH = app.isPackaged
+      ? path.join(process.resourcesPath, 'assets/icons')
+      : path.join(__dirname, '../../assets/icons');
         
     if (process.platform === 'darwin') {
       // Direct path to high-resolution icon
-      const iconPath = path.join(ICONSET_PATH, 'icon_512x512@2x.png');
+      const iconPath = path.join(ICONS_PATH, 'icon_512x512@2x.png');
       console.log('Setting macOS app icon explicitly:', iconPath);
       console.log('Icon exists:', fs.existsSync(iconPath));
       try {

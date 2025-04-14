@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import {
   Modal,
@@ -6,7 +6,7 @@ import {
   ModalActions,
   SendButton,
 } from '../../styles/StyledComponents';
-import { FaKey, FaFileCode, FaChevronRight, FaUpload } from 'react-icons/fa';
+import { FaKey, FaFileCode, FaChevronRight, FaUpload, FaCheck, FaInfoCircle, FaLock } from 'react-icons/fa';
 
 // Airbnb-inspired styled components with dark theme
 const StyledModal = styled(Modal)`
@@ -14,18 +14,19 @@ const StyledModal = styled(Modal)`
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(5px);
 `;
 
 const AirbnbModalContent = styled(ModalContent)`
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 32px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  max-width: 580px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  max-width: 620px;
   width: 100%;
-  background-color: #222222;
+  background-color: #1a1a1a;
   transform: translateY(0);
   animation: modalFadeIn 0.3s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.07);
 
   @keyframes modalFadeIn {
     from {
@@ -41,7 +42,6 @@ const AirbnbModalContent = styled(ModalContent)`
 
 const ModalTitle = styled.h2`
   font-family:
-    'Circular',
     -apple-system,
     BlinkMacSystemFont,
     Roboto,
@@ -59,7 +59,6 @@ const ModalTitle = styled.h2`
 
 const ModalSubtitle = styled.p`
   font-family:
-    'Circular',
     -apple-system,
     BlinkMacSystemFont,
     Roboto,
@@ -76,10 +75,11 @@ const IconContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background-color: #3290ff;
   border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(50, 144, 255, 0.3);
 `;
 
 const EnvTextArea = styled.textarea`
@@ -108,6 +108,18 @@ const EnvTextArea = styled.textarea`
   }
 `;
 
+const InputLabel = styled.label`
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #dddddd;
+  margin-bottom: 8px;
+`;
+
+const InputGroup = styled.div`
+  margin-bottom: 20px;
+`;
+
 const Input = styled.input`
   width: 100%;
   padding: 12px 16px;
@@ -117,7 +129,6 @@ const Input = styled.input`
   color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   font-size: 14px;
-  margin-bottom: 16px;
   
   &:focus {
     outline: none;
@@ -132,8 +143,8 @@ const Input = styled.input`
 
 const SupportedFormatsContainer = styled.div`
   background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 12px 16px;
+  border-radius: 10px;
+  padding: 14px 18px;
   margin-bottom: 24px;
 `;
 
@@ -181,7 +192,6 @@ const CancelText = styled.button`
   color: #dddddd;
   cursor: pointer;
   font-family:
-    'Circular',
     -apple-system,
     BlinkMacSystemFont,
     Roboto,
@@ -217,35 +227,54 @@ const ImportButton = styled(SendButton)`
   }
 `;
 
-const FileUploadContainer = styled.div`
+const FileUploadContainer = styled.div<{ isDragActive: boolean; hasFile: boolean }>`
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 60px;
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  margin-bottom: 16px;
+  height: 72px;
+  border: 2px dashed ${props => props.isDragActive ? 'rgba(50, 144, 255, 0.7)' : props.hasFile ? 'rgba(92, 184, 92, 0.7)' : 'rgba(255, 255, 255, 0.2)'};
+  border-radius: 10px;
+  margin-bottom: 20px;
   cursor: pointer;
   transition: all 0.2s;
+  background-color: ${props => props.isDragActive ? 'rgba(50, 144, 255, 0.08)' : props.hasFile ? 'rgba(92, 184, 92, 0.08)' : 'transparent'};
   
   &:hover {
-    border-color: rgba(50, 144, 255, 0.5);
-    background-color: rgba(50, 144, 255, 0.05);
+    border-color: ${props => props.hasFile ? 'rgba(92, 184, 92, 0.7)' : 'rgba(50, 144, 255, 0.5)'};
+    background-color: ${props => props.hasFile ? 'rgba(92, 184, 92, 0.08)' : 'rgba(50, 144, 255, 0.05)'};
   }
 `;
 
-const FileUploadLabel = styled.label`
+const FileUploadLabel = styled.label<{ hasFile: boolean }>`
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.7);
+  gap: 12px;
+  color: ${props => props.hasFile ? 'rgba(92, 184, 92, 0.9)' : 'rgba(255, 255, 255, 0.7)'};
   font-size: 14px;
   cursor: pointer;
 `;
 
 const HiddenFileInput = styled.input`
   display: none;
+`;
+
+const InfoBox = styled.div`
+  background-color: rgba(50, 144, 255, 0.1);
+  border-left: 4px solid #3290ff;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  font-size: 14px;
+  color: #f0f0f0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+`;
+
+const InfoIcon = styled.div`
+  margin-top: 2px;
+  color: #3290ff;
 `;
 
 interface ImportEnvModalProps {
@@ -262,6 +291,9 @@ function ImportEnvModal({
   const [envContent, setEnvContent] = useState('');
   const [profileName, setProfileName] = useState('');
   const [fileName, setFileName] = useState('');
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   
   const placeholderText = "API_KEY=your_api_key_here\nAPI_SECRET=your_secret_here\nDATABASE_URL=postgresql://user:pass@localhost:5432/db";
 
@@ -305,6 +337,67 @@ function ImportEnvModal({
     };
     reader.readAsText(file);
   };
+  
+  const handleDragEnter = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(true);
+  }, []);
+  
+  const handleDragLeave = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+  }, []);
+  
+  const handleDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+  
+  const handleDrop = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+    
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      
+      // Default the profile name to the file name without extension
+      const baseName = file.name.replace(/\.[^/.]+$/, "");
+      if (!profileName) {
+        setProfileName(baseName);
+      }
+      
+      setFileName(file.name);
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setEnvContent(event.target.result as string);
+        }
+      };
+      reader.readAsText(file);
+    }
+  }, [profileName]);
+  
+  // Set up drag-and-drop event listeners
+  useEffect(() => {
+    const dropZone = dropZoneRef.current;
+    if (dropZone) {
+      dropZone.addEventListener('dragenter', handleDragEnter);
+      dropZone.addEventListener('dragleave', handleDragLeave);
+      dropZone.addEventListener('dragover', handleDragOver);
+      dropZone.addEventListener('drop', handleDrop);
+      
+      return () => {
+        dropZone.removeEventListener('dragenter', handleDragEnter);
+        dropZone.removeEventListener('dragleave', handleDragLeave);
+        dropZone.removeEventListener('dragover', handleDragOver);
+        dropZone.removeEventListener('drop', handleDrop);
+      };
+    }
+  }, [handleDragEnter, handleDragLeave, handleDragOver, handleDrop]);
 
   if (!isOpen) return null;
 
@@ -313,42 +406,65 @@ function ImportEnvModal({
       <AirbnbModalContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <ModalTitle>
           <IconContainer>
-            <FaKey size={16} />
+            <FaKey size={20} />
           </IconContainer>
           Import from .env file
         </ModalTitle>
         <ModalSubtitle>Upload or paste your .env file content to import secrets</ModalSubtitle>
         
-        <Input
-          type="text"
-          placeholder="Profile Name (e.g., Development, Production)"
-          value={profileName}
-          onChange={(e) => setProfileName(e.target.value)}
-          required
-        />
+        <InputGroup>
+          <InputLabel htmlFor="profile-name">Profile Name</InputLabel>
+          <Input
+            id="profile-name"
+            type="text"
+            placeholder="E.g., Development, Production, Staging"
+            value={profileName}
+            onChange={(e) => setProfileName(e.target.value)}
+            required
+          />
+        </InputGroup>
         
-        <FileUploadContainer>
-          <FileUploadLabel>
+        <FileUploadContainer 
+          ref={dropZoneRef}
+          isDragActive={isDragActive} 
+          hasFile={!!fileName}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <FileUploadLabel hasFile={!!fileName}>
             <HiddenFileInput 
+              ref={fileInputRef}
               type="file" 
               accept=".env" 
               onChange={handleFileUpload}
             />
-            <FaUpload size={16} />
-            {fileName ? `Selected: ${fileName}` : 'Choose a .env file or drag & drop'}
+            {fileName ? <FaCheck size={16} /> : <FaUpload size={16} />}
+            {fileName ? `Selected: ${fileName}` : 'Choose a .env file or drag & drop here'}
           </FileUploadLabel>
         </FileUploadContainer>
         
-        <EnvTextArea
-          placeholder={placeholderText}
-          value={envContent}
-          onChange={(e) => setEnvContent(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
+        <InputGroup>
+          <InputLabel htmlFor="env-content">Environment Variables</InputLabel>
+          <EnvTextArea
+            id="env-content"
+            placeholder={placeholderText}
+            value={envContent}
+            onChange={(e) => setEnvContent(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </InputGroup>
+        
+        <InfoBox>
+          <InfoIcon>
+            <FaLock size={14} />
+          </InfoIcon>
+          <div>
+            Your secrets will be stored locally on your device and never shared with external servers.
+          </div>
+        </InfoBox>
         
         <SupportedFormatsContainer>
           <FormatTitle>
-            <FaFileCode size={12} /> Environment Variables Format
+            <FaFileCode size={14} /> Environment Variables Format
           </FormatTitle>
           <FormatsList>
             <FormatTag>KEY=VALUE format</FormatTag>

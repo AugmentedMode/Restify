@@ -213,7 +213,7 @@
       "entitlements": "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
       "gatekeeperAssess": false,
-      "icon": "assets/icon.icns",
+      "icon": "assets/icons/icon_512x512@2x.png",
       "category": "public.app-category.developer-tools",
       "identity": "3BLRKVZ9R4",
       "notarize": false
@@ -241,14 +241,14 @@
       "target": [
         "nsis"
       ],
-      "icon": "assets/icon.ico"
+      "icon": "assets/icons/icon_256x256.png"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
       "category": "Development",
-      "icon": "assets/icon.png"
+      "icon": "assets/icons/icon_512x512.png"
     },
     "directories": {
       "app": "release/app",

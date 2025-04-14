@@ -666,12 +666,169 @@ const SecretsManager: React.FC<SecretsManagerProps> = ({
   if (!activeProfile) {
     return (
       <Container>
-        <NoSecretsMessage>
-          <div>Select a secrets profile from the sidebar or create a new one.</div>
+        <HeaderContainer>
+          <HeaderTitle>
+            <FaKey size={22} />
+            Secrets Manager
+          </HeaderTitle>
           <ActionButton onClick={onReturn}>
             <FaChevronLeft size={12} /> Return to API Client
           </ActionButton>
-        </NoSecretsMessage>
+        </HeaderContainer>
+        
+        <ScrollWrapper>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '40px 20px',
+              height: 'calc(100vh - 200px)',
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              style={{
+                background: 'linear-gradient(135deg, rgba(50, 144, 255, 0.1), rgba(25, 25, 25, 0.3))',
+                borderRadius: '16px',
+                padding: '40px',
+                maxWidth: '600px',
+                width: '100%',
+                border: '1px solid rgba(50, 144, 255, 0.2)',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2), 0 0 30px rgba(50, 144, 255, 0.1)',
+                textAlign: 'center',
+              }}
+            >
+              <motion.div
+                animate={{ 
+                  y: [0, -10, 0],
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity, 
+                  repeatType: "reverse",
+                  ease: "easeInOut"
+                }}
+                style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(50, 144, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  border: '1px dashed rgba(50, 144, 255, 0.3)',
+                }}
+              >
+                <FaKey size={40} color="rgba(50, 144, 255, 0.8)" />
+              </motion.div>
+              
+              <h2 style={{ 
+                fontSize: '28px', 
+                marginBottom: '16px', 
+                fontWeight: 600,
+                background: 'linear-gradient(120deg, #ffffff, #3290ff)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}>
+                Manage Your API Secrets
+              </h2>
+              
+              <p style={{ 
+                fontSize: '16px', 
+                color: 'rgba(255, 255, 255, 0.7)', 
+                maxWidth: '450px',
+                margin: '0 auto 30px',
+                lineHeight: 1.6 
+              }}>
+                Select an existing profile from the sidebar or create a new one to securely store your API keys, tokens, and other sensitive information.
+              </p>
+              
+              <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <motion.button
+                  whileHover={{ y: -3, boxShadow: '0 6px 12px rgba(0, 0, 0, 0.2)' }}
+                  whileTap={{ y: 0 }}
+                  onClick={onImportSecrets}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 20px',
+                    background: 'linear-gradient(90deg, #3290ff, #1a7deb)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: 'white',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 10px rgba(50, 144, 255, 0.3)',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <FaFileImport size={16} />
+                  Import from .env file
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ y: -3, boxShadow: '0 6px 12px rgba(0, 0, 0, 0.2)' }}
+                  whileTap={{ y: 0 }}
+                  onClick={() => {
+                    const defaultProfile = {
+                      id: uuidv4(),
+                      name: 'New Profile',
+                      description: '',
+                      secrets: [],
+                      isEncrypted: false,
+                      createdAt: Date.now(),
+                      updatedAt: Date.now()
+                    };
+                    onUpdateProfile(defaultProfile);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 20px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '8px',
+                    color: 'white',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <FaPlus size={16} />
+                  Create New Profile
+                </motion.button>
+              </div>
+              
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '10px', 
+                margin: '40px auto 0',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                maxWidth: 'fit-content'
+              }}>
+                <FaLock size={14} color="rgba(255, 255, 255, 0.6)" />
+                <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                  Your secrets stay local and are never sent to any server
+                </span>
+              </div>
+            </motion.div>
+          </motion.div>
+        </ScrollWrapper>
       </Container>
     );
   }

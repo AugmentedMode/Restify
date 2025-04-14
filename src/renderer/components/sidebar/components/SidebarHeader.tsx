@@ -18,6 +18,8 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
     window.dispatchEvent(new Event('popstate'));
   };
 
+  
+
   return (
     <Header>
       <Logo onClick={navigateToHome} style={{ cursor: 'pointer' }}>
@@ -31,7 +33,7 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
               animate={{ opacity: isSidebarCollapsed ? 0 : 1 }}
               transition={{ duration: 0.2 }}
             >
-              Restify API Client
+              Hapi Dev Tools
             </motion.span>
           </>
         )}
