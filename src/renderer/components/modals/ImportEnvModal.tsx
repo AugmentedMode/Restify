@@ -455,7 +455,7 @@ function ImportEnvModal({
           />
         </InputGroup>
         
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '-20px' }}>
           <div style={{ flex: 1 }}>
             <InfoBox>
               <InfoIcon>
