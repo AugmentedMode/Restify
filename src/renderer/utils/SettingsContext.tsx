@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import githubService, { GitHubService } from '../services/GitHubService';
 
 // Define settings types (matching our settings component)
 interface GeneralSettings {
@@ -30,11 +31,17 @@ interface AISettings {
   apiUrl?: string;
 }
 
+interface GitHubSettings {
+  token: string;
+  isConnected: boolean;
+}
+
 export interface AppSettings {
   general: GeneralSettings;
   api: ApiSettings;
   security: SecuritySettings;
   ai: AISettings;
+  github: GitHubSettings;
 }
 
 // Default settings
@@ -63,6 +70,10 @@ const defaultSettings: AppSettings = {
     provider: 'openai',
     model: 'gpt-3.5-turbo',
     apiUrl: ''
+  },
+  github: {
+    token: '',
+    isConnected: false
   }
 };
 
@@ -77,6 +88,8 @@ interface SettingsContextType {
     category: T,
     setting: keyof AppSettings[T] & string
   ) => void;
+  setGitHubToken: (token: string) => Promise<void>;
+  clearGitHubToken: () => Promise<void>;
 }
 
 // Create the context
@@ -111,9 +124,37 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       ai: {
         ...defaultSettings.ai,
         ...parsedSettings.ai
+      },
+      github: {
+        ...defaultSettings.github,
+        ...parsedSettings.github
       }
     };
   });
+
+  // Initialize GitHub connection on first load
+  useEffect(() => {
+    const initGitHub = async () => {
+      try {
+        const savedToken = await GitHubService.loadStoredToken();
+        if (savedToken && settings.security.storeGitHubToken) {
+          await githubService.initialize(savedToken, settings.security.storeGitHubToken);
+          setSettings(prev => ({
+            ...prev,
+            github: {
+              ...prev.github,
+              isConnected: true,
+              token: '******' // Mask token in memory for security
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to initialize GitHub service:', error);
+      }
+    };
+    
+    initGitHub();
+  }, []);
 
   // Save settings to localStorage when they change
   useEffect(() => {
@@ -159,8 +200,64 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
+  // Set GitHub token and initialize service
+  const setGitHubToken = async (token: string) => {
+    try {
+      await githubService.initialize(token, settings.security.storeGitHubToken);
+      
+      // Dispatch a custom event to notify components about GitHub authentication
+      window.dispatchEvent(new CustomEvent('github-auth-changed', { detail: { authenticated: true } }));
+      
+      // Update settings
+      setSettings(prev => ({
+        ...prev,
+        github: {
+          ...prev.github,
+          isConnected: true,
+          token: '******' // Mask token in memory for security
+        }
+      }));
+    } catch (error) {
+      console.error('Failed to set GitHub token:', error);
+      throw error;
+    }
+  };
+
+  // Clear GitHub token
+  const clearGitHubToken = async () => {
+    try {
+      // Clear token from service
+      githubService.clearToken();
+      
+      // Clear from storage
+      GitHubService.clearStoredToken();
+      
+      // Dispatch a custom event to notify components
+      window.dispatchEvent(new CustomEvent('github-auth-changed', { detail: { authenticated: false } }));
+      
+      // Update settings
+      setSettings(prev => ({
+        ...prev,
+        github: {
+          ...prev.github,
+          isConnected: false,
+          token: ''
+        }
+      }));
+    } catch (error) {
+      console.error('Failed to clear GitHub token:', error);
+      throw error;
+    }
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, toggleSetting }}>
+    <SettingsContext.Provider value={{ 
+      settings, 
+      updateSettings, 
+      toggleSetting,
+      setGitHubToken,
+      clearGitHubToken
+    }}>
       {children}
     </SettingsContext.Provider>
   );

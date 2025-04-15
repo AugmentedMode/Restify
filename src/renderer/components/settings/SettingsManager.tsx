@@ -15,7 +15,13 @@ import {
   FaTrash,
   FaFileImport,
   FaRobot,
-  FaKey
+  FaKey,
+  FaCog,
+  FaChevronLeft,
+  FaChevronRight,
+  FaGithub,
+  FaUser,
+  FaLink
 } from 'react-icons/fa';
 import { useSettings } from '../../utils/SettingsContext';
 import { db, NotesService, CollectionsService, HistoryService, ResponsesService, EnvironmentsService, SettingsService } from '../../services/DatabaseService';
@@ -325,6 +331,24 @@ const AboutLink = styled.a`
   }
 `;
 
+const LinkButton = styled.a`
+  color: ${theme.brand.primary};
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+  
+  svg {
+    margin-right: 6px;
+  }
+`;
+
 const ActionButton = styled.button`
   background-color: ${theme.brand.primary};
   color: white;
@@ -361,6 +385,46 @@ const PasswordInput = styled(TextInput).attrs({ type: 'password' })`
   font-family: monospace;
 `;
 
+const GitHubTokenField = styled(PasswordInput)`
+  font-family: monospace;
+  letter-spacing: 1px;
+`;
+
+const GitHubTokenSection = styled.div`
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid ${theme.border.light};
+`;
+
+const MaskedToken = styled.div`
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: ${theme.text.secondary};
+  background-color: ${theme.background.tertiary};
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid ${theme.controls.inactive};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const TokenActions = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+`;
+
+const ConnectionStatus = styled.div<{ connected: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-top: 8px;
+  color: ${props => props.connected ? '#2da44e' : theme.text.secondary};
+`;
+
 interface SettingsManagerProps {
   onReturn: () => void;
 }
@@ -387,8 +451,11 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
+  // State for GitHub token input
+  const [githubToken, setGithubToken] = useState('');
+  
   // Use settings context instead of local state
-  const { settings, updateSettings, toggleSetting } = useSettings();
+  const { settings, updateSettings, toggleSetting, setGitHubToken, clearGitHubToken } = useSettings();
   
   // Update select input settings
   const updateSelectSetting = <T extends keyof typeof settings>(
@@ -714,7 +781,86 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
             onClick={() => toggleSetting('security', 'storeGitHubToken')}
           />
         </SettingRow>
-        <SettingRow>
+
+        <GitHubTokenSection>
+          <SettingLabel style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FaGithub size={16} style={{ color: theme.brand.primary }} /> 
+            GitHub Connection
+          </SettingLabel>
+          
+          {settings.github.isConnected ? (
+            <>
+              <ConnectionStatus connected={true}>
+                <FaCheck /> Connected to GitHub
+              </ConnectionStatus>
+              <MaskedToken>
+                ••••••••••••••••••••••••••
+                <FaTimes 
+                  style={{ cursor: 'pointer', color: theme.text.secondary }} 
+                  onClick={async () => {
+                    try {
+                      await clearGitHubToken();
+                    } catch (error) {
+                      console.error('Failed to clear GitHub token:', error);
+                    }
+                  }}
+                  title="Disconnect from GitHub"
+                />
+              </MaskedToken>
+              <SettingDescription style={{ marginTop: '8px' }}>
+                Your GitHub token is securely stored and encrypted. Click the X to disconnect.
+              </SettingDescription>
+            </>
+          ) : (
+            <>
+              <ConnectionStatus connected={false}>
+                <FaTimes /> Not connected to GitHub
+              </ConnectionStatus>
+              <div style={{ marginTop: '12px' }}>
+                <SettingDescription style={{ marginBottom: '8px' }}>
+                  Enter a GitHub Personal Access Token to connect:
+                </SettingDescription>
+                <GitHubTokenField
+                  id="github-token"
+                  type="password"
+                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={githubToken}
+                  onChange={(e) => setGithubToken(e.target.value)}
+                />
+                <TokenActions>
+                  <ActionButton 
+                    onClick={async () => {
+                      if (!githubToken) {
+                        alert('Please enter a GitHub token');
+                        return;
+                      }
+                      
+                      try {
+                        await setGitHubToken(githubToken);
+                        setGithubToken(''); // Clear the input field after successful connection
+                      } catch (error) {
+                        console.error('Failed to set GitHub token:', error);
+                        alert(`Failed to connect to GitHub: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                      }
+                    }}
+                  >
+                    Connect
+                  </ActionButton>
+                  <LinkButton 
+                    href="https://github.com/settings/tokens/new" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <FaLink size={12} /> Create a token
+                  </LinkButton>
+                </TokenActions>
+              </div>
+            </>
+          )}
+        </GitHubTokenSection>
+
+        <SettingRow style={{ marginTop: '24px' }}>
           <div>
             <SettingLabel><FaTrash style={{ marginRight: '8px', color: theme.brand.primary }} /> Delete All Data</SettingLabel>
             <SettingDescription>Permanently remove all app data including collections, history, environments, and settings</SettingDescription>

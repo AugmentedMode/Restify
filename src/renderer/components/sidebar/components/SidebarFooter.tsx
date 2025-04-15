@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { FaCog, FaChevronLeft, FaChevronRight, FaGithub, FaUser } from 'react-icons/fa';
+import { FaCog, FaChevronLeft, FaChevronRight, FaGithub, FaUser, FaCheck, FaTimes } from 'react-icons/fa';
 import { SidebarFooter as Footer } from '../../../styles/StyledComponents';
 import NavTooltip from './NavTooltip';
 import styled from 'styled-components';
 import githubService from '../../../services/GitHubService';
+import { useSettings } from '../../../utils/SettingsContext';
 
 const ProfileSection = styled.div`
   display: flex;
@@ -92,7 +93,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
 }) => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [tokenCheckInterval, setTokenCheckInterval] = useState<number | null>(null);
+  const { settings } = useSettings();
 
   // Function to fetch GitHub profile
   const fetchProfile = async () => {
@@ -100,38 +101,46 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
       if (githubService.isInitialized()) {
         const userData = await githubService.getCurrentUser();
         setProfile(userData);
-        setLoading(false);
-        if (tokenCheckInterval) {
-          window.clearInterval(tokenCheckInterval);
-          setTokenCheckInterval(null);
-        }
+      } else {
+        setProfile(null);
       }
     } catch (error) {
       console.error('[GitHub Profile] Error fetching user data:', error);
+      setProfile(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Set up polling to check GitHub authentication status
+  // React to GitHub authentication changes
   useEffect(() => {
-    // Initial fetch
-    fetchProfile();
-    
-    // Check every 2 seconds if not authenticated yet
-    const interval = window.setInterval(() => {
-      if (!profile) {
-        fetchProfile();
-      }
-    }, 2000);
-    
-    setTokenCheckInterval(interval);
-    
-    // Cleanup
-    return () => {
-      if (tokenCheckInterval) {
-        window.clearInterval(tokenCheckInterval);
+    // Initialize with current GitHub connection state
+    const checkAuthStatus = async () => {
+      setLoading(true);
+      if (settings.github.isConnected && githubService.isInitialized()) {
+        await fetchProfile();
+      } else {
+        setProfile(null);
+        setLoading(false);
       }
     };
-  }, []);
+
+    // Listen for GitHub auth changes
+    const handleAuthChange = () => {
+      checkAuthStatus();
+    };
+
+    // Add event listener for auth changes
+    window.addEventListener('github-auth-changed', handleAuthChange);
+    
+    // Initial check
+    checkAuthStatus();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('github-auth-changed', handleAuthChange);
+    };
+  }, [settings.github.isConnected]);
 
   // Handle profile section click based on connection status
   const handleProfileClick = () => {

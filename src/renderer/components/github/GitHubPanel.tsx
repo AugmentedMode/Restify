@@ -783,7 +783,6 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [activeTab, setActiveTab] = useState<'mine' | 'reviews'>('mine');
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string>('');
-  const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTokenManagement, setShowTokenManagement] = useState(false);
   const [showFullToken, setShowFullToken] = useState(false);
@@ -811,8 +810,8 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [myPrReviewFilter, setMyPrReviewFilter] = useState<ReviewFilter>('all');
   const [reviewPrReviewFilter, setReviewPrReviewFilter] = useState<ReviewFilter>('all');
   
-  // Get settings from context
-  const { settings } = useSettings();
+  // Get settings from context including GitHub token management functions
+  const { settings, setGitHubToken, clearGitHubToken } = useSettings();
   
   // Function to get current filter state based on active tab
   const getFilterState = () => {
@@ -853,147 +852,40 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     }
   };
   
-  // Function to reset token in case of issues
-  const resetToken = () => {
+  // Reset token (modified to use settings)
+  const resetToken = async () => {
     console.log('[GitHub] Resetting token due to user request');
-    GitHubService.resetAllTokens();
-    setToken('');
-    setInitialized(false);
-    setError(null);
-    setShowTokenManagement(false);
+    try {
+      await clearGitHubToken();
+      setError(null);
+      setShowTokenManagement(false);
+    } catch (error) {
+      console.error('[GitHub] Error clearing GitHub token:', error);
+      setError('Failed to reset GitHub token');
+    }
   };
   
-  // Load filter settings from localStorage on component mount
+  // Load token (modified to use settings)
   useEffect(() => {
-    try {
-      const savedMyPrFilters = localStorage.getItem('github-panel-mypr-filters');
-      const savedReviewPrFilters = localStorage.getItem('github-panel-reviewpr-filters');
-      
-      if (savedMyPrFilters) {
-        const filters = JSON.parse(savedMyPrFilters);
-        setMyPrSearchTerm(filters.searchTerm || '');
-        setMyPrRepoFilter(filters.repoFilter || 'all');
-        setMyPrStatusFilter(filters.statusFilter || 'all');
-        setMyPrAgeFilter(filters.ageFilter || 'all');
-        setMyPrSortOption(filters.sortOption || 'newest');
-        setMyPrSortDirection(filters.sortDirection || 'desc');
-        setMyPrReviewFilter(filters.reviewFilter || 'all');
-      }
-      
-      if (savedReviewPrFilters) {
-        const filters = JSON.parse(savedReviewPrFilters);
-        setReviewPrSearchTerm(filters.searchTerm || '');
-        setReviewPrRepoFilter(filters.repoFilter || 'all');
-        setReviewPrStatusFilter(filters.statusFilter || 'all');
-        setReviewPrAgeFilter(filters.ageFilter || 'all');
-        setReviewPrSortOption(filters.sortOption || 'newest');
-        setReviewPrSortDirection(filters.sortDirection || 'desc');
-        setReviewPrReviewFilter(filters.reviewFilter || 'all');
-      }
-    } catch (error) {
-      console.error('[GitHub] Error loading saved filters:', error);
-      // If there's an error, we'll just use the default filters
-    }
-  }, []);
-  
-  // Save filter settings to localStorage whenever they change
-  useEffect(() => {
-    try {
-      const myPrFilters = {
-        searchTerm: myPrSearchTerm,
-        repoFilter: myPrRepoFilter,
-        statusFilter: myPrStatusFilter,
-        ageFilter: myPrAgeFilter,
-        sortOption: myPrSortOption,
-        sortDirection: myPrSortDirection,
-        reviewFilter: myPrReviewFilter
-      };
-      
-      localStorage.setItem('github-panel-mypr-filters', JSON.stringify(myPrFilters));
-    } catch (error) {
-      console.error('[GitHub] Error saving My PR filters:', error);
-    }
-  }, [myPrSearchTerm, myPrRepoFilter, myPrStatusFilter, myPrAgeFilter, myPrSortOption, myPrSortDirection, myPrReviewFilter]);
-  
-  useEffect(() => {
-    try {
-      const reviewPrFilters = {
-        searchTerm: reviewPrSearchTerm,
-        repoFilter: reviewPrRepoFilter,
-        statusFilter: reviewPrStatusFilter,
-        ageFilter: reviewPrAgeFilter,
-        sortOption: reviewPrSortOption,
-        sortDirection: reviewPrSortDirection,
-        reviewFilter: reviewPrReviewFilter
-      };
-      
-      localStorage.setItem('github-panel-reviewpr-filters', JSON.stringify(reviewPrFilters));
-    } catch (error) {
-      console.error('[GitHub] Error saving Review PR filters:', error);
-    }
-  }, [reviewPrSearchTerm, reviewPrRepoFilter, reviewPrStatusFilter, reviewPrAgeFilter, reviewPrSortOption, reviewPrSortDirection, reviewPrReviewFilter]);
-  
-  // Load token from secure storage on component mount
-  useEffect(() => {
-    const loadToken = async () => {
+    const loadGitHubData = async () => {
       try {
         setError(null);
         
-        // First check if GitHub service is already initialized
-        if (githubService.isInitialized()) {
-          console.log('[GitHub] Service already initialized, fetching PRs directly');
-          // Try to get the current token to update the UI state
-          try {
-            const currentUser = await githubService.getCurrentUser();
-            if (currentUser) {
-              // If we can get the current user, the token is valid
-              setToken('******'); // Use masked placeholder for security
-              setInitialized(true);
-              fetchAllPullRequests();
-              return;
-            }
-          } catch (e) {
-            console.error('[GitHub] Error verifying initialized service:', e);
-          }
-        }
-        
-        // Use the static helper method to get stored token if service not initialized
-        const savedToken = await GitHubService.loadStoredToken();
-        if (savedToken) {
-          console.log('[GitHub] Found saved token, initializing service');
-          setToken(savedToken);
-          await initializeGitHubService(savedToken);
-        } else {
-          console.log('[GitHub] No saved token found');
+        // Check connection status from settings
+        if (settings.github.isConnected && githubService.isInitialized()) {
+          setLoading(true);
+          await fetchAllPullRequests();
         }
       } catch (error) {
-        console.error('[GitHub] Failed to load GitHub token:', error);
-        setError('Failed to load saved token. Token might be corrupted.');
+        console.error('[GitHub] Failed to load GitHub data:', error);
+        setError('Failed to load GitHub data');
+      } finally {
+        setLoading(false);
       }
     };
     
-    loadToken();
-  }, []);
-  
-  const initializeGitHubService = async (accessToken: string) => {
-    try {
-      setError(null);
-      
-      // Pass the storeGitHubToken setting to the initialize method
-      await githubService.initialize(
-        accessToken, 
-        settings.security.storeGitHubToken
-      );
-      setInitialized(true);
-      
-      // Fetch PRs immediately after initialization
-      fetchAllPullRequests();
-    } catch (error) {
-      console.error('[GitHub] Failed to initialize GitHub service:', error);
-      setError('Failed to initialize GitHub service. Please check your token.');
-      setInitialized(false);
-    }
-  };
+    loadGitHubData();
+  }, [settings.github.isConnected]);
   
   const fetchAllPullRequests = async () => {
     try {
@@ -1048,6 +940,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     }
   };
   
+  // Handle token save (modified to use settings)
   const handleSaveToken = async () => {
     if (!token) {
       setError('Please enter a GitHub token');
@@ -1056,20 +949,15 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     
     try {
       setError(null);
-      await initializeGitHubService(token);
+      setLoading(true);
+      await setGitHubToken(token);
+      setToken(''); // Clear the input after successful save
     } catch (error: any) {
       setError(`Failed to save token: ${error.message || 'Unknown error'}`);
+    } finally {
+      setLoading(false);
     }
   };
-  
-  // Monitor settings changes for storeGitHubToken
-  useEffect(() => {
-    // If the setting to store token is turned off, clear the token
-    if (!settings.security.storeGitHubToken) {
-      GitHubService.clearStoredToken();
-      // Don't reinitialize as we still want to use the token for the current session
-    }
-  }, [settings.security.storeGitHubToken]);
   
   // Format the relative time for PR creation/update
   const formatRelativeTime = (timestamp: string) => {
@@ -1120,7 +1008,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     
     try {
       setError(null);
-      await initializeGitHubService(newToken);
+      await setGitHubToken(newToken);
       setEditingToken(false);
     } catch (error: any) {
       setError(`Failed to save token: ${error.message || 'Unknown error'}`);
@@ -1315,7 +1203,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   
   // Replace the renderContent method with this improved version
   const renderContent = () => {
-    if (!initialized) {
+    if (!settings.github.isConnected) {
       return (
         <TokenContainer>
           <ContainerHeader>
@@ -1821,7 +1709,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   
   // The renderTokenManagement function should be inside the component
   const renderTokenManagement = () => {
-    if (!initialized) return null;
+    if (!settings.github.isConnected) return null;
     
     return (
       <>
@@ -1923,7 +1811,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
             GitHub Pull Requests
           </Title>
         </HeaderLeft>
-        {initialized && (
+        {settings.github.isConnected && (
           <RefreshButton 
             onClick={refreshAllPullRequests} 
             title="Refresh pull requests"
@@ -1934,7 +1822,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         )}
       </Header>
       <Content>
-        {showTokenManagement && initialized && renderTokenManagement()}
+        {showTokenManagement && settings.github.isConnected && renderTokenManagement()}
         {renderContent()}
       </Content>
     </Container>
