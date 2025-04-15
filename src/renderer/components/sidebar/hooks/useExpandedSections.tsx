@@ -9,6 +9,7 @@ interface ExpandedSections {
   secrets: boolean;
   github: boolean;
   ai: boolean;
+  aiPrompts: boolean;
 }
 
 export const useExpandedSections = (initialState: Partial<ExpandedSections> = {}) => {
@@ -21,6 +22,7 @@ export const useExpandedSections = (initialState: Partial<ExpandedSections> = {}
     secrets: false,
     github: false,
     ai: false,
+    aiPrompts: false,
     ...initialState,
   });
 

@@ -40,6 +40,7 @@ import { SettingsProvider } from './utils/SettingsContext';
 import GitHubPanel from './components/github/GitHubPanel';
 import Home from './components/Home';
 import AIChat from './components/AIChat';
+import AIPromptsContainer from './components/AIPrompts/AIPromptsContainer';
 import AISection from './components/sidebar/sections/AISection';
 import { useExpandedSections } from './components/sidebar/hooks/useExpandedSections';
 
@@ -984,6 +985,11 @@ function AppContent() {
     // Route to the AI Chat page
     if (currentRoute === '/ai') {
       return <AIChat />;
+    }
+
+    // Route to AI Prompts pages
+    if (currentRoute === '/ai-prompts' || currentRoute === '/ai-prompts/saved') {
+      return <AIPromptsContainer />;
     }
 
     // Route to the kanban page if needed

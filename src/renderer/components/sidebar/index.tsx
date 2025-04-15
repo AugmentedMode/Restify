@@ -18,7 +18,8 @@ import {
   FaTimes,
   FaCog,
   FaGithub,
-  FaRobot
+  FaRobot,
+  FaLightbulb
 } from 'react-icons/fa';
 import { 
   Sidebar as SidebarContainer, 
@@ -43,6 +44,7 @@ import EnvironmentManager from '../EnvironmentManager';
 import SecretsSection from './sections/SecretsSection';
 import GitHubSection from './sections/GitHubSection';
 import AISection from '../sidebar/sections/AISection';
+import AIPromptsSection from '../sidebar/sections/AIPromptsSection';
 
 // Dynamically load the SettingsSection with an import() to avoid errors
 // when the file hasn't been created yet
@@ -211,6 +213,30 @@ function Sidebar({
   // Toggle settings panel visibility
   const toggleSettings = () => {
     setShowSettings(!showSettings);
+  };
+
+  // Navigation function for AI Prompts
+  const navigateToAIPrompts = () => {
+    if (window.location.pathname !== '/ai-prompts') {
+      window.history.pushState({}, '', '/ai-prompts');
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+  
+  // Handle adding a new AI Prompt
+  const handleAddNewPrompt = () => {
+    if (window.location.pathname !== '/ai-prompts/new') {
+      window.history.pushState({}, '', '/ai-prompts/new');
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+  
+  // Handle viewing saved prompts
+  const handleViewSavedPrompts = () => {
+    if (window.location.pathname !== '/ai-prompts/saved') {
+      window.history.pushState({}, '', '/ai-prompts/saved');
+      window.dispatchEvent(new Event('popstate'));
+    }
   };
 
   // Handle rename
@@ -391,6 +417,29 @@ function Sidebar({
           className="nav-item"
         >
           <FaRobot size={20} />
+        </div>
+      </NavTooltip>
+
+      {/* AI Prompts */}
+      <NavTooltip title="AI Prompts" isCollapsed={isSidebarCollapsed}>
+        <div
+          style={{
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            backgroundColor: expandedSections.aiPrompts
+              ? 'rgba(255, 56, 92, 0.1)'
+              : 'transparent',
+            color: expandedSections.aiPrompts ? '#FF385C' : 'inherit',
+            transition: 'all 0.2s',
+          }}
+          onClick={() => {
+            toggleSection('aiPrompts');
+            navigateToAIPrompts();
+          }}
+          className="nav-item"
+        >
+          <FaLightbulb size={20} />
         </div>
       </NavTooltip>
 
@@ -617,15 +666,7 @@ function Sidebar({
                     />
                   )}
 
-                  {/* Add AI Section */}
-                  {/* <AISection
-                    expanded={expandedSections.ai}
-                    toggleSection={() => toggleSection('ai')}
-                    onNavigateToAI={() => {
-                      window.history.pushState({}, '', '/ai');
-                      window.dispatchEvent(new Event('popstate'));
-                    }}
-                  /> */}
+              
 
                   {settings.general.showGitHub && (
                     <GitHubSection
@@ -669,6 +710,15 @@ function Sidebar({
                       onNavigateToNotes={onNavigateToNotes}
                     />
                   )}
+
+                      {/* AI Prompts Section */}
+                      <AIPromptsSection
+                    expanded={expandedSections.aiPrompts}
+                    toggleSection={() => toggleSection('aiPrompts')}
+                    onNavigateToPrompts={navigateToAIPrompts}
+                    onAddNewPrompt={handleAddNewPrompt}
+                    onViewSavedPrompts={handleViewSavedPrompts}
+                  />
 
                   {settings.general.showHistory && (
                     <HistorySection
