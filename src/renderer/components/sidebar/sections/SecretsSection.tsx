@@ -36,12 +36,12 @@ const ProfileItemContainer = styled.div<{ active?: boolean }>`
   cursor: pointer;
   transition: all 0.2s;
   margin: 4px 0;
-  background-color: ${(props) => (props.active ? 'rgba(50, 144, 255, 0.15)' : 'transparent')};
-  color: ${(props) => (props.active ? '#3290ff' : 'inherit')};
+  background-color: ${(props) => (props.active ? 'rgba(255, 255, 255, 0.1)' : 'transparent')};
+  color: ${(props) => (props.active ? 'rgba(255, 255, 255, 0.9)' : 'inherit')};
   margin-left: 16px;
   
   &:hover {
-    background-color: ${(props) => (props.active ? 'rgba(50, 144, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)')};
+    background-color: ${(props) => (props.active ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)')};
   }
 `;
 
