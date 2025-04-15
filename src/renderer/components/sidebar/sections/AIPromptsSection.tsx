@@ -15,6 +15,7 @@ const SectionHeader = styled.div`
   cursor: pointer;
   user-select: none;
   border-radius: 4px;
+  color: rgba(255, 255, 255, 0.8);
   
   &:hover {
     background-color: rgba(255, 255, 255, 0.05);
