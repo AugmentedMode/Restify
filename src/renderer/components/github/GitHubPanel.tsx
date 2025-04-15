@@ -939,7 +939,25 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
       try {
         setError(null);
         
-        // Use the static helper method
+        // First check if GitHub service is already initialized
+        if (githubService.isInitialized()) {
+          console.log('[GitHub] Service already initialized, fetching PRs directly');
+          // Try to get the current token to update the UI state
+          try {
+            const currentUser = await githubService.getCurrentUser();
+            if (currentUser) {
+              // If we can get the current user, the token is valid
+              setToken('******'); // Use masked placeholder for security
+              setInitialized(true);
+              fetchAllPullRequests();
+              return;
+            }
+          } catch (e) {
+            console.error('[GitHub] Error verifying initialized service:', e);
+          }
+        }
+        
+        // Use the static helper method to get stored token if service not initialized
         const savedToken = await GitHubService.loadStoredToken();
         if (savedToken) {
           console.log('[GitHub] Found saved token, initializing service');
