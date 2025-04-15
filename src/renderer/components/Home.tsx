@@ -127,7 +127,7 @@ const WelcomeTitle = styled.h1`
 const WelcomeSubtitle = styled.p`
   font-size: 18px;
   color: #BBBBBB;
-  max-width: 600px;
+  max-width: 500px;
   margin: 0 auto;
   line-height: 1.5;
 `;
@@ -315,7 +315,7 @@ const Home: React.FC<HomeProps> = ({
         <WelcomeSection>
           <WelcomeTitle>Welcome to Hapi Dev Tools</WelcomeTitle>
           <WelcomeSubtitle>
-            Your modern API testing and development platform. Build, test, and debug API requests with ease.
+          Stop context switching between apps. All your essential developer tools in one environment.
           </WelcomeSubtitle>
         </WelcomeSection>
         
@@ -408,9 +408,9 @@ const Home: React.FC<HomeProps> = ({
         <FeaturedSection>
           <FeaturedBox>
             <FeaturedContent>
-              <FeaturedTitle>Build and Test APIs with Confidence</FeaturedTitle>
+              <FeaturedTitle>Hapi API Development Starts Here</FeaturedTitle>
               <FeaturedDescription>
-                Create API requests, organize them into collections, and set up automated tests to ensure your endpoints work as expected.
+                Build, test, and manage your APIs with a smile. Hapi makes development more enjoyable with intuitive tools and a streamlined workflow.
               </FeaturedDescription>
               <PrimaryButton onClick={onCreateCollection}>
                 <FaRocket /> Get Started
