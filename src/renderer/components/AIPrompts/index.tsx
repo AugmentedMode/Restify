@@ -230,6 +230,7 @@ const PromptDescription = styled.div`
 `;
 
 const PromptCardFooter = styled.div`
+  margin-top: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
