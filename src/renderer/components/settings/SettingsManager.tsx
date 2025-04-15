@@ -21,7 +21,20 @@ import {
   FaChevronRight,
   FaGithub,
   FaUser,
-  FaLink
+  FaLink,
+  FaEye,
+  FaEyeSlash,
+  FaBuilding,
+  FaMapMarkerAlt,
+  FaCalendarAlt,
+  FaCopy,
+  FaLock,
+  FaExclamationTriangle,
+  FaUsers,
+  FaCode,
+  FaStar,
+  FaExternalLinkAlt,
+  FaUserSecret
 } from 'react-icons/fa';
 import { useSettings } from '../../utils/SettingsContext';
 import { db, NotesService, CollectionsService, HistoryService, ResponsesService, EnvironmentsService, SettingsService } from '../../services/DatabaseService';
@@ -29,6 +42,7 @@ import ImportFileModal from '../modals/ImportFileModal';
 import DeleteConfirmationModal from '../modals/DeleteConfirmationModal';
 import { ImportService } from '../../services/ImportService';
 import aiService from '../../services/AIService';
+import githubService, { GitHubService } from '../../services/GitHubService';
 
 // Theme colors for consistency
 const theme = {
@@ -425,6 +439,298 @@ const ConnectionStatus = styled.div<{ connected: boolean }>`
   color: ${props => props.connected ? '#2da44e' : theme.text.secondary};
 `;
 
+// Add these new styled components for the GitHub profile section
+const GitHubProfileSection = styled.div`
+  margin-top: 24px;
+  padding: 24px;
+  background-color: ${theme.background.secondary};
+  border-radius: 12px;
+  border: 1px solid ${theme.border.light};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+`;
+
+const ProfileHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+const AvatarContainer = styled.div`
+  position: relative;
+`;
+
+const Avatar = styled.img`
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid ${theme.brand.primary};
+  box-shadow: 0 3px 8px rgba(255, 56, 92, 0.2);
+`;
+
+const AvatarPlaceholder = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: ${theme.background.tertiary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${theme.text.secondary};
+  font-size: 32px;
+  border: 3px solid ${theme.border.light};
+`;
+
+const VerifiedBadge = styled.div`
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: #2da44e;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border: 2px solid ${theme.background.secondary};
+`;
+
+const ProfileInfo = styled.div`
+  flex: 1;
+`;
+
+const ProfileName = styled.h3`
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: ${theme.text.bright};
+`;
+
+const ProfileLogin = styled.div`
+  color: ${theme.text.secondary};
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const ProfileStats = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+`;
+
+const StatItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: ${theme.text.secondary};
+  font-size: 13px;
+`;
+
+const ConnectionButtonGroup = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  
+  @media (max-width: 600px) {
+    margin-top: 12px;
+    width: 100%;
+  }
+`;
+
+const ProfileButton = styled.button`
+  background-color: transparent;
+  border: 1px solid ${theme.border.light};
+  color: ${theme.text.primary};
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: ${theme.text.secondary};
+  }
+`;
+
+const ConnectionButton = styled(ProfileButton)<{ variant?: 'primary' | 'danger' }>`
+  background-color: ${props => props.variant === 'primary' ? theme.brand.primary : 
+                              props.variant === 'danger' ? 'rgba(255, 56, 92, 0.1)' : 'transparent'};
+  color: ${props => props.variant === 'primary' ? 'white' : 
+                    props.variant === 'danger' ? theme.brand.primary : theme.text.primary};
+  border-color: ${props => props.variant === 'primary' ? theme.brand.primary : 
+                           props.variant === 'danger' ? theme.brand.primary : theme.border.light};
+  
+  &:hover {
+    background-color: ${props => props.variant === 'primary' ? theme.brand.hover : 
+                                 props.variant === 'danger' ? 'rgba(255, 56, 92, 0.2)' : 'rgba(255, 255, 255, 0.05)'};
+    transform: ${props => props.variant === 'primary' ? 'translateY(-2px)' : 'none'};
+    box-shadow: ${props => props.variant === 'primary' ? '0 4px 8px rgba(255, 56, 92, 0.25)' : 'none'};
+  }
+  
+  &:active {
+    transform: ${props => props.variant === 'primary' ? 'translateY(0)' : 'none'};
+  }
+`;
+
+const ProfileSectionTitle = styled.h4`
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: ${theme.text.bright};
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const DangerZone = styled.div`
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: rgba(255, 56, 92, 0.05);
+  border: 1px solid rgba(255, 56, 92, 0.2);
+`;
+
+const TokenManagementSection = styled.div`
+  margin-top: 20px;
+`;
+
+const TokenDisplay = styled.div`
+  position: relative;
+  background-color: ${theme.background.tertiary};
+  padding: 12px;
+  border-radius: 8px;
+  margin: 12px 0;
+  border: 1px solid ${theme.border.light};
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: ${theme.text.secondary};
+  word-break: break-all;
+`;
+
+const CopyButton = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: ${theme.text.primary};
+  border: none;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: ${theme.brand.primary};
+  }
+`;
+
+const ModalBackdrop = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const Modal = styled.div`
+  background-color: ${theme.background.secondary};
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: ${theme.text.bright};
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ModalCloseButton = styled.button`
+  background: none;
+  border: none;
+  color: ${theme.text.secondary};
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  
+  &:hover {
+    color: ${theme.brand.primary};
+  }
+`;
+
+const ModalContent = styled.div`
+  margin-bottom: 24px;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+`;
+
+// Add loading spinner style
+const LoadingSpinner = styled.span`
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+`;
+
+// Add loading spinner style
 interface SettingsManagerProps {
   onReturn: () => void;
 }
@@ -451,8 +757,13 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
-  // State for GitHub token input
+  // State for GitHub token input and profile
   const [githubToken, setGithubToken] = useState('');
+  const [showGitHubToken, setShowGitHubToken] = useState(false);
+  const [showDeleteTokenModal, setShowDeleteTokenModal] = useState(false);
+  const [githubProfile, setGithubProfile] = useState<any>(null);
+  const [fetchingProfile, setFetchingProfile] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   // Use settings context instead of local state
   const { settings, updateSettings, toggleSetting, setGitHubToken, clearGitHubToken } = useSettings();
@@ -630,6 +941,114 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
     updateSettings('ai', 'apiKey', e.target.value);
   };
   
+  // Fetch GitHub profile data when connected
+  useEffect(() => {
+    const fetchGitHubProfile = async () => {
+      if (settings.github.isConnected && githubService.isInitialized()) {
+        try {
+          setFetchingProfile(true);
+          const userData = await githubService.getCurrentUser();
+          setGithubProfile(userData);
+        } catch (error) {
+          console.error('Failed to fetch GitHub profile:', error);
+        } finally {
+          setFetchingProfile(false);
+        }
+      } else {
+        setGithubProfile(null);
+      }
+    };
+    
+    fetchGitHubProfile();
+  }, [settings.github.isConnected]);
+  
+  // Function to copy token to clipboard
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+  
+  // Function to reveal and fetch the actual token
+  const handleRevealToken = async () => {
+    if (!showGitHubToken) {
+      try {
+        // Use the static method from the GitHubService class
+        const token = await GitHubService.loadStoredToken();
+        if (token) {
+          setGithubToken(token);
+          setShowGitHubToken(true);
+        }
+      } catch (error) {
+        console.error('Failed to load GitHub token:', error);
+      }
+    } else {
+      setShowGitHubToken(false);
+    }
+  };
+  
+  // Function to handle token deletion with confirmation
+  const handleDeleteToken = async () => {
+    try {
+      setFetchingProfile(true);
+      
+      // Use the context method to clear the token
+      await clearGitHubToken();
+      
+      // Reset local state
+      setShowDeleteTokenModal(false);
+      setGithubToken('');
+      setShowGitHubToken(false);
+      setGithubProfile(null);
+      
+      // Manually dispatch event to ensure all components update
+      window.dispatchEvent(new CustomEvent('github-auth-changed', { 
+        detail: { authenticated: false } 
+      }));
+    } catch (error) {
+      console.error('Failed to delete GitHub token:', error);
+      alert(`Failed to disconnect GitHub: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setFetchingProfile(false);
+    }
+  };
+  
+  // Update the token connection flow to ensure events are properly dispatched
+  const handleConnectGitHub = async () => {
+    if (!githubToken) {
+      alert('Please enter a GitHub token');
+      return;
+    }
+    
+    try {
+      setFetchingProfile(true);
+      
+      // Use the context method to set the token which handles all the state updates
+      await setGitHubToken(githubToken);
+      
+      // Clear the input field after successful connection
+      setGithubToken('');
+      
+      // Force refresh of the profile data to ensure UI is synchronized
+      const userData = await githubService.getCurrentUser();
+      setGithubProfile(userData);
+      
+      // Manually dispatch event to ensure all components update
+      window.dispatchEvent(new CustomEvent('github-auth-changed', { 
+        detail: { authenticated: true } 
+      }));
+    } catch (error) {
+      console.error('Failed to set GitHub token:', error);
+      alert(`Failed to connect to GitHub: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setFetchingProfile(false);
+    }
+  };
+  
   // Render sidebar categories
   const renderCategories = () => {
     const categories: { id: SettingCategory; icon: JSX.Element; name: string }[] = [
@@ -782,83 +1201,268 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
           />
         </SettingRow>
 
-        <GitHubTokenSection>
-          <SettingLabel style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FaGithub size={16} style={{ color: theme.brand.primary }} /> 
-            GitHub Connection
-          </SettingLabel>
-          
-          {settings.github.isConnected ? (
+        <GitHubProfileSection>
+          {settings.github.isConnected && githubProfile ? (
             <>
-              <ConnectionStatus connected={true}>
-                <FaCheck /> Connected to GitHub
-              </ConnectionStatus>
-              <MaskedToken>
-                ••••••••••••••••••••••••••
-                <FaTimes 
-                  style={{ cursor: 'pointer', color: theme.text.secondary }} 
-                  onClick={async () => {
-                    try {
-                      await clearGitHubToken();
-                    } catch (error) {
-                      console.error('Failed to clear GitHub token:', error);
-                    }
-                  }}
-                  title="Disconnect from GitHub"
-                />
-              </MaskedToken>
-              <SettingDescription style={{ marginTop: '8px' }}>
-                Your GitHub token is securely stored and encrypted. Click the X to disconnect.
-              </SettingDescription>
+              <ProfileHeader>
+                <AvatarContainer>
+                  <Avatar 
+                    src={githubProfile.avatar_url} 
+                    alt={`${githubProfile.login}'s avatar`} 
+                  />
+                  <VerifiedBadge>
+                    <FaCheck size={12} />
+                  </VerifiedBadge>
+                </AvatarContainer>
+                
+                <ProfileInfo>
+                  <ProfileName>{githubProfile.name || githubProfile.login}</ProfileName>
+                  <ProfileLogin>
+                    <FaGithub size={12} />
+                    {githubProfile.login}
+                  </ProfileLogin>
+                  
+                  {githubProfile.bio && (
+                    <div style={{ margin: '8px 0', fontSize: '14px', color: theme.text.primary }}>
+                      {githubProfile.bio}
+                    </div>
+                  )}
+                  
+                  <ProfileStats>
+                    {githubProfile.company && (
+                      <StatItem>
+                        <FaBuilding size={12} />
+                        {githubProfile.company}
+                      </StatItem>
+                    )}
+                    {githubProfile.location && (
+                      <StatItem>
+                        <FaMapMarkerAlt size={12} />
+                        {githubProfile.location}
+                      </StatItem>
+                    )}
+                    <StatItem>
+                      <FaCalendarAlt size={12} />
+                      Joined {new Date(githubProfile.created_at).toLocaleDateString()}
+                    </StatItem>
+                    {githubProfile.followers !== undefined && (
+                      <StatItem>
+                        <FaUsers size={12} />
+                        {githubProfile.followers} followers
+                      </StatItem>
+                    )}
+                  </ProfileStats>
+                </ProfileInfo>
+                
+                <ConnectionButtonGroup>
+                  <ProfileButton 
+                    onClick={() => window.open(githubProfile.html_url, '_blank')}
+                    aria-label="View GitHub profile"
+                  >
+                    <FaExternalLinkAlt size={12} />
+                    View Profile
+                  </ProfileButton>
+                </ConnectionButtonGroup>
+              </ProfileHeader>
+              
+              <TokenManagementSection>
+                <ProfileSectionTitle>
+                  <FaLock size={14} />
+                  Personal Access Token
+                </ProfileSectionTitle>
+                
+                <div style={{ fontSize: '14px', marginBottom: '12px', color: theme.text.secondary }}>
+                  Your GitHub token is securely stored and encrypted. This token allows the app to access your GitHub data.
+                </div>
+                
+                <TokenDisplay>
+                  {showGitHubToken ? githubToken : '••••••••••••••••••••••••••••••••••••••••••••'}
+                  {showGitHubToken && (
+                    <CopyButton 
+                      onClick={() => copyToClipboard(githubToken)}
+                      aria-label="Copy token to clipboard"
+                      title="Copy to clipboard"
+                    >
+                      {copied ? <FaCheck size={14} /> : <FaCopy size={14} />}
+                    </CopyButton>
+                  )}
+                </TokenDisplay>
+                
+                <ConnectionButtonGroup>
+                  <ConnectionButton 
+                    onClick={handleRevealToken}
+                    aria-label={showGitHubToken ? "Hide token" : "Show token"}
+                  >
+                    {showGitHubToken ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                    {showGitHubToken ? "Hide Token" : "Reveal Token"}
+                  </ConnectionButton>
+                  
+                  <ConnectionButton 
+                    variant="danger"
+                    onClick={() => setShowDeleteTokenModal(true)}
+                    aria-label="Disconnect GitHub account"
+                    disabled={fetchingProfile}
+                  >
+                    {fetchingProfile ? (
+                      <>
+                        <LoadingSpinner />
+                        Disconnecting...
+                      </>
+                    ) : (
+                      <>
+                        <FaTimes size={14} />
+                        Disconnect
+                      </>
+                    )}
+                  </ConnectionButton>
+                </ConnectionButtonGroup>
+              </TokenManagementSection>
+              
+              {/* Delete Token Confirmation Modal */}
+              {showDeleteTokenModal && (
+                <ModalBackdrop>
+                  <Modal>
+                    <ModalHeader>
+                      <ModalTitle>
+                        <FaExclamationTriangle color={theme.brand.primary} />
+                        Disconnect GitHub Account
+                      </ModalTitle>
+                      <ModalCloseButton 
+                        onClick={() => setShowDeleteTokenModal(false)}
+                        aria-label="Close modal"
+                      >
+                        <FaTimes />
+                      </ModalCloseButton>
+                    </ModalHeader>
+                    
+                    <ModalContent>
+                      <div style={{ marginBottom: '16px' }}>
+                        Are you sure you want to disconnect your GitHub account? This will:
+                      </div>
+                      <ul style={{ color: theme.text.secondary, marginBottom: '16px', paddingLeft: '20px' }}>
+                        <li>Remove your GitHub token from this app</li>
+                        <li>End your ability to view and manage pull requests</li>
+                        <li>Require you to reconnect with a token if you want to use GitHub features again</li>
+                      </ul>
+                      <div style={{ color: theme.text.secondary }}>
+                        Note: This does not revoke the token on GitHub itself. To fully revoke access, 
+                        please visit GitHub's settings page.
+                      </div>
+                    </ModalContent>
+                    
+                    <ModalButtons>
+                      <ProfileButton onClick={() => setShowDeleteTokenModal(false)}>
+                        Cancel
+                      </ProfileButton>
+                      <ConnectionButton 
+                        variant="danger" 
+                        onClick={handleDeleteToken}
+                        disabled={fetchingProfile}
+                      >
+                        {fetchingProfile ? (
+                          <>
+                            <LoadingSpinner />
+                            Disconnecting...
+                          </>
+                        ) : (
+                          <>
+                            <FaTimes size={14} />
+                            Disconnect
+                          </>
+                        )}
+                      </ConnectionButton>
+                    </ModalButtons>
+                  </Modal>
+                </ModalBackdrop>
+              )}
             </>
           ) : (
             <>
-              <ConnectionStatus connected={false}>
-                <FaTimes /> Not connected to GitHub
-              </ConnectionStatus>
-              <div style={{ marginTop: '12px' }}>
-                <SettingDescription style={{ marginBottom: '8px' }}>
-                  Enter a GitHub Personal Access Token to connect:
-                </SettingDescription>
-                <GitHubTokenField
-                  id="github-token"
-                  type="password"
-                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  value={githubToken}
-                  onChange={(e) => setGithubToken(e.target.value)}
-                />
-                <TokenActions>
-                  <ActionButton 
-                    onClick={async () => {
-                      if (!githubToken) {
-                        alert('Please enter a GitHub token');
-                        return;
-                      }
-                      
-                      try {
-                        await setGitHubToken(githubToken);
-                        setGithubToken(''); // Clear the input field after successful connection
-                      } catch (error) {
-                        console.error('Failed to set GitHub token:', error);
-                        alert(`Failed to connect to GitHub: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                      }
-                    }}
-                  >
-                    Connect
-                  </ActionButton>
-                  <LinkButton 
-                    href="https://github.com/settings/tokens/new" 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    <FaLink size={12} /> Create a token
-                  </LinkButton>
-                </TokenActions>
-              </div>
+              <ProfileHeader>
+                <AvatarPlaceholder>
+                  <FaGithub />
+                </AvatarPlaceholder>
+                
+                <ProfileInfo>
+                  <ProfileName>Connect GitHub Account</ProfileName>
+                  <div style={{ color: theme.text.secondary, fontSize: '14px', margin: '8px 0' }}>
+                    Connect your GitHub account to view and manage pull requests directly in the app.
+                  </div>
+                </ProfileInfo>
+              </ProfileHeader>
+              
+              <TokenManagementSection>
+                <ProfileSectionTitle>
+                  <FaUserSecret size={14} />
+                  Personal Access Token
+                </ProfileSectionTitle>
+                
+                <div style={{ fontSize: '14px', marginBottom: '12px', color: theme.text.secondary }}>
+                  A personal access token allows this app to access your GitHub data securely.
+                </div>
+                
+                <div>
+                  <GitHubTokenField
+                    id="github-token"
+                    type="password"
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={githubToken}
+                    onChange={(e) => setGithubToken(e.target.value)}
+                    aria-label="GitHub personal access token"
+                  />
+                  
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                    <ConnectionButton 
+                      variant="primary"
+                      onClick={handleConnectGitHub}
+                      aria-label="Connect GitHub account"
+                      disabled={fetchingProfile}
+                    >
+                      {fetchingProfile ? (
+                        <>
+                          <LoadingSpinner />
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          <FaGithub size={14} />
+                          Connect Account
+                        </>
+                      )}
+                    </ConnectionButton>
+                    
+                    <ConnectionButton
+                      as="a"
+                      href="https://github.com/settings/tokens/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Create a new GitHub token"
+                    >
+                      <FaLink size={14} />
+                      Create Token
+                    </ConnectionButton>
+                  </div>
+                </div>
+                
+                <div style={{ 
+                  marginTop: '16px',
+                  padding: '12px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '8px',
+                  fontSize: '13px'
+                }}>
+                  <div style={{ marginBottom: '8px', fontWeight: 500 }}>To create a token:</div>
+                  <ol style={{ paddingLeft: '16px', color: theme.text.secondary, margin: '0' }}>
+                    <li>Go to GitHub → Settings → Developer settings → Personal access tokens</li>
+                    <li>Generate a new token with <code>repo</code> scope</li>
+                    <li>Copy the token immediately (GitHub only shows it once)</li>
+                    <li>Paste the token here to connect your account</li>
+                  </ol>
+                </div>
+              </TokenManagementSection>
             </>
           )}
-        </GitHubTokenSection>
+        </GitHubProfileSection>
 
         <SettingRow style={{ marginTop: '24px' }}>
           <div>
