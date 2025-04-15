@@ -70,7 +70,7 @@ const theme = {
 };
 
 // Define setting categories
-type SettingCategory = 'general' | 'api' | 'security' | 'shortcuts' | 'export' | 'about' | 'ai';
+type SettingCategory = 'general' | 'api' | 'github' | 'shortcuts' | 'export' | 'about' | 'ai';
 
 // Define settings types
 interface GeneralSettings {
@@ -89,7 +89,7 @@ interface ApiSettings {
   validateSSL: boolean;
 }
 
-interface SecuritySettings {
+interface GithubSettings {
   clearHistoryOnExit: boolean;
   storeCredentialsSecurely: boolean;
   storeGitHubToken: boolean;
@@ -98,7 +98,7 @@ interface SecuritySettings {
 interface AppSettings {
   general: GeneralSettings;
   api: ApiSettings;
-  security: SecuritySettings;
+  github: GithubSettings;
 }
 
 // Define styled components for the settings UI
@@ -744,7 +744,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
       const tabParam = urlParams.get('tab');
       
       // Check if the tab param is a valid category
-      if (tabParam && ['general', 'api', 'security', 'shortcuts', 'export', 'about', 'ai'].includes(tabParam)) {
+      if (tabParam && ['general', 'api', 'github', 'shortcuts', 'export', 'about', 'ai'].includes(tabParam)) {
         return tabParam as SettingCategory;
       }
     }
@@ -904,7 +904,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
           followRedirects: true,
           validateSSL: true,
         },
-        security: {
+        github: {
           clearHistoryOnExit: false,
           storeCredentialsSecurely: true,
           storeGitHubToken: true,
@@ -1055,7 +1055,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
       { id: 'general', icon: <FaPalette />, name: 'General' },
       { id: 'api', icon: <FaGlobe />, name: 'API' },
       { id: 'ai', icon: <FaRobot />, name: 'AI Assistant' },
-      { id: 'security', icon: <FaShieldAlt />, name: 'Security' },
+      { id: 'github', icon: <FaGithub />, name: 'GitHub' },
       { id: 'shortcuts', icon: <FaKeyboard />, name: 'Shortcuts' },
       { id: 'export', icon: <FaFileExport />, name: 'Export/Import' },
       { id: 'about', icon: <FaInfoCircle />, name: 'About' },
@@ -1138,6 +1138,24 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
           />
         </SettingRow>
       </SettingSection>
+
+      <SettingSection style={{ marginTop: '32px' }}>
+        <SectionTitle style={{ color: theme.brand.primary }}>Danger Zone</SectionTitle>
+        
+        <SettingRow>
+          <div>
+            <SettingLabel><FaTrash style={{ marginRight: '8px', color: theme.brand.primary }} /> Delete All Data</SettingLabel>
+            <SettingDescription>Permanently remove all app data including collections, history, environments, and settings</SettingDescription>
+          </div>
+          <ActionButton onClick={() => setShowDeleteModal(true)}>Delete All Data</ActionButton>
+        </SettingRow>
+        
+        <DeleteConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteAllData}
+        />
+      </SettingSection>
     </SettingsPanel>
   );
   
@@ -1185,22 +1203,10 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
     </SettingsPanel>
   );
   
-  // Render Security settings
-  const renderSecuritySettings = () => (
+  // Render GitHub settings
+  const renderGitHubSettings = () => (
     <SettingsPanel>
       <SettingSection>
-        <SectionTitle>Security Settings</SectionTitle>
-        <SettingRow>
-          <div>
-            <SettingLabel>Store GitHub Token</SettingLabel>
-            <SettingDescription>Securely store GitHub personal access token in local storage</SettingDescription>
-          </div>
-          <ToggleButton 
-            isActive={settings.security.storeGitHubToken}
-            onClick={() => toggleSetting('security', 'storeGitHubToken')}
-          />
-        </SettingRow>
-
         <GitHubProfileSection>
           {settings.github.isConnected && githubProfile ? (
             <>
@@ -1318,7 +1324,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
                 </ConnectionButtonGroup>
               </TokenManagementSection>
               
-              {/* Delete Token Confirmation Modal */}
+              {/* Add the Delete Token Confirmation Modal back */}
               {showDeleteTokenModal && (
                 <ModalBackdrop>
                   <Modal>
@@ -1463,22 +1469,7 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
             </>
           )}
         </GitHubProfileSection>
-
-        <SettingRow style={{ marginTop: '24px' }}>
-          <div>
-            <SettingLabel><FaTrash style={{ marginRight: '8px', color: theme.brand.primary }} /> Delete All Data</SettingLabel>
-            <SettingDescription>Permanently remove all app data including collections, history, environments, and settings</SettingDescription>
-          </div>
-          <ActionButton onClick={() => setShowDeleteModal(true)}>Delete All Data</ActionButton>
-        </SettingRow>
       </SettingSection>
-      
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDeleteAllData}
-      />
     </SettingsPanel>
   );
   
@@ -1704,8 +1695,8 @@ const SettingsManager: React.FC<SettingsManagerProps> = ({ onReturn }) => {
         return renderGeneralSettings();
       case 'api':
         return renderApiSettings();
-      case 'security':
-        return renderSecuritySettings();
+      case 'github':
+        return renderGitHubSettings();
       case 'shortcuts':
         return renderShortcutsSettings();
       case 'export':
