@@ -32,6 +32,7 @@ import { initializeEncryption } from './utils/encryptionUtils';
 import ImportFileModal from './components/modals/ImportFileModal';
 import AddCollectionModal from './components/modals/AddCollectionModal';
 import ImportEnvModal from './components/modals/ImportEnvModal';
+import ShareModal from './components/modals/ShareModal';
 import TodoKanban from './components/Todo';
 import SecretsManager from './components/secrets/SecretsManager';
 import { SecretsService } from './services/SecretsService';
@@ -373,6 +374,8 @@ function AppContent() {
   // Add state for collection modal
   const [showAddCollectionModal, setShowAddCollectionModal] = useState(false);
   const [showImportEnvModal, setShowImportEnvModal] = useState(false);
+  // Add state for share modal
+  const [showShareModal, setShowShareModal] = useState(false);
   
   // Store responses by request ID for persistence
   const [responseMap, setResponseMap] = useState<Record<string, ApiResponse>>(
@@ -960,6 +963,16 @@ function AppContent() {
     }
   };
 
+  // Create a handler for the share modal
+  const handleOpenShareModal = useCallback(() => {
+    setShowShareModal(true);
+  }, []);
+
+  // Create a handler to close the share modal
+  const handleCloseShareModal = useCallback(() => {
+    setShowShareModal(false);
+  }, []);
+
   // Update the renderMainContent function to use Home component
   const renderMainContent = () => {
     // Home route that overrides active request/note
@@ -974,10 +987,7 @@ function AppContent() {
             window.history.pushState({}, '', '/kanban');
             window.dispatchEvent(new Event('popstate'));
           }}
-          onNavigateToGitHub={() => {
-            window.history.pushState({}, '', '/github');
-            window.dispatchEvent(new Event('popstate'));
-          }}
+          onOpenShareModal={handleOpenShareModal}
         />
       );
     }
@@ -1083,10 +1093,7 @@ function AppContent() {
             window.history.pushState({}, '', '/kanban');
             window.dispatchEvent(new Event('popstate'));
           }}
-          onNavigateToGitHub={() => {
-            window.history.pushState({}, '', '/github');
-            window.dispatchEvent(new Event('popstate'));
-          }}
+          onOpenShareModal={handleOpenShareModal}
         />
       );
     }
@@ -1439,6 +1446,17 @@ function AppContent() {
           onClose={() => setShowAddCollectionModal(false)}
           onAddCollection={handleAddCollection}
         />
+        
+        {/* Share Modal */}
+        {showShareModal && (
+          <ShareModal
+            isOpen={showShareModal}
+            onClose={handleCloseShareModal}
+            collectionName={activeRequest?.folderPath?.[0] ? 
+              collections.find(c => c.id === activeRequest.folderPath[0])?.name : 
+              'MyCollection'}
+          />
+        )}
       </AppContainer>
     </>
   );

@@ -10,7 +10,8 @@ import {
   FaColumns,
   FaRocket,
   FaLightbulb,
-  FaRegCompass
+  FaRegCompass,
+  FaShare
 } from 'react-icons/fa';
 import styled from 'styled-components';
 
@@ -20,6 +21,7 @@ interface HomeProps {
   onNavigateToSettings?: () => void;
   onNavigateToSecrets?: () => void;
   onNavigateToKanban?: () => void;
+  onOpenShareModal?: () => void;
 }
 
 // Styled components
@@ -279,7 +281,8 @@ const Home: React.FC<HomeProps> = ({
   onImportFromFile,
   onNavigateToSettings,
   onNavigateToSecrets,
-  onNavigateToKanban
+  onNavigateToKanban,
+  onOpenShareModal
 }) => {
   return (
     <HomeContainer>
@@ -295,14 +298,14 @@ const Home: React.FC<HomeProps> = ({
         </AppLogo>
         
         <ActionButtons>
+          {onOpenShareModal && (
+            <ActionButton onClick={onOpenShareModal}>
+              <FaShare /> Refer a Friend
+            </ActionButton>
+          )}
           {onImportFromFile && (
             <ActionButton onClick={onImportFromFile}>
               <FaFileImport /> Import
-            </ActionButton>
-          )}
-          {onNavigateToSettings && (
-            <ActionButton onClick={onNavigateToSettings}>
-              <FaCog /> Settings
             </ActionButton>
           )}
           <PrimaryButton onClick={onCreateCollection}>

@@ -33,7 +33,7 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
               animate={{ opacity: isSidebarCollapsed ? 0 : 1 }}
               transition={{ duration: 0.2 }}
             >
-              Hapi Dev Tools
+              Hapi Dev
             </motion.span>
           </>
         )}
