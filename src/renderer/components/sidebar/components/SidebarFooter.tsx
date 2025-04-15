@@ -65,26 +65,18 @@ const Login = styled.span`
   margin-top: 2px;
 `;
 
-const LoadingDot = styled.div`
+const LoadingAnimation = styled.div`
   @keyframes pulse {
-    0% { opacity: 0.4; }
+    0% { opacity: 0.6; }
     50% { opacity: 1; }
-    100% { opacity: 0.4; }
+    100% { opacity: 0.6; }
   }
-  
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #aaa;
-  margin-right: 4px;
-  animation: pulse 1.5s infinite;
-  &:nth-child(2) { animation-delay: 0.2s; }
-  &:nth-child(3) { animation-delay: 0.4s; }
-`;
-
-const LoadingIndicator = styled.div`
   display: flex;
   align-items: center;
+  animation: pulse 1.2s infinite ease-in-out;
+  color: #bbb;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 interface SidebarFooterProps {
@@ -99,24 +91,23 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
   onOpenSettings = () => {} 
 }) => {
   const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [tokenCheckInterval, setTokenCheckInterval] = useState<number | null>(null);
 
   // Function to fetch GitHub profile
   const fetchProfile = async () => {
     try {
-      setLoading(true);
       if (githubService.isInitialized()) {
         const userData = await githubService.getCurrentUser();
         setProfile(userData);
-      } else {
-        setProfile(null);
+        setLoading(false);
+        if (tokenCheckInterval) {
+          window.clearInterval(tokenCheckInterval);
+          setTokenCheckInterval(null);
+        }
       }
     } catch (error) {
       console.error('[GitHub Profile] Error fetching user data:', error);
-      setProfile(null);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -125,20 +116,14 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
     // Initial fetch
     fetchProfile();
     
-    // Check every 3 seconds if not authenticated yet
-    if (!tokenCheckInterval) {
-      const interval = window.setInterval(() => {
-        if (githubService.isInitialized()) {
-          fetchProfile();
-          if (tokenCheckInterval) {
-            window.clearInterval(tokenCheckInterval);
-            setTokenCheckInterval(null);
-          }
-        }
-      }, 3000);
-      
-      setTokenCheckInterval(interval);
-    }
+    // Check every 2 seconds if not authenticated yet
+    const interval = window.setInterval(() => {
+      if (!profile) {
+        fetchProfile();
+      }
+    }, 2000);
+    
+    setTokenCheckInterval(interval);
     
     // Cleanup
     return () => {
@@ -173,11 +158,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
             )}
             <UserInfo isCollapsed={isSidebarCollapsed}>
               {loading ? (
-                <LoadingIndicator>
-                  <LoadingDot />
-                  <LoadingDot />
-                  <LoadingDot />
-                </LoadingIndicator>
+                <LoadingAnimation>Connecting...</LoadingAnimation>
               ) : profile ? (
                 <>
                   <Username>{profile.name || profile.login}</Username>
