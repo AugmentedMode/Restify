@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaLightbulb, FaPlus, FaStar } from 'react-icons/fa';
 import styled from 'styled-components';
 
@@ -7,7 +7,7 @@ const Section = styled.div`
   margin-bottom: 10px;
 `;
 
-const SectionHeader = styled.div`
+const SectionHeader = styled.div<{ isActive?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -15,10 +15,11 @@ const SectionHeader = styled.div`
   cursor: pointer;
   user-select: none;
   border-radius: 4px;
-  color: rgba(255, 255, 255, 0.8);
+  color: ${props => props.isActive ? '#FF385C' : 'rgba(255, 255, 255, 0.8)'};
+  background-color: ${props => props.isActive ? 'rgba(255, 56, 92, 0.1)' : 'transparent'};
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: ${props => props.isActive ? 'rgba(255, 56, 92, 0.15)' : 'rgba(255, 255, 255, 0.05)'};
   }
 `;
 
@@ -37,19 +38,20 @@ const SectionContent = styled.div`
   margin-left: 12px;
 `;
 
-const Item = styled.div`
+const Item = styled.div<{ isActive?: boolean }>`
   display: flex;
   align-items: center;
   padding: 8px 12px;
   cursor: pointer;
   user-select: none;
   border-radius: 6px;
-  color: rgba(255, 255, 255, 0.8);
+  color: ${props => props.isActive ? '#FF385C' : 'rgba(255, 255, 255, 0.8)'};
+  background-color: ${props => props.isActive ? 'rgba(255, 56, 92, 0.1)' : 'transparent'};
   font-size: 14px;
   transition: background-color 0.2s ease;
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: ${props => props.isActive ? 'rgba(255, 56, 92, 0.15)' : 'rgba(255, 255, 255, 0.05)'};
   }
   
   svg {
@@ -101,9 +103,29 @@ const AIPromptsSection: React.FC<AIPromptsSectionProps> = ({
   onAddNewPrompt,
   onViewSavedPrompts,
 }) => {
+  const [isActive, setIsActive] = useState(false);
+  
+  // Check if we're on the AI prompts page
+  useEffect(() => {
+    const checkActiveState = () => {
+      const pathname = window.location.pathname;
+      setIsActive(pathname.startsWith('/ai-prompts'));
+    };
+    
+    // Check initially
+    checkActiveState();
+    
+    // Listen for route changes
+    window.addEventListener('popstate', checkActiveState);
+    
+    return () => {
+      window.removeEventListener('popstate', checkActiveState);
+    };
+  }, []);
+  
   return (
     <Section>
-      <SectionHeader onClick={toggleSection}>
+      <SectionHeader onClick={onNavigateToPrompts} isActive={isActive}>
         <SectionTitle>
           <FaLightbulb size={16} />
           AI Prompts
@@ -112,7 +134,7 @@ const AIPromptsSection: React.FC<AIPromptsSectionProps> = ({
 
       {expanded && (
         <SectionContent>
-          <Item onClick={onNavigateToPrompts}>
+          <Item onClick={onNavigateToPrompts} isActive={isActive && !window.location.pathname.includes('/new') && !window.location.pathname.includes('/saved')}>
             <FaLightbulb size={14} />
             <ItemText>All Prompts</ItemText>
           </Item>

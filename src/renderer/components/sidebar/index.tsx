@@ -427,14 +427,13 @@ function Sidebar({
             cursor: 'pointer',
             padding: '8px',
             borderRadius: '8px',
-            backgroundColor: expandedSections.aiPrompts
+            backgroundColor: currentRoute.startsWith('/ai-prompts')
               ? 'rgba(255, 56, 92, 0.1)'
               : 'transparent',
-            color: expandedSections.aiPrompts ? '#FF385C' : 'inherit',
+            color: currentRoute.startsWith('/ai-prompts') ? '#FF385C' : 'inherit',
             transition: 'all 0.2s',
           }}
           onClick={() => {
-            toggleSection('aiPrompts');
             navigateToAIPrompts();
           }}
           className="nav-item"
