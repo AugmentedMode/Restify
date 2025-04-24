@@ -19,7 +19,8 @@ import {
   FaCog,
   FaGithub,
   FaRobot,
-  FaLightbulb
+  FaLightbulb,
+  FaKey
 } from 'react-icons/fa';
 import { 
   Sidebar as SidebarContainer, 
@@ -548,6 +549,61 @@ function Sidebar({
         </NavTooltip>
       )}
 
+      {settings.general.showSecretsManager && (
+        <NavTooltip title="Secrets Manager" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: currentRoute === '/secrets'
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: currentRoute === '/secrets' ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+          >
+            <div
+              style={{
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                // Clear any active profile ID to show the list view
+                onSelectSecretsProfile && onSelectSecretsProfile({ id: null } as any);
+                navigateToSecretsManager();
+              }}
+              className="nav-item"
+            >
+              <FaKey size={20} />
+            </div>
+            {onAddSecretsProfile && (
+              <div
+                style={{
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '4px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddSecretsProfile();
+                }}
+                title="New Secret Group"
+              >
+                <FaPlus size={12} />
+              </div>
+            )}
+          </div>
+        </NavTooltip>
+      )}
+
       <NavTooltip title="New Collection" isCollapsed={isSidebarCollapsed}>
         <div
           style={{
@@ -597,7 +653,21 @@ function Sidebar({
     }
   };
 
-  // Add a function to navigate to GitHub PRs
+  // Add a function to navigate to Secrets Manager
+  const navigateToSecretsManager = () => {
+    // Clear any active profile ID to show the list view
+    onSelectSecretsProfile && onSelectSecretsProfile({ id: null } as any);
+    
+    // Navigate to the secrets manager route
+    if (window.location.pathname !== '/secrets') {
+      window.history.pushState({}, '', '/secrets');
+      
+      // Dispatch a custom event to notify the App component
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
+  // Navigation function for GitHub PRs
   const navigateToGitHub = () => {
     // Navigate to the github route
     if (window.location.pathname !== '/github') {
@@ -678,7 +748,7 @@ function Sidebar({
                       secretsProfiles={secretsProfiles}
                       activeProfileId={activeSecretsProfileId}
                       expanded={expandedSections.secrets}
-                      toggleSection={() => toggleSection('secrets')}
+                      toggleSection={navigateToSecretsManager}
                       onSelectProfile={onSelectSecretsProfile}
                       onAddProfile={onAddSecretsProfile}
                       onImportSecrets={onImportSecrets}

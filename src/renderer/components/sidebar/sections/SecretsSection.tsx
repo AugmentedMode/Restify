@@ -1,175 +1,90 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { FaKey, FaPlus, FaLock, FaFileExport, FaFileImport } from 'react-icons/fa';
-import {
-  ActionButton,
-  ActionButtons,
-  CollectionHeader,
-  CollectionIcon,
-  CollectionTitle,
-  EmptyHistoryMessage,
-} from '../../../styles/StyledComponents';
-import CollapsibleSection from '../components/CollapsibleSection';
+import { FaKey, FaPlus } from 'react-icons/fa';
 import styled from 'styled-components';
-import { SecretsProfile } from '../../../types';
+import { CollectionTitle } from '../../../styles/StyledComponents';
 
-// Animation variants
-const itemVariants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: { opacity: 1, x: 0 },
-};
+// Styled components
+const Section = styled.div`
+  margin-bottom: 10px;
+`;
 
-const listVariants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
-};
-
-const ProfileItemContainer = styled.div<{ active?: boolean }>`
+const SectionHeader = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 8px 10px;
-  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
-  margin: 4px 0;
-  background-color: ${(props) => (props.active ? 'rgba(255, 255, 255, 0.1)' : 'transparent')};
-  color: ${(props) => (props.active ? 'rgba(255, 255, 255, 0.9)' : 'inherit')};
-  margin-left: 16px;
+  user-select: none;
+  border-radius: 4px;
   
   &:hover {
-    background-color: ${(props) => (props.active ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)')};
+    background-color: rgba(255, 255, 255, 0.05);
   }
 `;
 
-const ProfileName = styled.div`
-  flex: 1;
-  font-size: 13px;
-  margin-left: 8px;
+const SectionTitle = styled.div`
+  display: flex;
+  align-items: center;
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  
+  svg {
+    margin-right: 10px;
+  }
+`;
+
+const ActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 `;
 
 interface SecretsSectionProps {
-  secretsProfiles: SecretsProfile[];
-  activeProfileId: string | null;
   expanded: boolean;
   toggleSection: () => void;
-  onSelectProfile: (profile: SecretsProfile) => void;
+  onSelectProfile: (profile: any) => void;
   onAddProfile: () => void;
   onImportSecrets: () => void;
   onExportSecrets: (profileId: string) => void;
+  secretsProfiles: any[];
+  activeProfileId: string | null;
   filter?: string;
 }
 
 const SecretsSection: React.FC<SecretsSectionProps> = ({
-  secretsProfiles,
-  activeProfileId,
-  expanded,
   toggleSection,
-  onSelectProfile,
-  onAddProfile,
-  onImportSecrets,
-  onExportSecrets,
-  filter,
+  onAddProfile
 }) => {
-  // Filter profiles based on search term
-  const filteredProfiles = filter 
-    ? secretsProfiles.filter(profile => 
-        profile.name.toLowerCase().includes(filter.toLowerCase()))
-    : secretsProfiles;
-
-  const sectionTitle = (
-    <CollectionHeader>
-      <CollectionIcon>
-        <FaKey />
-      </CollectionIcon>
-      <CollectionTitle>Secrets Manager</CollectionTitle>
-    </CollectionHeader>
-  );
-
-  const sectionActions = (
-    <ActionButtons>
-      <ActionButton
-        onClick={(e) => {
-          e.stopPropagation();
-          onImportSecrets();
-        }}
-        title="Import Secrets"
-        className="action-button"
-      >
-        <FaFileImport />
-      </ActionButton>
-    </ActionButtons>
-  );
-
   return (
-    <CollapsibleSection
-      title={sectionTitle}
-      expanded={expanded}
-      onToggle={toggleSection}
-      actions={sectionActions}
-    >
-      {filteredProfiles.length === 0 ? (
-        <EmptyHistoryMessage>
-          {filter
-            ? 'No matching secret profiles found.'
-            : 'No secret profiles yet. Create one to get started.'}
-        </EmptyHistoryMessage>
-      ) : (
-        <motion.div
-          variants={listVariants}
-          initial="hidden"
-          animate="visible"
+    <Section>
+      <SectionHeader>
+        <SectionTitle onClick={toggleSection}>
+          <FaKey />
+          <CollectionTitle>Secrets Manager</CollectionTitle>
+        </SectionTitle>
+        <ActionButton 
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddProfile();
+          }}
+          title="New Secret Group"
         >
-          {filteredProfiles.map((profile) => (
-            <motion.div
-              key={profile.id}
-              variants={itemVariants}
-              transition={{ duration: 0.2 }}
-              whileHover={{ x: 4 }}
-            >
-              <ProfileItemContainer
-                active={activeProfileId === profile.id}
-                data-active={profile.id === activeProfileId}
-                onClick={() => onSelectProfile(profile)}
-              >
-                {profile.isEncrypted ? <FaLock size={12} /> : <FaKey size={12} />}
-                <ProfileName>{profile.name}</ProfileName>
-                {profile.secrets.length > 0 && (
-                  <div style={{ 
-                    fontSize: '10px', 
-                    color: 'rgba(255, 255, 255, 0.5)', 
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    padding: '1px 6px',
-                    borderRadius: '10px',
-                    marginRight: '4px'
-                  }}>
-                    {profile.secrets.length}
-                  </div>
-                )}
-                <ActionButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onExportSecrets(profile.id);
-                  }}
-                  title="Export Secrets"
-                  className="action-button"
-                  style={{ opacity: 0.7, fontSize: '10px' }}
-                >
-                  <FaFileExport size={10} />
-                </ActionButton>
-              </ProfileItemContainer>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
-    </CollapsibleSection>
+          <FaPlus size={14} />
+        </ActionButton>
+      </SectionHeader>
+    </Section>
   );
 };
 

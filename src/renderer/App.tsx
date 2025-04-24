@@ -35,6 +35,7 @@ import ImportEnvModal from './components/modals/ImportEnvModal';
 import ShareModal from './components/modals/ShareModal';
 import TodoKanban from './components/Todo';
 import SecretsManager from './components/secrets/SecretsManager';
+import SecretsManagerList from './components/secrets/SecretsManagerList';
 import { SecretsService } from './services/SecretsService';
 import SettingsManager from './components/settings/SettingsManager';
 import { SettingsProvider } from './utils/SettingsContext';
@@ -1010,25 +1011,43 @@ function AppContent() {
     // Route to the secrets manager
     if (currentRoute === '/secrets') {
       const profile = secretsProfiles.find(p => p.id === activeSecretsProfile);
-      return (
-        <SecretsManager
-          activeProfile={profile || null}
-          profiles={secretsProfiles}
-          onAddSecret={handleAddSecret}
-          onUpdateSecret={handleUpdateSecret}
-          onDeleteSecret={handleDeleteSecret}
-          onUpdateProfile={handleUpdateSecretsProfile}
-          onDeleteProfile={handleDeleteSecretsProfile}
-          onExportSecrets={handleExportSecrets}
-          onImportSecrets={handleImportSecrets}
-          onEncryptProfile={handleEncryptProfile}
-          onDecryptProfile={handleDecryptProfile}
-          onReturn={() => {
-            window.history.pushState({}, '', '/');
-            window.dispatchEvent(new Event('popstate'));
-          }}
-        />
-      );
+      if (profile) {
+        return (
+          <SecretsManager
+            activeProfile={profile}
+            profiles={secretsProfiles}
+            onAddSecret={handleAddSecret}
+            onUpdateSecret={handleUpdateSecret}
+            onDeleteSecret={handleDeleteSecret}
+            onUpdateProfile={handleUpdateSecretsProfile}
+            onDeleteProfile={handleDeleteSecretsProfile}
+            onExportSecrets={handleExportSecrets}
+            onImportSecrets={handleImportSecrets}
+            onEncryptProfile={handleEncryptProfile}
+            onDecryptProfile={handleDecryptProfile}
+            onReturn={() => {
+              // Navigate to the secrets list page instead of root
+              window.history.pushState({}, '', '/secrets');
+              // Clear active profile to show the list view
+              setActiveSecretsProfile(null);
+              window.dispatchEvent(new Event('popstate'));
+            }}
+          />
+        );
+      } else {
+        return (
+          <SecretsManagerList
+            profiles={secretsProfiles}
+            onSelectProfile={handleSelectSecretsProfile}
+            onAddProfile={handleAddSecretsProfile}
+            onImportSecrets={handleImportSecrets}
+            onReturn={() => {
+              window.history.pushState({}, '', '/');
+              window.dispatchEvent(new Event('popstate'));
+            }}
+          />
+        );
+      }
     }
     
     // Route to settings
@@ -1225,19 +1244,9 @@ function AppContent() {
   }, [navigateToSecrets]);
 
   const handleAddSecretsProfile = useCallback(() => {
-    const newProfile: SecretsProfile = {
-      id: uuidv4(),
-      name: 'New Profile',
-      secrets: [],
-      isEncrypted: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    
-    setSecretsProfiles(prev => [...prev, newProfile]);
-    setActiveSecretsProfile(newProfile.id);
-    navigateToSecrets();
-  }, [navigateToSecrets]);
+    // Open the import env modal instead of creating a blank profile
+    setShowImportEnvModal(true);
+  }, []);
 
   const handleAddSecret = useCallback((profileId: string, secret: Secret) => {
     setSecretsProfiles(prev => prev.map(profile => 
