@@ -15,6 +15,10 @@ import {
   FaEyeSlash,
   FaLock,
   FaLockOpen,
+  FaSatellite,
+  FaRadiation,
+  FaQuestion,
+  FaSpaceShuttle,
 } from 'react-icons/fa';
 import { ApiResponse, ApiRequest, Environment } from '../../types/index';
 import {
@@ -265,6 +269,77 @@ const SaveButton = styled.button`
     background-color: #e6324f;
   }
 `;
+
+// Adding the NoResponseMessage component
+const NoResponseMessage = () => (
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '30px 20px',
+      color: '#888',
+      textAlign: 'center',
+      height: '100%',
+      position: 'relative',
+      overflow: 'hidden',
+    }}
+  >
+    {/* Stars in background */}
+    <div className="stars-container">
+      {[...Array(20)].map((_, i) => (
+        <div 
+          key={i} 
+          className="star" 
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${1 + Math.random() * 3}s`,
+          }}
+        />
+      ))}
+    </div>
+    
+    <div
+      style={{
+        fontSize: '56px',
+        marginBottom: '16px',
+        color: '#FF385C',
+        animation: 'float 4s ease-in-out infinite',
+        zIndex: 2,
+      }}
+    >
+      <FaSatellite />
+    </div>
+    
+    <h3 
+      style={{ 
+        margin: '0 0 12px 0', 
+        color: '#999', 
+        fontWeight: 400, 
+        fontSize: '20px',
+        zIndex: 2,
+      }}
+    >
+      Houston, we have a problem
+    </h3>
+    
+    <p 
+      style={{ 
+        fontSize: '14px', 
+        maxWidth: '300px', 
+        color: '#777',
+        fontWeight: 300,
+        lineHeight: 1.5,
+        zIndex: 2,
+      }}
+    >
+      Our satellite couldn't find any response data in the vast emptiness of space. Try sending a request!
+    </p>
+  </div>
+);
 
 interface ResponsePanelProps {
   response: ApiResponse | null;
@@ -1236,22 +1311,7 @@ function ResponsePanel({
     }
 
     if (!response) {
-      return (
-        <div
-          style={{
-            padding: '20px',
-            textAlign: 'center',
-            color: 'rgba(255, 255, 255, 0.6)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-          }}
-        >
-          No response data available
-        </div>
-      );
+      return <NoResponseMessage />;
     }
 
     switch (activeTab) {
@@ -1550,6 +1610,30 @@ function ResponsePanel({
         @keyframes slideUp {
           from { transform: translateY(20px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
+          100% { transform: translateY(0px); }
+        }
+        .stars-container {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          top: 0;
+          left: 0;
+        }
+        .star {
+          position: absolute;
+          width: 2px;
+          height: 2px;
+          background-color: rgba(255, 255, 255, 0.5);
+          border-radius: 50%;
+          animation: twinkle 2s infinite;
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.5); }
         }
       `}</style>
     </ResponseContainer>
