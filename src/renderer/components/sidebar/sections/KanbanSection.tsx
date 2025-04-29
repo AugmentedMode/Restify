@@ -107,6 +107,22 @@ const KanbanSection: React.FC<KanbanSectionProps> = ({
     };
   }, []);
 
+  // Navigation function to go to Kanban board
+  const navigateToKanban = () => {
+    // Navigate to the kanban route
+    if (window.location.pathname !== '/kanban') {
+      window.history.pushState({}, '', '/kanban');
+      
+      // Dispatch a custom event to notify the App component
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
+  // Handle section header click - navigate directly to kanban board
+  const handleSectionClick = () => {
+    navigateToKanban();
+  };
+
   const sectionTitle = (
     <CollectionHeader>
       <CollectionIcon>
@@ -131,17 +147,6 @@ const KanbanSection: React.FC<KanbanSectionProps> = ({
     </ActionButtons>
   );
 
-  // Navigation function to go to Kanban board
-  const navigateToKanban = () => {
-    // Navigate to the kanban route
-    if (window.location.pathname !== '/kanban') {
-      window.history.pushState({}, '', '/kanban');
-      
-      // Dispatch a custom event to notify the App component
-      window.dispatchEvent(new Event('popstate'));
-    }
-  };
-
   // Get epic background and text colors
   const getEpicColors = (epic: string) => {
     const colorMap: Record<string, { bg: string, text: string }> = {
@@ -160,48 +165,11 @@ const KanbanSection: React.FC<KanbanSectionProps> = ({
     <CollapsibleSection
       title={sectionTitle}
       expanded={expanded}
-      onToggle={toggleSection}
+      onToggle={handleSectionClick}
       actions={sectionActions}
     >
-      <div style={{ padding: '10px' }}>
-        <motion.div
-          variants={listVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.div
-            variants={itemVariants}
-            transition={{ duration: 0.2 }}
-            whileHover={{ x: 4 }}
-            style={{ 
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--bg-light)',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              gap: '8px',
-              paddingLeft: '16px'
-            }}
-            onClick={navigateToKanban}
-          >
-            <FaColumns size={12} />
-            Todo List
-          </motion.div>
-          
-          <div style={{ 
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            fontSize: '0.85rem',
-          }}>
-         
-          </div>
-        </motion.div>
-      </div>
+      {/* We still need to provide children for CollapsibleSection */}
+      <div></div>
     </CollapsibleSection>
   );
 };
