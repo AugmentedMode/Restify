@@ -19,6 +19,12 @@ import {
   FaRadiation,
   FaQuestion,
   FaSpaceShuttle,
+  FaExclamationTriangle,
+  FaRobot,
+  FaWater,
+  FaMountain,
+  FaSearch,
+  FaRocket,
 } from 'react-icons/fa';
 import { ApiResponse, ApiRequest, Environment } from '../../types/index';
 import {
@@ -340,6 +346,336 @@ const NoResponseMessage = () => (
     </p>
   </div>
 );
+
+// Adding a fun 404 Not Found screen - space themed
+const NotFoundScreen = () => (
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '30px 20px',
+      color: '#888',
+      textAlign: 'center',
+      height: '100%',
+      position: 'relative',
+      overflow: 'hidden',
+    }}
+  >
+    {/* Stars in background */}
+    <div className="stars-container">
+      {[...Array(20)].map((_, i) => (
+        <div 
+          key={i} 
+          className="star" 
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${1 + Math.random() * 3}s`,
+          }}
+        />
+      ))}
+    </div>
+    
+    {/* Black hole effect */}
+    <div className="black-hole"></div>
+    
+    <div
+      style={{
+        fontSize: '56px',
+        marginBottom: '16px', 
+        color: '#FF385C',
+        animation: 'float 4s ease-in-out infinite',
+        zIndex: 2,
+      }}
+    >
+      <FaSearch />
+    </div>
+    
+    <h3 
+      style={{ 
+        margin: '0 0 12px 0', 
+        color: '#999', 
+        fontWeight: 400, 
+        fontSize: '20px',
+        zIndex: 2,
+      }}
+    >
+      Lost in Space - 404
+    </h3>
+    
+    <p 
+      style={{ 
+        fontSize: '14px', 
+        maxWidth: '300px', 
+        color: '#777',
+        fontWeight: 300,
+        lineHeight: 1.5,
+        zIndex: 2,
+        marginBottom: '15px',
+      }}
+    >
+      The resource you're looking for has drifted into a black hole. It could not be found in this galaxy.
+    </p>
+    
+    {/* Technical information for developers */}
+    <div 
+      style={{ 
+        background: 'rgba(255, 56, 92, 0.1)', 
+        padding: '10px 16px', 
+        borderRadius: '6px',
+        maxWidth: '300px',
+        width: '100%',
+        zIndex: 2,
+        border: '1px solid rgba(255, 56, 92, 0.2)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+        <span style={{ color: '#999' }}>Status:</span>
+        <span style={{ color: '#FF385C', fontWeight: 'bold' }}>404 Not Found</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+        <span style={{ color: '#999' }}>Resource:</span>
+        <span style={{ color: '#ccc', fontFamily: 'monospace', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+          {window.location.pathname}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+// Adding a fun 500 Server Error screen - space themed
+const ServerErrorScreen = () => (
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '30px 20px',
+      color: '#888',
+      textAlign: 'center',
+      height: '100%',
+      position: 'relative',
+      overflow: 'hidden',
+    }}
+  >
+    {/* Stars in background */}
+    <div className="stars-container meteor-shower">
+      {[...Array(20)].map((_, i) => (
+        <div 
+          key={i} 
+          className="star" 
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${1 + Math.random() * 3}s`,
+          }}
+        />
+      ))}
+      
+      {/* Improved Meteors */}
+      {[...Array(7)].map((_, i) => (
+        <div 
+          key={i} 
+          className="meteor" 
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `-5%`,
+            width: `${2 + Math.random() * 1}px`,
+            height: `${10 + Math.random() * 20}px`,
+            animationDuration: `${1 + Math.random() * 2}s`,
+            animationDelay: `${Math.random() * 6}s`,
+          }}
+        />
+      ))}
+    </div>
+    
+    <div
+      style={{
+        fontSize: '56px',
+        marginBottom: '16px',
+        color: '#FF385C',
+        animation: 'spaceship-drift 8s ease-in-out infinite',
+        zIndex: 2,
+        position: 'relative',
+      }}
+    >
+      <FaSpaceShuttle style={{ transform: 'rotate(90deg)' }} />
+      <div className="engine-flame"></div>
+    </div>
+    
+    <h3 
+      style={{ 
+        margin: '0 0 12px 0', 
+        color: '#999', 
+        fontWeight: 400, 
+        fontSize: '20px',
+        zIndex: 2,
+      }}
+    >
+      Space Station Failure
+    </h3>
+    
+    <p 
+      style={{ 
+        fontSize: '14px', 
+        maxWidth: '300px', 
+        color: '#777',
+        fontWeight: 300,
+        lineHeight: 1.5,
+        zIndex: 2,
+        marginBottom: '15px',
+      }}
+    >
+      The server space station is experiencing critical system failures. Mission control is working on repairs.
+    </p>
+    
+    {/* Technical information for developers */}
+    <div 
+      style={{ 
+        background: 'rgba(255, 56, 92, 0.1)', 
+        padding: '10px 16px', 
+        borderRadius: '6px',
+        maxWidth: '300px',
+        width: '100%',
+        zIndex: 2,
+        marginBottom: '15px',
+        border: '1px solid rgba(255, 56, 92, 0.2)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+        <span style={{ color: '#999' }}>Status:</span>
+        <span style={{ color: '#FF385C', fontWeight: 'bold' }}>500 Server Error</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+        <span style={{ color: '#999' }}>Type:</span>
+        <span style={{ color: '#ccc', fontFamily: 'monospace' }}>Internal Server Error</span>
+      </div>
+    </div>
+    
+    <div className="error-terminal">
+      <div className="terminal-header">
+        <span className="terminal-title">Error Log</span>
+      </div>
+      <div className="terminal-body">
+        <span className="terminal-prompt">$</span>
+        <span className="terminal-text">error_code:</span>
+        <span className="terminal-error-code">5XX_SERVER_FAILURE</span>
+      </div>
+    </div>
+  </div>
+);
+
+// Space-themed loading animation
+const SpaceLoadingAnimation = () => {
+  return (
+    <div
+      style={{
+        padding: '20px',
+        textAlign: 'center',
+        color: 'rgba(255, 255, 255, 0.7)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Backdrop glow */}
+      <div className="space-backdrop"></div>
+      
+      {/* Stars background */}
+      <div className="stars-container loading-stars">
+        {[...Array(20)].map((_, i) => (
+          <div 
+            key={i} 
+            className="star" 
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              width: `${1 + Math.random() * 2}px`,
+              height: `${1 + Math.random() * 2}px`,
+              opacity: 0.1 + Math.random() * 0.5,
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* Small distant stars with parallax effect */}
+      <div className="parallax-stars">
+        {[...Array(30)].map((_, i) => (
+          <div 
+            key={i} 
+            className="parallax-star" 
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* Main loading indicator */}
+      <div className="space-loading-scene">
+        {/* Planet */}
+        <div className="planet">
+          <div className="planet-shadow"></div>
+          <div className="planet-surface"></div>
+          
+          {/* Orbit paths */}
+          <div className="orbit orbit-1"></div>
+          <div className="orbit orbit-2"></div>
+          
+          {/* Satellite */}
+          <div className="satellite-container">
+            <div className="satellite">
+              <FaSatellite size={10} />
+            </div>
+          </div>
+        </div>
+        
+        {/* Rocket launch pad */}
+        <div className="launch-pad">
+          <div className="launch-stand-left"></div>
+          <div className="launch-stand-right"></div>
+        </div>
+        
+        {/* Rocket with improved design */}
+        <div className="rocket-wrapper">
+          <div className="rocket">
+            <div className="rocket-body">
+              <FaRocket className="rocket-icon" />
+            </div>
+            <div className="rocket-exhaust">
+              <div className="rocket-flame"></div>
+              <div className="rocket-smoke"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Progress indicator */}
+      <div className="loading-progress">
+        <div className="loading-dots">
+          <span className="loading-dot"></span>
+          <span className="loading-dot"></span>
+          <span className="loading-dot"></span>
+        </div>
+        <div className="loading-text">
+          Establishing connection
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface ResponsePanelProps {
   response: ApiResponse | null;
@@ -1284,34 +1620,20 @@ function ResponsePanel({
   // Render the appropriate tab content
   const renderTabContent = () => {
     if (isLoading) {
-      return (
-        <div
-          style={{
-            padding: '20px',
-            textAlign: 'center',
-            color: 'rgba(255, 255, 255, 0.6)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-          }}
-        >
-          <FaSpinner
-            style={{
-              fontSize: '32px',
-              marginBottom: '16px',
-              opacity: 0.7,
-              animation: 'spin 1.5s linear infinite',
-            }}
-          />
-          <div>Loading response...</div>
-        </div>
-      );
+      return <SpaceLoadingAnimation />;
     }
 
     if (!response) {
       return <NoResponseMessage />;
+    }
+    
+    // Show different screens for different HTTP status codes
+    if (response.status === 404) {
+      return <NotFoundScreen />;
+    }
+    
+    if (response.status >= 500 && response.status < 600) {
+      return <ServerErrorScreen />;
     }
 
     switch (activeTab) {
@@ -1634,6 +1956,414 @@ function ResponsePanel({
         @keyframes twinkle {
           0%, 100% { opacity: 0.2; transform: scale(1); }
           50% { opacity: 0.8; transform: scale(1.5); }
+        }
+        
+        /* Black hole styles for 404 */
+        .black-hole {
+          position: absolute;
+          width: 150px;
+          height: 150px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(18,18,18,1) 0%, rgba(18,18,18,0.7) 50%, rgba(18,18,18,0) 100%);
+          box-shadow: 0 0 20px 5px rgba(255, 56, 92, 0.2);
+          animation: pulse-hole 6s ease-in-out infinite;
+          opacity: 0.6;
+          z-index: 1;
+        }
+        @keyframes pulse-hole {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 20px 5px rgba(255, 56, 92, 0.2); }
+          50% { transform: scale(1.1); box-shadow: 0 0 25px 8px rgba(255, 56, 92, 0.3); }
+        }
+        
+        /* Improved Meteor shower styles for 500 error */
+        .meteor {
+          position: absolute;
+          background: linear-gradient(to bottom, rgba(255, 56, 92, 0), rgba(255, 56, 92, 0.7));
+          transform: rotate(25deg);
+          animation: meteor-fall 2s linear infinite;
+          z-index: 1;
+          border-radius: 100px 0px;
+        }
+        @keyframes meteor-fall {
+          0% { transform: translateX(-10px) translateY(-10px) rotate(25deg); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateX(350px) translateY(350px) rotate(25deg); opacity: 0; }
+        }
+        
+        /* Improved spaceship animation */
+        @keyframes spaceship-drift {
+          0%, 100% { transform: translateY(0) rotate(90deg); }
+          25% { transform: translateY(-8px) rotate(92deg); }
+          50% { transform: translateY(0) rotate(90deg); }
+          75% { transform: translateY(8px) rotate(88deg); }
+        }
+        
+        /* Engine flame effect */
+        .engine-flame {
+          position: absolute;
+          bottom: -5px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 10px;
+          height: 15px;
+          background: linear-gradient(to bottom, #FF385C, rgba(255, 56, 92, 0.1));
+          border-radius: 0 0 10px 10px;
+          animation: flame 0.5s alternate infinite;
+        }
+        @keyframes flame {
+          0% { height: 10px; opacity: 0.8; }
+          100% { height: 15px; opacity: 1; }
+        }
+        
+        /* Terminal styling for error code */
+        .error-terminal {
+          background-color: #1a1a1a;
+          border-radius: 6px;
+          width: 300px;
+          overflow: hidden;
+          margin-top: 10px;
+          border: 1px solid #333;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          z-index: 2;
+        }
+        .terminal-header {
+          background-color: #333;
+          padding: 5px 10px;
+          display: flex;
+        }
+        .terminal-title {
+          color: #ddd;
+          font-size: 12px;
+        }
+        .terminal-body {
+          padding: 10px;
+          font-family: monospace;
+          font-size: 13px;
+          color: #ddd;
+          text-align: left;
+        }
+        .terminal-prompt {
+          color: #FF385C;
+          margin-right: 8px;
+        }
+        .terminal-text {
+          color: #ccc;
+          margin-right: 8px;
+        }
+        .terminal-error-code {
+          color: #FF385C;
+          animation: blink 1s infinite;
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        
+        /* Improved Space loading animation styles */
+        .space-backdrop {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 200px;
+          height: 200px;
+          background: radial-gradient(circle, rgba(255, 56, 92, 0.05) 0%, rgba(255, 56, 92, 0.02) 40%, rgba(0, 0, 0, 0) 70%);
+          border-radius: 50%;
+          z-index: 1;
+        }
+        
+        .loading-stars .star {
+          background-color: rgba(255, 255, 255, 0.8);
+          box-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+        
+        .parallax-stars {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          top: 0;
+          left: 0;
+          z-index: 1;
+        }
+        
+        .parallax-star {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          background-color: rgba(255, 255, 255, 0.4);
+          border-radius: 50%;
+          animation: parallax 60s linear infinite;
+        }
+        
+        @keyframes parallax {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-100px); }
+        }
+        
+        .space-loading-scene {
+          position: relative;
+          width: 180px;
+          height: 180px;
+          margin-bottom: 30px;
+          z-index: 5;
+        }
+        
+        .planet {
+          position: absolute;
+          top: 30px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          z-index: 3;
+          overflow: visible;
+        }
+        
+        .planet-surface {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 50%, #2a2a2a 100%);
+          box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+          overflow: hidden;
+        }
+        
+        .planet-shadow {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: linear-gradient(45deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 50%);
+          z-index: 2;
+        }
+        
+        .orbit {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          border-radius: 50%;
+          border: 1px dashed rgba(255, 255, 255, 0.15);
+          z-index: 1;
+        }
+        
+        .orbit-1 {
+          width: 90px;
+          height: 90px;
+          animation: orbit-rotation 50s linear infinite;
+        }
+        
+        .orbit-2 {
+          width: 130px;
+          height: 70px;
+          transform: translate(-50%, -50%) rotate(20deg);
+          border-color: rgba(255, 255, 255, 0.07);
+        }
+        
+        @keyframes orbit-rotation {
+          0% { transform: translate(-50%, -50%) rotate(0deg); }
+          100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        .satellite-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          animation: satellite-orbit 8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+          z-index: 2;
+        }
+        
+        .satellite {
+          position: absolute;
+          top: -5px;
+          left: 50%;
+          transform: translateX(-50%);
+          color: #FF385C;
+          animation: satellite-tilt 8s ease-in-out infinite;
+          filter: drop-shadow(0 0 2px rgba(255, 56, 92, 0.5));
+        }
+        
+        @keyframes satellite-orbit {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes satellite-tilt {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(10deg); }
+          75% { transform: rotate(-10deg); }
+        }
+        
+        .launch-pad {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 40px;
+          height: 5px;
+          z-index: 2;
+        }
+        
+        .launch-stand-left, .launch-stand-right {
+          position: absolute;
+          bottom: 0;
+          width: 3px;
+          height: 15px;
+          background-color: #555;
+          transform-origin: bottom center;
+        }
+        
+        .launch-stand-left {
+          left: 8px;
+          transform: rotate(-10deg);
+        }
+        
+        .launch-stand-right {
+          right: 8px;
+          transform: rotate(10deg);
+        }
+        
+        .rocket-wrapper {
+          position: absolute;
+          left: 50%;
+          bottom: 35px;
+          transform: translateX(-50%);
+          z-index: 10;
+          animation: prepare-launch 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes prepare-launch {
+          0% { transform: translateX(-50%) translateY(0); }
+          100% { transform: translateX(-50%) translateY(-2px); }
+        }
+        
+        .rocket {
+          position: relative;
+          animation: launch 4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+          transform-origin: bottom center;
+        }
+        
+        .rocket-body {
+          position: relative;
+          z-index: 10;
+        }
+        
+        .rocket-icon {
+          color: #FF385C;
+          font-size: 30px;
+          transform: rotate(-45deg);
+          filter: drop-shadow(0 0 5px rgba(255, 56, 92, 0.5));
+        }
+        
+        .rocket-exhaust {
+          position: absolute;
+          bottom: 6px;
+          left: 14px;
+          transform: rotate(45deg);
+          z-index: 1;
+        }
+        
+        .rocket-flame {
+          width: 8px;
+          height: 12px;
+          background: linear-gradient(to bottom, #FF385C, rgba(255, 255, 255, 0.7), rgba(255, 56, 92, 0));
+          border-radius: 0 0 4px 4px;
+          animation: rocket-flame 0.1s ease-out alternate infinite;
+          transform-origin: top center;
+        }
+        
+        .rocket-smoke {
+          position: absolute;
+          bottom: -4px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: -1;
+        }
+        
+        .rocket-smoke::before,
+        .rocket-smoke::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          width: 10px;
+          height: 10px;
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 50%;
+          animation: smoke 2s ease-out infinite;
+          opacity: 0;
+        }
+        
+        .rocket-smoke::before {
+          left: -8px;
+          animation-delay: 0.2s;
+        }
+        
+        .rocket-smoke::after {
+          left: 2px;
+          animation-delay: 0.7s;
+        }
+        
+        @keyframes smoke {
+          0% { transform: translateY(0) scale(0.2); opacity: 0.5; }
+          100% { transform: translateY(-20px) scale(1.5); opacity: 0; }
+        }
+        
+        @keyframes launch {
+          0% { transform: translateY(0) scale(1); opacity: 1; }
+          20% { transform: translateY(0) scale(1); opacity: 1; }
+          30% { transform: translateY(-10px) scale(1); opacity: 1; }
+          90% { transform: translateY(-180px) scale(0.6); opacity: 0.2; }
+          100% { transform: translateY(-180px) scale(0.5); opacity: 0; }
+        }
+        
+        @keyframes rocket-flame {
+          0% { height: 12px; opacity: 0.7; transform: scaleX(1); }
+          100% { height: 20px; opacity: 1; transform: scaleX(0.8); }
+        }
+        
+        .loading-progress {
+          margin-top: 20px;
+          position: relative;
+          z-index: 20;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+        }
+        
+        .loading-dots {
+          display: flex;
+          gap: 5px;
+        }
+        
+        .loading-dot {
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          background-color: rgba(255, 56, 92, 0.5);
+          border-radius: 50%;
+          animation: loading-dots 1.4s infinite ease-in-out both;
+        }
+        
+        .loading-dot:nth-child(1) { animation-delay: 0s; }
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes loading-dots {
+          0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+          40% { transform: scale(1.2); opacity: 1; }
+        }
+        
+        .loading-text {
+          font-size: 14px;
+          letter-spacing: 0.5px;
+          font-weight: 300;
+          color: #aaa;
         }
       `}</style>
     </ResponseContainer>

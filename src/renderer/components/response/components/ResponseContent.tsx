@@ -8,7 +8,8 @@ import {
   FaFileAlt, 
   FaPause,
   FaSpinner,
-  FaSkull
+  FaSkull,
+  FaSatelliteDish
 } from 'react-icons/fa';
 import { ApiResponse } from '../../../types/index';
 import { formatBytes } from '../utils';
@@ -30,7 +31,7 @@ const tombstoneStyle = `
   }
 `;
 
-// REST in Peace component
+// REST in Space component (replaced tombstone)
 const RestInPeaceTombstone = () => (
   <div
     style={{
@@ -42,18 +43,71 @@ const RestInPeaceTombstone = () => (
       color: '#888',
       textAlign: 'center',
       height: '100%',
+      position: 'relative',
+      overflow: 'hidden',
     }}
   >
-    <style>{tombstoneStyle}</style>
+    <style>{`
+      @keyframes spin-slow {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes float-gentle {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-12px); }
+        100% { transform: translateY(0px); }
+      }
+      @keyframes twinkle-star {
+        0%, 100% { opacity: 0.2; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.2); }
+      }
+      .space-star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        animation: twinkle-star 3s infinite;
+      }
+      .planet-ring {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        border: 2px solid rgba(255, 56, 92, 0.1);
+        border-radius: 50%;
+        animation: spin-slow 20s linear infinite;
+      }
+    `}</style>
+    
+    {/* Stars background */}
+    {[...Array(15)].map((_, i) => (
+      <div 
+        key={i} 
+        className="space-star" 
+        style={{
+          left: `${Math.random() * 100}%`,
+          top: `${Math.random() * 100}%`,
+          animationDelay: `${Math.random() * 3}s`,
+        }}
+      />
+    ))}
+    
+    {/* Planet rings */}
+    <div className="planet-ring" style={{ transform: 'rotate(10deg)' }}></div>
+    <div className="planet-ring" style={{ width: '100px', height: '100px', transform: 'rotate(45deg)' }}></div>
+    <div className="planet-ring" style={{ width: '60px', height: '60px', transform: 'rotate(75deg)' }}></div>
+    
     <div
       style={{
         fontSize: '56px',
         marginBottom: '16px',
-        color: '#999',
-        animation: 'gentleFloat 5s ease-in-out infinite, subtleFade 5s ease-in-out infinite',
+        color: '#FF385C',
+        animation: 'float-gentle 6s ease-in-out infinite',
+        zIndex: 2,
+        position: 'relative',
       }}
     >
-      <FaSkull />
+      <FaSatelliteDish />
     </div>
     
     <h3 
@@ -62,9 +116,10 @@ const RestInPeaceTombstone = () => (
         color: '#999', 
         fontWeight: 400, 
         fontSize: '20px',
+        zIndex: 2,
       }}
     >
-      rest in peace
+      lost in space
     </h3>
     
     <p 
@@ -74,9 +129,11 @@ const RestInPeaceTombstone = () => (
         color: '#777',
         fontWeight: 300,
         lineHeight: 1.5,
+        zIndex: 2,
+        marginBottom: '12px',
       }}
     >
-      the server returned null. it's probably just chilling.
+      the server returned null. your data appears to have drifted into the cosmic void.
     </p>
   </div>
 );
@@ -380,7 +437,7 @@ function ResponseContent({
     );
   }
 
-  // Show REST in Peace animation when response exists but data is null
+  // Show REST in Space animation when response exists but data is null
   if (response && response.data === null) {
     return <RestInPeaceTombstone />;
   }
