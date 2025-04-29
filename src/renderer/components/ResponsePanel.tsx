@@ -1,5 +1,5 @@
 import React from 'react';
-import { ApiResponse, ApiRequest, Environment } from '../types';
+import { ApiResponse, ApiRequest, Environment } from '../types/index';
 import ResponsePanel from './response/ResponsePanel';
 
 interface ResponsePanelProps {

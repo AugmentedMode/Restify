@@ -7,14 +7,79 @@ import {
   FaCode, 
   FaFileAlt, 
   FaPause,
-  FaSpinner
+  FaSpinner,
+  FaSkull
 } from 'react-icons/fa';
-import { ApiResponse } from '../../../types';
+import { ApiResponse } from '../../../types/index';
 import { formatBytes } from '../utils';
 import { MASSIVE_RESPONSE_THRESHOLD, VERY_LARGE_RESPONSE_THRESHOLD } from '../constants';
 import JSONViewer from './JSONViewer';
 import PlainTextViewer from './PlainTextViewer';
 import CopyButton from './CopyButton';
+
+// Add styles for the tombstone animation
+const tombstoneStyle = `
+  @keyframes gentleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  
+  @keyframes subtleFade {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 0.85; }
+  }
+`;
+
+// REST in Peace component
+const RestInPeaceTombstone = () => (
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '30px 20px',
+      color: '#888',
+      textAlign: 'center',
+      height: '100%',
+    }}
+  >
+    <style>{tombstoneStyle}</style>
+    <div
+      style={{
+        fontSize: '56px',
+        marginBottom: '16px',
+        color: '#999',
+        animation: 'gentleFloat 5s ease-in-out infinite, subtleFade 5s ease-in-out infinite',
+      }}
+    >
+      <FaSkull />
+    </div>
+    
+    <h3 
+      style={{ 
+        margin: '0 0 12px 0', 
+        color: '#999', 
+        fontWeight: 400, 
+        fontSize: '20px',
+      }}
+    >
+      rest in peace
+    </h3>
+    
+    <p 
+      style={{ 
+        fontSize: '14px', 
+        maxWidth: '280px', 
+        color: '#777',
+        fontWeight: 300,
+        lineHeight: 1.5,
+      }}
+    >
+      the server returned null. it's probably just chilling.
+    </p>
+  </div>
+);
 
 interface ResponseContentProps {
   response: ApiResponse | null;
@@ -313,6 +378,11 @@ function ResponseContent({
         </div>
       </>
     );
+  }
+
+  // Show REST in Peace animation when response exists but data is null
+  if (response && response.data === null) {
+    return <RestInPeaceTombstone />;
   }
 
   if (isLargeResponse && !showFullResponse) {

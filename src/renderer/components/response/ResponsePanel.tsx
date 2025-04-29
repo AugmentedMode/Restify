@@ -16,7 +16,7 @@ import {
   FaLock,
   FaLockOpen,
 } from 'react-icons/fa';
-import { ApiResponse, ApiRequest, Environment } from '../../types';
+import { ApiResponse, ApiRequest, Environment } from '../../types/index';
 import {
   ResponseContainer,
   ResponseHeader,
@@ -1328,11 +1328,57 @@ function ResponsePanel({
 
   // Get HTTP status text
   const getStatusText = (status: number): string => {
+    // Specific status codes
+    switch (status) {
+      // 2xx Success
+      case 200: return 'OK';
+      case 201: return 'Created';
+      case 204: return 'No Content';
+      
+      // 3xx Redirection
+      case 301: return 'Moved Permanently';
+      case 302: return 'Found';
+      case 304: return 'Not Modified';
+      
+      // 4xx Client Errors
+      case 400: return 'Bad Request';
+      case 401: return 'Unauthorized';
+      case 403: return 'Forbidden';
+      case 404: return 'Not Found';
+      case 405: return 'Method Not Allowed';
+      case 409: return 'Conflict';
+      case 422: return 'Unprocessable Entity';
+      case 429: return 'Too Many Requests';
+      
+      // 5xx Server Errors
+      case 500: return 'Internal Server Error';
+      case 502: return 'Bad Gateway';
+      case 503: return 'Service Unavailable';
+      case 504: return 'Gateway Timeout';
+    }
+    
+    // Generic ranges
     if (status >= 200 && status < 300) return 'OK';
     if (status >= 300 && status < 400) return 'Redirect';
     if (status >= 400 && status < 500) return 'Client Error';
     if (status >= 500) return 'Server Error';
     return 'Unknown';
+  };
+
+  // Add a function to get a more descriptive status message
+  const getDescriptiveStatus = (response: ApiResponse): React.ReactNode => {
+    if (response.status === 0) {
+      return (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          Connection Failed
+        </span>
+      );
+    }
+    return (
+      <>
+        {response.status} {getStatusText(response.status)}
+      </>
+    );
   };
 
   // Add a function to toggle the secret status
@@ -1365,7 +1411,7 @@ function ResponsePanel({
             <StatusPill
               success={response.status >= 200 && response.status < 300}
             >
-              {response.status} {getStatusText(response.status)}
+              {getDescriptiveStatus(response)}
             </StatusPill>
             <ResponseMetric>{response.time} ms</ResponseMetric>
             <ResponseMetric>{formatBytes(response.size)}</ResponseMetric>
