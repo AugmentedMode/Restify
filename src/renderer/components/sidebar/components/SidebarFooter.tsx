@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { FaCog, FaChevronLeft, FaChevronRight, FaGithub, FaUser, FaCheck, FaTimes } from 'react-icons/fa';
 import { SidebarFooter as Footer } from '../../../styles/StyledComponents';
 import NavTooltip from './NavTooltip';
 import styled from 'styled-components';
-import githubService from '../../../services/GitHubService';
-import { useSettings } from '../../../utils/SettingsContext';
+import { useGitHubProfile } from '../../../hooks/useGitHubProfile';
 
 const ProfileSection = styled.div`
   display: flex;
@@ -91,56 +90,8 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
   toggleSidebar,
   onOpenSettings = () => {} 
 }) => {
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const { settings } = useSettings();
-
-  // Function to fetch GitHub profile
-  const fetchProfile = async () => {
-    try {
-      if (githubService.isInitialized()) {
-        const userData = await githubService.getCurrentUser();
-        setProfile(userData);
-      } else {
-        setProfile(null);
-      }
-    } catch (error) {
-      console.error('[GitHub Profile] Error fetching user data:', error);
-      setProfile(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // React to GitHub authentication changes
-  useEffect(() => {
-    // Initialize with current GitHub connection state
-    const checkAuthStatus = async () => {
-      setLoading(true);
-      if (settings.github.isConnected && githubService.isInitialized()) {
-        await fetchProfile();
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    };
-
-    // Listen for GitHub auth changes
-    const handleAuthChange = () => {
-      checkAuthStatus();
-    };
-
-    // Add event listener for auth changes
-    window.addEventListener('github-auth-changed', handleAuthChange);
-    
-    // Initial check
-    checkAuthStatus();
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('github-auth-changed', handleAuthChange);
-    };
-  }, [settings.github.isConnected]);
+  // Use our new hook instead of managing GitHub state directly
+  const { profile, loading, isConnected } = useGitHubProfile();
 
   // Handle profile section click based on connection status
   const handleProfileClick = () => {

@@ -30,10 +30,18 @@ import {
   FaThumbsUp,
   FaThumbsDown,
   FaComment,
-  FaCircle
+  FaCircle,
+  FaPlus,
+  FaDatabase,
+  FaCodepen,
+  FaLayerGroup,
+  FaBook,
+  FaBuilding,
+  FaUsers
 } from 'react-icons/fa';
-import githubService, { GitHubService } from '../../services/GitHubService';
+import githubService from '../../services/GitHubService';
 import { useSettings } from '../../utils/SettingsContext';
+import { useGitHubProfile } from '../../hooks/useGitHubProfile';
 
 // Styled components
 const Container = styled.div`
@@ -765,6 +773,163 @@ const ReviewStatus = styled.div`
   gap: 8px;
 `;
 
+// New styled components for dashboard layout
+const DashboardLayout = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  width: 100%;
+`;
+
+const DashboardColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const DashboardCard = styled.div`
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const CardTitle = styled.h3`
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+`;
+
+const CardContent = styled.div`
+  padding: 0;
+`;
+
+const ViewAllLink = styled.a`
+  color: #aaa;
+  font-size: 14px;
+  text-decoration: none;
+  
+  &:hover {
+    color: #FF385C;
+    text-decoration: underline;
+  }
+`;
+
+const RepoList = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const RepoItem = styled.div`
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+`;
+
+const RepoName = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  svg {
+    color: #aaa;
+  }
+`;
+
+const RepoMeta = styled.div`
+  font-size: 12px;
+  color: #aaa;
+`;
+
+const OrgList = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const OrgItem = styled.div`
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+`;
+
+const OrgAvatar = styled.img`
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background-color: #2a2a2a;
+`;
+
+const OrgInfo = styled.div`
+  flex: 1;
+`;
+
+const OrgName = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+`;
+
+const OrgMeta = styled.div`
+  font-size: 12px;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  svg {
+    font-size: 10px;
+  }
+`;
+
+const NewButton = styled.button`
+  background-color: #2da44e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  &:hover {
+    background-color: #2c974b;
+  }
+`;
+
 interface GitHubPanelProps {
   onReturn: () => void;
 }
@@ -780,7 +945,7 @@ type ReviewFilter = 'all' | 'approved' | 'changes_requested' | 'commented' | 'no
 const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [pullRequests, setPullRequests] = useState<any[]>([]);
   const [reviewRequests, setReviewRequests] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'mine' | 'reviews'>('mine');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'mine' | 'reviews'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -788,6 +953,11 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
   const [showFullToken, setShowFullToken] = useState(false);
   const [editingToken, setEditingToken] = useState(false);
   const [newToken, setNewToken] = useState('');
+  const [recentRepos, setRecentRepos] = useState<any[]>([]);
+  const [userOrgs, setUserOrgs] = useState<any[]>([]);
+  
+  // Use our GitHub profile hook
+  const { profile, isConnected: profileIsConnected } = useGitHubProfile();
   
   // Create separate filter states for each tab
   // My PRs filters
@@ -865,7 +1035,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     }
   };
   
-  // Load token (modified to use settings)
+  // Load PR and dashboard data
   useEffect(() => {
     const loadGitHubData = async () => {
       try {
@@ -874,6 +1044,47 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         // Check connection status from settings
         if (settings.github.isConnected && githubService.isInitialized()) {
           setLoading(true);
+          
+          // Load dashboard data
+          if (activeTab === 'dashboard') {
+            try {
+              const orgs = await githubService.getUserOrganizations();
+              setUserOrgs(orgs);
+              
+              // We should implement a method to get recent repos
+              // For now, we'll extract repos from PRs as a workaround
+              const myPRs = await githubService.getMyOpenPullRequests();
+              
+              // Extract unique repositories from PRs
+              const uniqueRepos = new Map();
+              myPRs.forEach(pr => {
+                const repoUrl = pr.repository_url || '';
+                const urlParts = repoUrl.split('/');
+                const owner = urlParts[urlParts.length - 2] || '';
+                const repo = urlParts[urlParts.length - 1] || '';
+                
+                if (owner && repo && !uniqueRepos.has(repo)) {
+                  uniqueRepos.set(repo, {
+                    name: repo,
+                    owner: owner,
+                    full_name: `${owner}/${repo}`,
+                    updated_at: pr.updated_at,
+                    html_url: pr.html_url.split('/pull/')[0]
+                  });
+                }
+              });
+              
+              // Convert Map to array and sort by updated date
+              const recentRepoArray = Array.from(uniqueRepos.values())
+                .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+                .slice(0, 5); // Take the 5 most recent
+              
+              setRecentRepos(recentRepoArray);
+            } catch (error) {
+              console.error('[GitHub] Error fetching dashboard data:', error);
+            }
+          }
+          
           await fetchAllPullRequests();
         }
       } catch (error) {
@@ -885,7 +1096,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     };
     
     loadGitHubData();
-  }, [settings.github.isConnected]);
+  }, [settings.github.isConnected, activeTab]);
   
   const fetchAllPullRequests = async () => {
     try {
@@ -1200,10 +1411,157 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     const filters = getFilterState();
     filters.setSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
   };
+
+  // Ensure connection state is consistent
+  const isConnected = settings.github.isConnected && profileIsConnected;
+
+  // Render dashboard content
+  const renderDashboard = () => {
+    return (
+      <DashboardLayout>
+        <DashboardColumn>
+          <DashboardCard>
+            <CardHeader>
+              <CardTitle>Active Pull Requests</CardTitle>
+              <ViewAllLink onClick={() => setActiveTab('mine')}>View all</ViewAllLink>
+            </CardHeader>
+            <CardContent>
+              {pullRequests.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                  No active pull requests
+                </div>
+              ) : (
+                <PRList style={{ padding: '0' }}>
+                  {pullRequests.slice(0, 3).map((pr: any) => (
+                    <PRItem key={pr.id} style={{ borderRadius: '0' }}>
+                      <PRHeader>
+                        <PRTitle>{pr.title}</PRTitle>
+                        <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
+                          <FaExternalLinkAlt size={12} />
+                        </PRLink>
+                      </PRHeader>
+                      <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
+                        {pr.repository_url?.split('/').slice(-2).join('/')} • {pr.draft ? 'Draft' : `${pr.comments} comments`}
+                      </div>
+                      <PRMeta>
+                        <PRMetaItem>
+                          <FaClock size={12} />
+                          <span>Updated {formatRelativeTime(pr.updated_at)}</span>
+                        </PRMetaItem>
+                      </PRMeta>
+                    </PRItem>
+                  ))}
+                </PRList>
+              )}
+            </CardContent>
+          </DashboardCard>
+          
+          <DashboardCard>
+            <CardHeader>
+              <CardTitle>Pending Reviews</CardTitle>
+              <ViewAllLink onClick={() => setActiveTab('reviews')}>View all</ViewAllLink>
+            </CardHeader>
+            <CardContent>
+              {reviewRequests.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                  No pending reviews
+                </div>
+              ) : (
+                <PRList style={{ padding: '0' }}>
+                  {reviewRequests.slice(0, 3).map((pr: any) => (
+                    <PRItem key={pr.id} style={{ borderRadius: '0' }}>
+                      <PRHeader>
+                        <PRTitle>{pr.title}</PRTitle>
+                        <PRLink href={pr.html_url} target="_blank" rel="noopener noreferrer">
+                          <FaExternalLinkAlt size={12} />
+                        </PRLink>
+                      </PRHeader>
+                      <div style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>
+                        {pr.repository_url?.split('/').slice(-2).join('/')} • Requested {formatRelativeTime(pr.updated_at)}
+                      </div>
+                      <PRMeta>
+                        <PRMetaItem style={{ color: '#FF385C' }}>
+                          <FaUserEdit size={12} />
+                          <span>Review requested</span>
+                        </PRMetaItem>
+                      </PRMeta>
+                    </PRItem>
+                  ))}
+                </PRList>
+              )}
+            </CardContent>
+          </DashboardCard>
+        </DashboardColumn>
+        
+        <DashboardColumn>
+          <DashboardCard>
+            <CardHeader>
+              <CardTitle>Recent Repositories</CardTitle>
+              <NewButton>
+                <FaPlus size={10} /> New
+              </NewButton>
+            </CardHeader>
+            <CardContent>
+              {recentRepos.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                  No recent repositories
+                </div>
+              ) : (
+                <RepoList>
+                  {recentRepos.map((repo: any) => (
+                    <RepoItem key={repo.name}>
+                      <RepoName>
+                        <FaCodepen />
+                        {repo.full_name}
+                      </RepoName>
+                      <RepoMeta>
+                        Updated {formatRelativeTime(repo.updated_at)}
+                      </RepoMeta>
+                    </RepoItem>
+                  ))}
+                </RepoList>
+              )}
+            </CardContent>
+          </DashboardCard>
+          
+          <DashboardCard>
+            <CardHeader>
+              <CardTitle>Your Organizations</CardTitle>
+              <ViewAllLink href="https://github.com/settings/organizations" target="_blank" rel="noopener noreferrer">
+                View all
+              </ViewAllLink>
+            </CardHeader>
+            <CardContent>
+              {userOrgs.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                  No organizations found
+                </div>
+              ) : (
+                <OrgList>
+                  {userOrgs.map((org: any) => (
+                    <OrgItem key={org.id}>
+                      <OrgAvatar src={org.avatar_url} alt={org.login} />
+                      <OrgInfo>
+                        <OrgName>{org.name}</OrgName>
+                        <OrgMeta>
+                          <FaBuilding size={10} />
+                          <span>{org.login}</span>
+                        </OrgMeta>
+                      </OrgInfo>
+                    </OrgItem>
+                  ))}
+                </OrgList>
+              )}
+            </CardContent>
+          </DashboardCard>
+        </DashboardColumn>
+      </DashboardLayout>
+    );
+  };
   
-  // Replace the renderContent method with this improved version
+  // Replace the renderContent method
   const renderContent = () => {
-    if (!settings.github.isConnected) {
+    if (!isConnected) {
       return (
         <TokenContainer>
           <ContainerHeader>
@@ -1290,7 +1648,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
       return (
         <EnhancedSpinner>
           <FaSync />
-          <p>Loading pull requests...</p>
+          <p>Loading GitHub data...</p>
         </EnhancedSpinner>
       );
     }
@@ -1328,27 +1686,32 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
     }
     
     // Add tab navigation
-    const renderTabContent = () => {
-      if (activeTab === 'mine') {
-        if (pullRequests.length === 0) {
-          return (
-            <EmptyState>
-              <FaGithub />
-              <h3>No open pull requests</h3>
-              <p>You don't have any open pull requests at the moment. When you create pull requests, they'll appear here.</p>
-              <LinkButton 
-                href="https://github.com" 
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ marginTop: '10px' }}
-              >
-                <FaGithub /> Go to GitHub
-              </LinkButton>
-            </EmptyState>
-          );
-        }
-
-        return (
+    return (
+      <>
+        <TabsContainer>
+          <Tab 
+            active={activeTab === 'dashboard'} 
+            onClick={() => setActiveTab('dashboard')}
+          >
+            <FaGithub /> Dashboard
+          </Tab>
+          <Tab 
+            active={activeTab === 'mine'} 
+            onClick={() => setActiveTab('mine')}
+          >
+            <FaCodeBranch /> My PRs {pullRequests.length > 0 && <ReviewBadge>{pullRequests.length}</ReviewBadge>}
+          </Tab>
+          <Tab 
+            active={activeTab === 'reviews'} 
+            onClick={() => setActiveTab('reviews')}
+          >
+            <FaCommentDots /> Review Requests {reviewRequests.length > 0 && <ReviewBadge>{reviewRequests.length}</ReviewBadge>}
+          </Tab>
+        </TabsContainer>
+        
+        {activeTab === 'dashboard' ? (
+          renderDashboard()
+        ) : activeTab === 'mine' ? (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px' }}>Your Open Pull Requests</h3>
@@ -1430,7 +1793,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
                 
                 <SortButton 
                   active={true} 
-                  onClick={() => setMyPrSortDirection(prev => prev === 'desc' ? 'asc' : 'desc')}
+                  onClick={toggleSortDirection}
                 >
                   {myPrSortDirection === 'desc' ? <FaSortAmountDown /> : <FaSortAmountUp />}
                 </SortButton>
@@ -1509,28 +1872,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
               </PRList>
             )}
           </>
-        );
-      } else {
-        // Review requests tab with similar filtering UI
-        if (reviewRequests.length === 0) {
-          return (
-            <EmptyReview>
-              <FaCommentDots />
-              <h3>No review requests</h3>
-              <p>You don't have any pull requests to review at the moment. When someone requests your review, they'll appear here.</p>
-              <LinkButton 
-                href="https://github.com/pulls/review-requested" 
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ marginTop: '10px' }}
-              >
-                <FaGithub /> Check on GitHub
-              </LinkButton>
-            </EmptyReview>
-          );
-        }
-
-        return (
+        ) : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px' }}>Pull Requests to Review</h3>
@@ -1682,34 +2024,14 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
               </PRList>
             )}
           </>
-        );
-      }
-    };
-    
-    return (
-      <>
-        <TabsContainer>
-          <Tab 
-            active={activeTab === 'mine'} 
-            onClick={() => setActiveTab('mine')}
-          >
-            <FaGithub /> My PRs {pullRequests.length > 0 && <ReviewBadge>{pullRequests.length}</ReviewBadge>}
-          </Tab>
-          <Tab 
-            active={activeTab === 'reviews'} 
-            onClick={() => setActiveTab('reviews')}
-          >
-            <FaCommentDots /> Review Requests {reviewRequests.length > 0 && <ReviewBadge>{reviewRequests.length}</ReviewBadge>}
-          </Tab>
-        </TabsContainer>
-        {renderTabContent()}
+        )}
       </>
     );
   };
   
-  // The renderTokenManagement function should be inside the component
+  // The renderTokenManagement function using profile from hook
   const renderTokenManagement = () => {
-    if (!settings.github.isConnected) return null;
+    if (!isConnected) return null;
     
     return (
       <>
@@ -1808,13 +2130,13 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
           </BackButton>
           <Title>
             <FaGithub />
-            GitHub Pull Requests
+            GitHub Dashboard
           </Title>
         </HeaderLeft>
-        {settings.github.isConnected && (
+        {isConnected && (
           <RefreshButton 
             onClick={refreshAllPullRequests} 
-            title="Refresh pull requests"
+            title="Refresh GitHub data"
             disabled={loading}
           >
             <FaSync />
@@ -1822,7 +2144,7 @@ const GitHubPanel: React.FC<GitHubPanelProps> = ({ onReturn }) => {
         )}
       </Header>
       <Content>
-        {showTokenManagement && settings.github.isConnected && renderTokenManagement()}
+        {showTokenManagement && isConnected && renderTokenManagement()}
         {renderContent()}
       </Content>
     </Container>

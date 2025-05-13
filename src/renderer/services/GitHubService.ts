@@ -444,6 +444,43 @@ export class GitHubService {
   }
 
   /**
+   * Get organizations that the authenticated user belongs to
+   * @returns Array of organizations
+   */
+  public async getUserOrganizations() {
+    this.ensureInitialized();
+    
+    try {
+      console.log('[GitHub] Fetching user organizations');
+      const { data } = await this.octokit.orgs.listForAuthenticatedUser({
+        per_page: 100
+      });
+      
+      return data.map((org: {
+        id: number;
+        login: string;
+        name?: string;
+        avatar_url: string;
+        description?: string;
+        url: string;
+        html_url: string;
+      }) => ({
+        id: org.id,
+        login: org.login,
+        name: org.name || org.login,
+        avatar_url: org.avatar_url,
+        description: org.description,
+        url: org.url,
+        html_url: org.html_url,
+        issues_count: 0  // We'll populate this later if needed
+      }));
+    } catch (error) {
+      console.error('[GitHub] Error fetching user organizations:', error);
+      return [];
+    }
+  }
+
+  /**
    * Ensure the service is initialized before making API calls
    */
   private ensureInitialized() {
