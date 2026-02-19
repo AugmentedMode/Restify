@@ -149,7 +149,7 @@ const CollectionsSection: React.FC<CollectionsSectionProps> = ({
                     transition={{ duration: 0.2 }}
                     style={{
                       marginLeft: 20,
-                      borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderLeft: '1px solid rgba(255, 255, 255, 0.16)',
                       overflow: 'hidden',
                     }}
                   >
@@ -191,7 +191,7 @@ const CollectionsSection: React.FC<CollectionsSectionProps> = ({
           {expandedFolders[collection.id] && collection.items && (
             <div style={{
               marginLeft: 20,
-              borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+              borderLeft: '1px solid rgba(255, 255, 255, 0.16)',
               paddingLeft: 0,
             }}>
               {renderCollectionItems(collection.items, [collection.id])}

@@ -150,32 +150,71 @@ export const AppContainer = styled.div`
 
 // Sidebar
 export const Sidebar = styled.div`
-  width: 300px;
-  background-color: #18181b;
-  overflow-y: auto;
-  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  width: 270px;
+  background:
+    radial-gradient(125% 72% at -18% -12%, rgba(255, 90, 126, 0.14), transparent 58%),
+    radial-gradient(115% 88% at 118% 108%, rgba(255, 136, 94, 0.12), transparent 60%),
+    linear-gradient(180deg, #18181c 0%, #141418 45%, #101115 100%);
+  overflow: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
   padding: 0;
   position: relative;
   height: 100vh;
   transition: width 0.3s ease;
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.03),
+    14px 0 42px rgba(0, 0, 0, 0.34);
 
   &.dark-theme {
-    --sidebar-bg: #18181b;
-    --sidebar-border: rgba(255, 255, 255, 0.07);
+    --sidebar-bg: #15161a;
+    --sidebar-border: rgba(255, 255, 255, 0.1);
     --sidebar-text: #ffffff;
-    --sidebar-text-secondary: rgba(255, 255, 255, 0.7);
-    --sidebar-hover: #2c2c2c;
+    --sidebar-text-secondary: rgba(223, 223, 233, 0.74);
+    --sidebar-hover: #23242a;
 
     background-color: var(--sidebar-bg);
     border-color: var(--sidebar-border);
     color: var(--sidebar-text);
   }
 
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.07) 0%,
+        rgba(255, 255, 255, 0.02) 13%,
+        rgba(255, 255, 255, 0) 26%
+      ),
+      radial-gradient(circle at 14% 18%, rgba(255, 96, 138, 0.16), transparent 24%);
+    opacity: 0.5;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 170, 122, 0.32) 0%,
+      rgba(255, 108, 150, 0.26) 40%,
+      rgba(255, 255, 255, 0.14) 100%
+    );
+    opacity: 0.45;
+  }
+
   /* Custom scrollbar */
   &::-webkit-scrollbar {
-    width: 5px;
+    width: 6px;
   }
 
   &::-webkit-scrollbar-track {
@@ -183,11 +222,11 @@ export const Sidebar = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.14);
+    border-radius: 4px;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.15);
+      background-color: rgba(255, 255, 255, 0.26);
     }
   }
 
@@ -195,7 +234,7 @@ export const Sidebar = styled.div`
     width: 100%;
     height: 250px;
     border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 `;
 
@@ -211,39 +250,51 @@ export const ResizeHandle = styled.div`
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: ${colors.accent.primary}40;
+    background-color: rgba(255, 56, 92, 0.35);
   }
 
   &.active {
-    background-color: ${colors.accent.primary};
+    background-color: rgba(255, 120, 150, 0.78);
   }
 `;
 
 export const SidebarHeader = styled.div`
-  padding: 18px 16px 10px;
+  padding: 18px 16px 12px;
   display: flex;
   align-items: center;
-  background-color: transparent;
+  justify-content: space-between;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.015)
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 1;
 `;
 
 export const Logo = styled.div`
   display: flex;
   align-items: center;
+  gap: 10px;
   font-weight: ${typography.fontWeights.bold};
   font-size: 18px;
-  color: ${colors.text.primary};
-  letter-spacing: -0.5px;
+  color: rgba(245, 245, 250, 0.96);
+  letter-spacing: 0.01em;
+  font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
 
   svg {
-    margin-right: 10px;
-    color: ${colors.accent.primary};
+    color: #ffe8d2;
   }
 `;
 
 export const SidebarContent = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 0;
+  padding: 0 0 6px;
+  position: relative;
+  z-index: 1;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -254,11 +305,11 @@ export const SidebarContent = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.16);
     border-radius: 4px;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.2);
+      background-color: rgba(255, 255, 255, 0.28);
     }
   }
 `;
@@ -309,18 +360,21 @@ export const FolderItem = styled.div`
   width: 100%;
   padding: 7px 10px;
   cursor: pointer;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 13px;
   font-weight: ${typography.fontWeights.medium};
-  color: rgba(255, 255, 255, 0.8);
-  transition: background-color 0.15s;
+  color: rgba(228, 229, 236, 0.86);
+  transition: all 0.15s ease;
+  letter-spacing: 0.01em;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.16);
   }
 
   &:hover .action-button {
-    opacity: 0.8;
+    opacity: 1;
   }
 `;
 
@@ -331,28 +385,39 @@ export const RequestItem = styled.div`
   width: 100%;
   font-size: 13px;
   padding: 5px 10px;
-  border-radius: 5px;
+  border-radius: 9px;
   overflow: hidden;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(211, 213, 222, 0.8);
+  border: 1px solid transparent;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+  }
 
   &:hover .action-button {
-    opacity: 0.8;
+    opacity: 1;
   }
 `;
 
 export const RequestItemContainer = styled.div<{ active?: boolean }>`
   cursor: pointer;
-  margin: 1px 0;
-  border-radius: 6px;
-  background-color: ${(props) => props.active ? 'rgba(255, 255, 255, 0.07)' : 'transparent'};
-  transition: background-color 0.15s;
+  margin: 2px 0;
+  border-radius: 10px;
+  background-color: ${(props) =>
+    props.active ? 'rgba(255, 56, 92, 0.15)' : 'transparent'};
+  border: 1px solid ${(props) =>
+    props.active ? 'rgba(255, 115, 146, 0.34)' : 'transparent'};
+  transition: all 0.15s ease;
 
   &[data-active="true"], &[data-active=""] {
-    background-color: rgba(255, 255, 255, 0.07);
+    background-color: rgba(255, 56, 92, 0.15);
+    border-color: rgba(255, 115, 146, 0.34);
   }
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
   }
 `;
 
@@ -1068,37 +1133,39 @@ export const CollectionIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${colors.text.secondary};
+  color: rgba(197, 200, 212, 0.82);
 `;
 
 export const CollectionTitle = styled.div`
-  font-weight: ${typography.fontWeights.medium};
-  color: ${colors.text.secondary};
+  font-weight: ${typography.fontWeights.semiBold};
+  font-size: 13px;
+  color: rgba(222, 224, 234, 0.84);
 `;
 
 export const ActionButtons = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 `;
 
 export const ActionButton = styled.button`
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${colors.text.tertiary};
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+  color: rgba(176, 182, 199, 0.76);
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   transition: all 0.2s;
   opacity: 0;
   
   &:hover {
-    background: ${colors.background.elevated};
-    color: ${colors.text.primary};
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #f1f3fb;
     opacity: 1;
   }
 `;
@@ -1197,27 +1264,31 @@ export const SectionHeader = styled.div`
   justify-content: space-between;
   padding: 8px 12px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background-color 0.2s;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
   
   .action-button {
-    opacity: 0.8;
+    opacity: 0.9;
   }
   
   &:hover {
-    background-color: ${colors.background.tertiary};
+    background-color: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.14);
   }
 `;
 
 export const HistoryItem = styled.div`
   padding: 8px 12px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 10px;
   margin: 2px 0;
-  transition: all 0.2s;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
   
   &:hover {
-    background-color: ${colors.background.elevated};
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
     transform: translateX(4px);
   }
 `;
@@ -1235,11 +1306,11 @@ export const HistoryItemsContainer = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.16);
     border-radius: 3px;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.2);
+      background-color: rgba(255, 255, 255, 0.28);
     }
   }
 `;
@@ -1351,47 +1422,70 @@ export const ContextMenuDivider = styled.div`
 export const SidebarFooter = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 6px 4px 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 13, 0) 0%,
+    rgba(10, 10, 14, 0.62) 34%,
+    rgba(9, 9, 12, 0.95) 100%
+  );
   margin-top: auto;
-  gap: 2px;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
 `;
 
 export const SearchContainer = styled.div`
   position: relative;
-  margin: 0 12px 12px;
+  margin: 12px 12px 10px;
 `;
 
 export const SearchIcon = styled.div`
   position: absolute;
-  left: 12px;
+  left: 13px;
   top: 50%;
   transform: translateY(-50%);
-  color: ${colors.text.tertiary};
+  color: rgba(196, 199, 212, 0.55);
+  z-index: 1;
 `;
 
 export const SearchInput = styled.input`
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.07);
-  color: ${colors.text.primary};
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  color: rgba(245, 246, 250, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
   padding: 10px 12px;
-  padding-left: 36px;
-  padding-right: 52px;
-  font-family: ${typography.fontFamily};
+  padding-left: 38px;
+  padding-right: 58px;
+  font-family: 'IBM Plex Sans', 'Avenir Next', 'Segoe UI', sans-serif;
   font-size: 13px;
-  height: 38px;
+  height: 40px;
   transition: all 0.2s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 20px rgba(0, 0, 0, 0.18);
 
   &:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.12);
-    background-color: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 102, 140, 0.55);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      0 0 0 2px rgba(255, 56, 92, 0.2);
   }
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(196, 199, 212, 0.5);
   }
 `;
 
@@ -1482,76 +1576,124 @@ export const Button = styled.button`
 // NeuralForge sidebar components
 
 export const NavItem = styled.div<{ active?: boolean }>`
+  position: relative;
   display: flex;
   align-items: center;
-  padding: 9px 14px;
+  padding: 9px 12px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 12px;
   margin: 2px 10px;
-  font-size: 14px;
-  font-weight: ${(props) => props.active ? typography.fontWeights.semiBold : typography.fontWeights.medium};
-  color: ${(props) => props.active ? colors.text.primary : 'rgba(255, 255, 255, 0.65)'};
-  background-color: ${(props) => props.active ? 'rgba(255, 255, 255, 0.07)' : 'transparent'};
-  transition: all 0.15s ease;
+  font-size: 13px;
+  font-weight: ${(props) =>
+    props.active ? typography.fontWeights.semiBold : typography.fontWeights.medium};
+  color: ${(props) =>
+    props.active ? 'rgba(247, 247, 252, 0.98)' : 'rgba(211, 214, 225, 0.76)'};
+  background-color: ${(props) =>
+    props.active ? 'rgba(255, 56, 92, 0.16)' : 'transparent'};
+  border: 1px solid
+    ${(props) => (props.active ? 'rgba(255, 115, 146, 0.34)' : 'transparent')};
+  transition: all 0.18s ease;
   letter-spacing: 0.01em;
 
+  &::before {
+    content: '';
+    width: 3px;
+    height: 18px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffbd91 0%, #ff5b90 100%);
+    opacity: ${(props) => (props.active ? 1 : 0)};
+    transform: ${(props) =>
+      props.active ? 'translateX(0)' : 'translateX(-6px)'};
+    transition: all 0.18s ease;
+    margin-right: ${(props) => (props.active ? '8px' : '0')};
+  }
+
+  span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   svg {
-    margin-right: 12px;
-    font-size: 16px;
-    opacity: ${(props) => props.active ? 0.95 : 0.55};
+    margin-right: 10px;
+    font-size: 14px;
+    opacity: ${(props) => (props.active ? 1 : 0.84)};
     flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 7px;
+    border-radius: 9px;
+    background: ${(props) =>
+      props.active ? 'rgba(255, 114, 153, 0.22)' : 'rgba(255, 255, 255, 0.06)'};
+    border: 1px solid
+      ${(props) =>
+        props.active ? 'rgba(255, 175, 199, 0.38)' : 'rgba(255, 255, 255, 0.12)'};
+    box-shadow: ${(props) =>
+      props.active ? '0 0 12px rgba(255, 109, 150, 0.25)' : 'none'};
   }
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.06);
-    color: ${colors.text.primary};
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(246, 247, 252, 0.98);
 
     svg {
-      opacity: 0.9;
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.11);
+      border-color: rgba(255, 255, 255, 0.24);
     }
   }
 `;
 
 export const NavItemBadge = styled.span`
   margin-left: auto;
-  background-color: rgba(255, 56, 92, 0.18);
-  color: #ff6b8a;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 163, 109, 0.22) 0%,
+    rgba(255, 134, 78, 0.18) 100%
+  );
+  color: #ffc9a0;
   font-size: 11px;
   font-weight: ${typography.fontWeights.bold};
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 999px;
   min-width: 22px;
   text-align: center;
   line-height: 1.4;
+  border: 1px solid rgba(255, 190, 149, 0.34);
 `;
 
 export const SectionLabel = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 16px 8px;
-  font-size: 11px;
+  padding: 18px 16px 8px;
+  font-size: 10px;
   font-weight: ${typography.fontWeights.semiBold};
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(169, 174, 192, 0.82);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.3px;
+  font-family: 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
 `;
 
 export const SectionLabelAction = styled.button`
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   cursor: pointer;
-  color: ${colors.text.tertiary};
-  padding: 2px;
+  color: rgba(228, 230, 239, 0.78);
+  padding: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.15s ease;
 
   &:hover {
-    color: ${colors.text.primary};
-    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(250, 250, 252, 0.96);
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
   }
 
   svg {
@@ -1561,32 +1703,40 @@ export const SectionLabelAction = styled.button`
 
 export const KeyboardShortcutBadge = styled.span`
   position: absolute;
-  right: 10px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.35);
-  font-size: 12px;
+  background: rgba(22, 23, 28, 0.86);
+  color: rgba(196, 200, 214, 0.74);
+  font-size: 11px;
   font-weight: ${typography.fontWeights.medium};
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 6px;
   pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-family: 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
 `;
 
 export const CollectionDot = styled.div<{ color: string }>`
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   background-color: ${(props) => props.color};
-  margin-right: 10px;
+  margin-right: 9px;
   flex-shrink: 0;
-  box-shadow: 0 0 6px ${(props) => props.color}40;
+  box-shadow:
+    0 0 10px ${(props) => props.color}55,
+    0 0 0 2px rgba(14, 14, 18, 0.9);
 `;
 
 export const SidebarDivider = styled.div`
   height: 1px;
-  background-color: rgba(255, 255, 255, 0.06);
-  margin: 8px 16px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.22) 14%,
+    rgba(255, 255, 255, 0.22) 86%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  margin: 10px 16px;
 `;

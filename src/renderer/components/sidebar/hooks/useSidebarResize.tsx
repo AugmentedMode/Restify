@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-export const useSidebarResize = (initialWidth: number = 300) => {
+export const useSidebarResize = (initialWidth: number = 270) => {
   const [sidebarWidth, setSidebarWidth] = useState(initialWidth);
   const [isResizing, setIsResizing] = useState(false);
   const startXRef = useRef<number>(0);
@@ -10,7 +10,7 @@ export const useSidebarResize = (initialWidth: number = 300) => {
     (e: MouseEvent) => {
       if (!isResizing) return;
       const newWidth = startWidthRef.current + (e.clientX - startXRef.current);
-      if (newWidth >= 180 && newWidth <= 500) {
+      if (newWidth >= 170 && newWidth <= 420) {
         setSidebarWidth(newWidth);
       }
     },

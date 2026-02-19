@@ -68,7 +68,7 @@ import AddCollectionModal from '../modals/AddCollectionModal';
 import { ApiRequest, Folder, HttpMethod, RequestHistoryItem, Environment, Note, SecretsProfile } from '../../types';
 
 const sidebarVariants = {
-  expanded: { width: 300 },
+  expanded: { width: 270 },
   collapsed: { width: 70 },
 };
 
@@ -151,7 +151,7 @@ function Sidebar({
 }: SidebarProps) {
   const { settings } = useSettings();
 
-  const { sidebarWidth, isResizing, handleResizeStart } = useSidebarResize(300);
+  const { sidebarWidth, isResizing, handleResizeStart } = useSidebarResize(270);
   const { expandedFolders, toggleFolder, toggleAllFolders } = useExpandedFolders();
   const { expandedSections, toggleSection } = useExpandedSections();
   const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
@@ -372,6 +372,27 @@ function Sidebar({
     );
   };
 
+  const collapsedNavBaseStyle = {
+    cursor: 'pointer',
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    border: '1px solid rgba(255, 255, 255, 0.14)',
+    color: 'rgba(211, 214, 225, 0.8)',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(255, 255, 255, 0.04)',
+  };
+
+  const collapsedNavActiveStyle = {
+    background: 'rgba(255, 56, 92, 0.16)',
+    border: '1px solid rgba(255, 115, 146, 0.34)',
+    color: '#ffd6e2',
+    boxShadow: '0 0 14px rgba(255, 90, 132, 0.24)',
+  };
+
   // Collapsed sidebar navigation
   const renderCollapsedNav = () => (
     <div
@@ -379,22 +400,16 @@ function Sidebar({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '20px 0',
-        gap: '12px',
+        padding: '14px 0 12px',
+        gap: '10px',
       }}
     >
       {settings.general.showHistory && (
         <NavTooltip title="History" isCollapsed={isSidebarCollapsed}>
           <div
             style={{
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: expandedSections.history
-                ? 'rgba(255, 56, 92, 0.1)'
-                : 'transparent',
-              color: expandedSections.history ? '#FF385C' : 'inherit',
-              transition: 'all 0.2s',
+              ...collapsedNavBaseStyle,
+              ...(expandedSections.history ? collapsedNavActiveStyle : {}),
             }}
             onClick={navigateToHistory}
             className="nav-item"
@@ -408,14 +423,8 @@ function Sidebar({
         <NavTooltip title="Kanban Board" isCollapsed={isSidebarCollapsed}>
           <div
             style={{
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: currentRoute === '/kanban'
-                ? 'rgba(255, 56, 92, 0.1)'
-                : 'transparent',
-              color: currentRoute === '/kanban' ? '#FF385C' : 'inherit',
-              transition: 'all 0.2s',
+              ...collapsedNavBaseStyle,
+              ...(currentRoute === '/kanban' ? collapsedNavActiveStyle : {}),
             }}
             onClick={navigateToKanban}
             className="nav-item"
@@ -428,14 +437,8 @@ function Sidebar({
       <NavTooltip title="AI Assistant" isCollapsed={isSidebarCollapsed}>
         <div
           style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: currentRoute === '/ai'
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: currentRoute === '/ai' ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
+            ...collapsedNavBaseStyle,
+            ...(currentRoute === '/ai' ? collapsedNavActiveStyle : {}),
           }}
           onClick={navigateToAI}
           className="nav-item"
@@ -448,14 +451,8 @@ function Sidebar({
         <NavTooltip title="Collections" isCollapsed={isSidebarCollapsed}>
           <div
             style={{
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: expandedSections.collections
-                ? 'rgba(255, 56, 92, 0.1)'
-                : 'transparent',
-              color: expandedSections.collections ? '#FF385C' : 'inherit',
-              transition: 'all 0.2s',
+              ...collapsedNavBaseStyle,
+              ...(expandedSections.collections ? collapsedNavActiveStyle : {}),
             }}
             onClick={() => toggleSection('collections')}
             className="nav-item"
@@ -469,14 +466,8 @@ function Sidebar({
         <NavTooltip title="Notes" isCollapsed={isSidebarCollapsed}>
           <div
             style={{
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: expandedSections.notes
-                ? 'rgba(255, 56, 92, 0.1)'
-                : 'transparent',
-              color: expandedSections.notes ? '#FF385C' : 'inherit',
-              transition: 'all 0.2s',
+              ...collapsedNavBaseStyle,
+              ...(expandedSections.notes ? collapsedNavActiveStyle : {}),
             }}
             onClick={() => {
               toggleSection('notes');
@@ -493,14 +484,8 @@ function Sidebar({
         <NavTooltip title="Secrets Manager" isCollapsed={isSidebarCollapsed}>
           <div
             style={{
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: currentRoute === '/secrets'
-                ? 'rgba(255, 56, 92, 0.1)'
-                : 'transparent',
-              color: currentRoute === '/secrets' ? '#FF385C' : 'inherit',
-              transition: 'all 0.2s',
+              ...collapsedNavBaseStyle,
+              ...(currentRoute === '/secrets' ? collapsedNavActiveStyle : {}),
             }}
             onClick={navigateToSecretsManager}
             className="nav-item"
@@ -513,14 +498,8 @@ function Sidebar({
       <NavTooltip title="AI Prompts" isCollapsed={isSidebarCollapsed}>
         <div
           style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: currentRoute.startsWith('/ai-prompts')
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: currentRoute.startsWith('/ai-prompts') ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
+            ...collapsedNavBaseStyle,
+            ...(currentRoute.startsWith('/ai-prompts') ? collapsedNavActiveStyle : {}),
           }}
           onClick={navigateToAIPrompts}
           className="nav-item"
@@ -533,14 +512,8 @@ function Sidebar({
         <NavTooltip title="GitHub PRs" isCollapsed={isSidebarCollapsed}>
           <div
             style={{
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: currentRoute === '/github'
-                ? 'rgba(255, 56, 92, 0.1)'
-                : 'transparent',
-              color: currentRoute === '/github' ? '#FF385C' : 'inherit',
-              transition: 'all 0.2s',
+              ...collapsedNavBaseStyle,
+              ...(currentRoute === '/github' ? collapsedNavActiveStyle : {}),
             }}
             onClick={navigateToGitHub}
             className="nav-item"
@@ -586,40 +559,12 @@ function Sidebar({
             ) : (
               <>
                 <SidebarSearch filter={filter} setFilter={setFilter} />
-
-                {/* Zone 1: Quick Nav */}
-                <div style={{ padding: '4px 0 2px' }}>
-                  {settings.general.showHistory && (
-                    <NavItemRow
-                      icon={<FaHistory />}
-                      label="History"
-                      badge={requestHistory.length}
-                      active={expandedSections.history}
-                      onClick={navigateToHistory}
-                    />
-                  )}
-                  {settings.general.showBoards && (
-                    <NavItemRow
-                      icon={<FaColumns />}
-                      label="Kanban Board"
-                      active={currentRoute === '/kanban'}
-                      onClick={navigateToKanban}
-                    />
-                  )}
-                  <NavItemRow
-                    icon={<FaRobot />}
-                    label="AI Assistant"
-                    active={currentRoute === '/ai'}
-                    onClick={navigateToAI}
-                  />
-                </div>
-
-                {/* Zone 2: Collections (scrollable middle) */}
                 <SidebarContent style={{ overflowX: 'hidden' }}>
+                  {/* Collections first to maximize visible request list area */}
                   {settings.general.showCollections && (
                     <>
                       <SectionLabel>
-                        <span>COLLECTIONS</span>
+                        <span>WORKSPACE</span>
                         <SectionLabelAction
                           onClick={showAddCollectionModal}
                           title="New Collection"
@@ -652,45 +597,69 @@ function Sidebar({
                       onClearHistory={onClearHistory}
                     />
                   )}
-                </SidebarContent>
 
-                {/* Zone 3: Lower Nav */}
-                <SidebarDivider />
-                <div style={{ padding: '4px 0 6px' }}>
-                  {settings.general.showNotes && (
-                    <NavItemRow
-                      icon={<FaStickyNote />}
-                      label="Notes"
-                      active={expandedSections.notes}
-                      onClick={() => {
-                        toggleSection('notes');
-                        onNavigateToNotes();
-                      }}
-                    />
-                  )}
-                  {settings.general.showSecretsManager && (
-                    <NavItemRow
-                      icon={<FaKey />}
-                      label="Secrets Manager"
-                      active={currentRoute === '/secrets'}
-                      onClick={navigateToSecretsManager}
-                    />
-                  )}
-                  <NavItemRow
-                    icon={<FaLightbulb />}
-                    label="AI Prompts"
-                    active={currentRoute.startsWith('/ai-prompts')}
-                    onClick={navigateToAIPrompts}
-                  />
-                  {settings.general.showGitHub && (
-                    <NavItemRow
-                      icon={<FaGithub />}
-                      label="Pull Requests"
-                      active={currentRoute === '/github'}
-                      onClick={navigateToGitHub}
-                    />
-                  )}
-                </div>
+                  <div style={{ marginTop: 10 }}>
+                    <SidebarDivider />
+                    <div style={{ padding: '4px 0 2px' }}>
+                      {settings.general.showHistory && (
+                        <NavItemRow
+                          icon={<FaHistory />}
+                          label="History"
+                          badge={requestHistory.length}
+                          active={expandedSections.history}
+                          onClick={navigateToHistory}
+                        />
+                      )}
+                      {settings.general.showBoards && (
+                        <NavItemRow
+                          icon={<FaColumns />}
+                          label="Kanban Board"
+                          active={currentRoute === '/kanban'}
+                          onClick={navigateToKanban}
+                        />
+                      )}
+                      <NavItemRow
+                        icon={<FaRobot />}
+                        label="AI Assistant"
+                        active={currentRoute === '/ai'}
+                        onClick={navigateToAI}
+                      />
+                      {settings.general.showNotes && (
+                        <NavItemRow
+                          icon={<FaStickyNote />}
+                          label="Notes"
+                          active={expandedSections.notes}
+                          onClick={() => {
+                            toggleSection('notes');
+                            onNavigateToNotes();
+                          }}
+                        />
+                      )}
+                      {settings.general.showSecretsManager && (
+                        <NavItemRow
+                          icon={<FaKey />}
+                          label="Secrets Manager"
+                          active={currentRoute === '/secrets'}
+                          onClick={navigateToSecretsManager}
+                        />
+                      )}
+                      <NavItemRow
+                        icon={<FaLightbulb />}
+                        label="AI Prompts"
+                        active={currentRoute.startsWith('/ai-prompts')}
+                        onClick={navigateToAIPrompts}
+                      />
+                      {settings.general.showGitHub && (
+                        <NavItemRow
+                          icon={<FaGithub />}
+                          label="Pull Requests"
+                          active={currentRoute === '/github'}
+                          onClick={navigateToGitHub}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </SidebarContent>
               </>
             )}
           </>

@@ -30,7 +30,7 @@ const SidebarSearch: React.FC<SidebarSearchProps> = ({ filter, setFilter }) => {
       </SearchIcon>
       <SearchInput
         ref={inputRef}
-        placeholder="Search..."
+        placeholder="Search workspace"
         value={filter}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilter(e.target.value)}
       />
