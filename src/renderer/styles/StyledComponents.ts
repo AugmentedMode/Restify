@@ -151,9 +151,9 @@ export const AppContainer = styled.div`
 // Sidebar
 export const Sidebar = styled.div`
   width: 300px;
-  background-color: #141417;
+  background-color: #18181b;
   overflow-y: auto;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -162,8 +162,8 @@ export const Sidebar = styled.div`
   transition: width 0.3s ease;
 
   &.dark-theme {
-    --sidebar-bg: #141417;
-    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-bg: #18181b;
+    --sidebar-border: rgba(255, 255, 255, 0.07);
     --sidebar-text: #ffffff;
     --sidebar-text-secondary: rgba(255, 255, 255, 0.7);
     --sidebar-hover: #2c2c2c;
@@ -175,7 +175,7 @@ export const Sidebar = styled.div`
 
   /* Custom scrollbar */
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
   }
 
   &::-webkit-scrollbar-track {
@@ -183,11 +183,11 @@ export const Sidebar = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.08);
     border-radius: 3px;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.2);
+      background-color: rgba(255, 255, 255, 0.15);
     }
   }
 
@@ -195,7 +195,7 @@ export const Sidebar = styled.div`
     width: 100%;
     height: 250px;
     border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   }
 `;
 
@@ -220,7 +220,7 @@ export const ResizeHandle = styled.div`
 `;
 
 export const SidebarHeader = styled.div`
-  padding: 14px 16px;
+  padding: 18px 16px 10px;
   display: flex;
   align-items: center;
   background-color: transparent;
@@ -307,16 +307,18 @@ export const FolderItem = styled.div`
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 8px 12px;
+  padding: 7px 10px;
   cursor: pointer;
   border-radius: 6px;
   font-size: 14px;
-  transition: background-color 0.2s;
+  font-weight: ${typography.fontWeights.medium};
+  color: rgba(255, 255, 255, 0.8);
+  transition: background-color 0.15s;
 
   &:hover {
-    background-color: ${colors.background.elevated};
+    background-color: rgba(255, 255, 255, 0.05);
   }
-  
+
   &:hover .action-button {
     opacity: 0.8;
   }
@@ -327,11 +329,12 @@ export const RequestItem = styled.div`
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  font-size: 14px;
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 5px;
   overflow: hidden;
-  
+  color: rgba(255, 255, 255, 0.65);
+
   &:hover .action-button {
     opacity: 0.8;
   }
@@ -339,17 +342,17 @@ export const RequestItem = styled.div`
 
 export const RequestItemContainer = styled.div<{ active?: boolean }>`
   cursor: pointer;
-  margin: 2px 0;
+  margin: 1px 0;
   border-radius: 6px;
-  background-color: ${(props) => props.active ? colors.background.elevated : 'transparent'};
-  transition: background-color 0.2s;
-  
+  background-color: ${(props) => props.active ? 'rgba(255, 255, 255, 0.07)' : 'transparent'};
+  transition: background-color 0.15s;
+
   &[data-active="true"], &[data-active=""] {
-    background-color: ${colors.background.elevated};
+    background-color: rgba(255, 255, 255, 0.07);
   }
-  
+
   &:hover {
-    background-color: ${colors.background.elevated};
+    background-color: rgba(255, 255, 255, 0.05);
   }
 `;
 
@@ -1348,14 +1351,15 @@ export const ContextMenuDivider = styled.div`
 export const SidebarFooter = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 8px 12px;
+  padding: 6px 4px 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   margin-top: auto;
+  gap: 2px;
 `;
 
 export const SearchContainer = styled.div`
   position: relative;
-  margin: 0 12px 8px;
+  margin: 0 12px 12px;
 `;
 
 export const SearchIcon = styled.div`
@@ -1368,26 +1372,26 @@ export const SearchIcon = styled.div`
 
 export const SearchInput = styled.input`
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.07);
   color: ${colors.text.primary};
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 10px;
   padding: 10px 12px;
   padding-left: 36px;
-  padding-right: 48px;
+  padding-right: 52px;
   font-family: ${typography.fontFamily};
   font-size: 13px;
-  height: 36px;
+  height: 38px;
   transition: all 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.15);
-    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.09);
   }
 
   &::placeholder {
-    color: ${colors.text.tertiary};
+    color: rgba(255, 255, 255, 0.35);
   }
 `;
 
@@ -1480,54 +1484,57 @@ export const Button = styled.button`
 export const NavItem = styled.div<{ active?: boolean }>`
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: 9px 14px;
   cursor: pointer;
   border-radius: 8px;
-  margin: 1px 8px;
+  margin: 2px 10px;
   font-size: 14px;
-  color: ${(props) => props.active ? colors.text.primary : colors.text.secondary};
-  background-color: ${(props) => props.active ? 'rgba(255, 255, 255, 0.08)' : 'transparent'};
+  font-weight: ${(props) => props.active ? typography.fontWeights.semiBold : typography.fontWeights.medium};
+  color: ${(props) => props.active ? colors.text.primary : 'rgba(255, 255, 255, 0.65)'};
+  background-color: ${(props) => props.active ? 'rgba(255, 255, 255, 0.07)' : 'transparent'};
   transition: all 0.15s ease;
+  letter-spacing: 0.01em;
 
   svg {
-    margin-right: 10px;
-    font-size: 15px;
-    opacity: ${(props) => props.active ? 1 : 0.7};
+    margin-right: 12px;
+    font-size: 16px;
+    opacity: ${(props) => props.active ? 0.95 : 0.55};
     flex-shrink: 0;
   }
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.06);
     color: ${colors.text.primary};
 
     svg {
-      opacity: 1;
+      opacity: 0.9;
     }
   }
 `;
 
 export const NavItemBadge = styled.span`
   margin-left: auto;
-  background-color: rgba(255, 56, 92, 0.2);
-  color: ${colors.accent.primary};
+  background-color: rgba(255, 56, 92, 0.18);
+  color: #ff6b8a;
   font-size: 11px;
-  font-weight: ${typography.fontWeights.semiBold};
-  padding: 2px 7px;
+  font-weight: ${typography.fontWeights.bold};
+  padding: 2px 8px;
   border-radius: 10px;
-  min-width: 20px;
+  min-width: 22px;
   text-align: center;
+  line-height: 1.4;
 `;
 
 export const SectionLabel = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 16px 6px;
+  padding: 20px 16px 8px;
   font-size: 11px;
   font-weight: ${typography.fontWeights.semiBold};
-  color: ${colors.text.tertiary};
+  color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 1px;
 `;
 
 export const SectionLabelAction = styled.button`
@@ -1557,27 +1564,29 @@ export const KeyboardShortcutBadge = styled.span`
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: rgba(255, 255, 255, 0.08);
-  color: ${colors.text.tertiary};
-  font-size: 11px;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 12px;
   font-weight: ${typography.fontWeights.medium};
-  padding: 2px 6px;
-  border-radius: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
   pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 `;
 
 export const CollectionDot = styled.div<{ color: string }>`
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background-color: ${(props) => props.color};
   margin-right: 10px;
   flex-shrink: 0;
+  box-shadow: 0 0 6px ${(props) => props.color}40;
 `;
 
 export const SidebarDivider = styled.div`
   height: 1px;
   background-color: rgba(255, 255, 255, 0.06);
-  margin: 4px 16px;
+  margin: 8px 16px;
 `;

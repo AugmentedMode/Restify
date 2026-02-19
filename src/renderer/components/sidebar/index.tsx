@@ -588,7 +588,7 @@ function Sidebar({
                 <SidebarSearch filter={filter} setFilter={setFilter} />
 
                 {/* Zone 1: Quick Nav */}
-                <div style={{ padding: '4px 0' }}>
+                <div style={{ padding: '4px 0 2px' }}>
                   {settings.general.showHistory && (
                     <NavItemRow
                       icon={<FaHistory />}
@@ -656,7 +656,7 @@ function Sidebar({
 
                 {/* Zone 3: Lower Nav */}
                 <SidebarDivider />
-                <div style={{ padding: '4px 0' }}>
+                <div style={{ padding: '4px 0 6px' }}>
                   {settings.general.showNotes && (
                     <NavItemRow
                       icon={<FaStickyNote />}

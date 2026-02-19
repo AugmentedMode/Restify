@@ -10,8 +10,9 @@ const ProfileRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 4px;
+  padding: 4px 8px;
   border-radius: 8px;
+  margin-top: 2px;
 `;
 
 const ProfileSection = styled.div`
@@ -30,24 +31,24 @@ const ProfileSection = styled.div`
 `;
 
 const Avatar = styled.img`
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
 `;
 
 const ProfilePlaceholder = styled.div`
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background-color: #333;
+  background-color: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #aaa;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 `;
 
