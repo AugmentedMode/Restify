@@ -8,24 +8,21 @@ import {
   FaFolderPlus,
   FaPlus,
   FaColumns,
-  FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
-  FaCode,
-  FaDatabase,
-  FaPalette,
-  FaSitemap,
-  FaTimes,
   FaCog,
   FaGithub,
   FaRobot,
   FaLightbulb,
   FaKey
 } from 'react-icons/fa';
-import { 
-  Sidebar as SidebarContainer, 
-  SidebarContent, 
+import {
+  Sidebar as SidebarContainer,
+  SidebarContent,
   ResizeHandle,
+  SectionLabel,
+  SectionLabelAction,
+  SidebarDivider,
 } from '../../styles/StyledComponents';
 import { modalDataStore } from '../../utils/modalDataStore';
 import { useSettings } from '../../utils/SettingsContext';
@@ -36,6 +33,7 @@ import SidebarFooter from './components/SidebarFooter';
 import SidebarSearch from './components/SidebarSearch';
 import CreatePanel from './components/CreatePanel';
 import NavTooltip from './components/NavTooltip';
+import NavItemRow from './components/NavItemRow';
 import ContextMenu from './components/ContextMenu';
 import CollectionsSection from './sections/CollectionsSection';
 import HistorySection from './sections/HistorySection';
@@ -47,8 +45,6 @@ import GitHubSection from './sections/GitHubSection';
 import AISection from '../sidebar/sections/AISection';
 import AIPromptsSection from '../sidebar/sections/AIPromptsSection';
 
-// Dynamically load the SettingsSection with an import() to avoid errors
-// when the file hasn't been created yet
 const SettingsSection = React.lazy(() => import('../settings/SettingsSection'));
 
 // Hooks
@@ -71,7 +67,6 @@ import AddCollectionModal from '../modals/AddCollectionModal';
 // Types
 import { ApiRequest, Folder, HttpMethod, RequestHistoryItem, Environment, Note, SecretsProfile } from '../../types';
 
-// Animation variants
 const sidebarVariants = {
   expanded: { width: 300 },
   collapsed: { width: 70 },
@@ -154,10 +149,8 @@ function Sidebar({
   onOpenSettings = () => {},
   onNavigateToNotes = () => {},
 }: SidebarProps) {
-  // Get settings from context
   const { settings } = useSettings();
 
-  // Use hooks for state management
   const { sidebarWidth, isResizing, handleResizeStart } = useSidebarResize(300);
   const { expandedFolders, toggleFolder, toggleAllFolders } = useExpandedFolders();
   const { expandedSections, toggleSection } = useExpandedSections();
@@ -165,7 +158,7 @@ function Sidebar({
   const {
     showImportCurlModal,
     setShowImportCurlModal,
-    showImportFileModal, 
+    showImportFileModal,
     setShowImportFileModal,
     renameModal,
     setRenameModal,
@@ -188,51 +181,44 @@ function Sidebar({
     toggleCreatePanel,
   } = useModalState();
 
-  // Additional state
   const [filter, setFilter] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<string>(window.location.pathname);
 
-  // Listen for route changes to update the current route state
   useEffect(() => {
     const handleRouteChange = () => {
       setCurrentRoute(window.location.pathname);
     };
-
     window.addEventListener('popstate', handleRouteChange);
     return () => {
       window.removeEventListener('popstate', handleRouteChange);
     };
   }, []);
 
-  // Toggle sidebar collapsed state
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
-  // Toggle settings panel visibility
   const toggleSettings = () => {
     setShowSettings(!showSettings);
   };
 
-  // Navigation function for AI Prompts
+  // Navigation helpers
   const navigateToAIPrompts = () => {
     if (window.location.pathname !== '/ai-prompts') {
       window.history.pushState({}, '', '/ai-prompts');
       window.dispatchEvent(new Event('popstate'));
     }
   };
-  
-  // Handle adding a new AI Prompt
+
   const handleAddNewPrompt = () => {
     if (window.location.pathname !== '/ai-prompts/new') {
       window.history.pushState({}, '', '/ai-prompts/new');
       window.dispatchEvent(new Event('popstate'));
     }
   };
-  
-  // Handle viewing saved prompts
+
   const handleViewSavedPrompts = () => {
     if (window.location.pathname !== '/ai-prompts/saved') {
       window.history.pushState({}, '', '/ai-prompts/saved');
@@ -240,7 +226,40 @@ function Sidebar({
     }
   };
 
-  // Handle rename
+  const navigateToKanban = () => {
+    if (window.location.pathname !== '/kanban') {
+      window.history.pushState({}, '', '/kanban');
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
+  const navigateToSecretsManager = () => {
+    onSelectSecretsProfile && onSelectSecretsProfile({ id: null } as any);
+    if (window.location.pathname !== '/secrets') {
+      window.history.pushState({}, '', '/secrets');
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
+  const navigateToGitHub = () => {
+    if (window.location.pathname !== '/github') {
+      window.history.pushState({}, '', '/github');
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
+  const navigateToAI = () => {
+    if (window.location.pathname !== '/ai') {
+      window.history.pushState({}, '', '/ai');
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
+  const navigateToHistory = () => {
+    toggleSection('history');
+  };
+
+  // Handlers
   const handleRename = (newName: string) => {
     if (renameModal.item && renameModal.itemType) {
       onRenameItem(
@@ -253,7 +272,6 @@ function Sidebar({
     }
   };
 
-  // Handle delete
   const handleDelete = () => {
     if (deleteModal.item && deleteModal.itemType) {
       onDeleteItem(deleteModal.item.id, deleteModal.itemType);
@@ -261,7 +279,6 @@ function Sidebar({
     }
   };
 
-  // Handle move
   const handleMove = (targetPath: string[]) => {
     if (moveModal.item && moveModal.itemType) {
       onMoveItem(
@@ -273,31 +290,22 @@ function Sidebar({
     }
   };
 
-  // Handle add request
   const handleAddRequest = (request: ApiRequest, path: string[]) => {
-    // Save the request data in our store
     modalDataStore.setLastCreatedRequest(request);
-    
-    // Call the parent's function with just the path
     onAddRequest(path);
     hideAddRequestModal();
   };
 
-  // Handle add collection
   const handleAddCollection = (collection: Folder) => {
-    // Save the collection data in our store
     modalDataStore.setLastCreatedCollection(collection);
-    
-    // Call the parent's function
     onAddFolder(collection.id);
     hideAddCollectionModal();
   };
 
-  // Handle context menu actions
   const handleContextMenuAction = (
-    action: string, 
-    item: any, 
-    itemType: 'collection' | 'folder' | 'request' | 'note', 
+    action: string,
+    item: any,
+    itemType: 'collection' | 'folder' | 'request' | 'note',
     path: string[]
   ) => {
     switch (action) {
@@ -305,7 +313,7 @@ function Sidebar({
         setRenameModal({
           visible: true,
           item,
-          itemType: itemType === 'note' ? 'request' : itemType, // Handle note type
+          itemType: itemType === 'note' ? 'request' : itemType,
           path,
         });
         break;
@@ -313,7 +321,7 @@ function Sidebar({
         setDeleteModal({
           visible: true,
           item,
-          itemType: itemType === 'note' ? 'request' : itemType, // Handle note type
+          itemType: itemType === 'note' ? 'request' : itemType,
           path,
         });
         break;
@@ -330,7 +338,7 @@ function Sidebar({
       case 'duplicate':
         if (itemType === 'request') {
           onDuplicateRequest(item.id);
-        } else if ('title' in item) { // Check for note property
+        } else if ('title' in item) {
           onDuplicateNote && onDuplicateNote(item.id);
         }
         break;
@@ -346,26 +354,25 @@ function Sidebar({
     closeContextMenu();
   };
 
-  // Render context menu based on type
   const renderContextMenu = () => {
     if (!contextMenu.visible) return null;
-    
+
     return (
       <ContextMenu
         item={contextMenu.item}
         itemType={contextMenu.itemType as 'collection' | 'folder' | 'request' | 'note'}
         position={{ x: contextMenu.x, y: contextMenu.y }}
         onAction={(action: string) => handleContextMenuAction(
-          action, 
-          contextMenu.item, 
-          contextMenu.itemType as 'collection' | 'folder' | 'request' | 'note', 
+          action,
+          contextMenu.item,
+          contextMenu.itemType as 'collection' | 'folder' | 'request' | 'note',
           contextMenu.path
         )}
       />
     );
   };
 
-  // Render collapsed sidebar navigation
+  // Collapsed sidebar navigation
   const renderCollapsedNav = () => (
     <div
       style={{
@@ -373,9 +380,70 @@ function Sidebar({
         flexDirection: 'column',
         alignItems: 'center',
         padding: '20px 0',
-        gap: '20px',
+        gap: '12px',
       }}
     >
+      {settings.general.showHistory && (
+        <NavTooltip title="History" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: expandedSections.history
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: expandedSections.history ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onClick={navigateToHistory}
+            className="nav-item"
+          >
+            <FaHistory size={18} />
+          </div>
+        </NavTooltip>
+      )}
+
+      {settings.general.showBoards && (
+        <NavTooltip title="Kanban Board" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: currentRoute === '/kanban'
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: currentRoute === '/kanban' ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onClick={navigateToKanban}
+            className="nav-item"
+          >
+            <FaColumns size={18} />
+          </div>
+        </NavTooltip>
+      )}
+
+      <NavTooltip title="AI Assistant" isCollapsed={isSidebarCollapsed}>
+        <div
+          style={{
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            backgroundColor: currentRoute === '/ai'
+              ? 'rgba(255, 56, 92, 0.1)'
+              : 'transparent',
+            color: currentRoute === '/ai' ? '#FF385C' : 'inherit',
+            transition: 'all 0.2s',
+          }}
+          onClick={navigateToAI}
+          className="nav-item"
+        >
+          <FaRobot size={18} />
+        </div>
+      </NavTooltip>
+
       {settings.general.showCollections && (
         <NavTooltip title="Collections" isCollapsed={isSidebarCollapsed}>
           <div
@@ -392,114 +460,7 @@ function Sidebar({
             onClick={() => toggleSection('collections')}
             className="nav-item"
           >
-            <FaBookmark size={20} />
-          </div>
-        </NavTooltip>
-      )}
-
-      {/* AI Assistant */}
-      <NavTooltip title="AI Assistant" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: expandedSections.ai
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: expandedSections.ai ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
-          }}
-          onClick={() => {
-            toggleSection('ai');
-            window.history.pushState({}, '', '/ai');
-            window.dispatchEvent(new Event('popstate'));
-          }}
-          className="nav-item"
-        >
-          <FaRobot size={20} />
-        </div>
-      </NavTooltip>
-
-      {/* AI Prompts */}
-      <NavTooltip title="AI Prompts" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: currentRoute.startsWith('/ai-prompts')
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: currentRoute.startsWith('/ai-prompts') ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
-          }}
-          onClick={() => {
-            navigateToAIPrompts();
-          }}
-          className="nav-item"
-        >
-          <FaLightbulb size={20} />
-        </div>
-      </NavTooltip>
-
-      {settings.general.showBoards && (
-        <NavTooltip title="Kanban Board" isCollapsed={isSidebarCollapsed}>
-          <div
-            style={{
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: expandedSections.kanban
-                ? 'rgba(255, 56, 92, 0.1)'
-                : 'transparent',
-              color: expandedSections.kanban ? '#FF385C' : 'inherit',
-              transition: 'all 0.2s',
-            }}
-            onClick={() => toggleSection('kanban')}
-            className="nav-item"
-          >
-            <FaColumns size={20} />
-          </div>
-        </NavTooltip>
-      )}
-
-      <NavTooltip title="Environments" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: expandedSections.environments
-              ? 'rgba(255, 56, 92, 0.1)'
-              : 'transparent',
-            color: expandedSections.environments ? '#FF385C' : 'inherit',
-            transition: 'all 0.2s',
-          }}
-          onClick={() => toggleSection('environments')}
-          className="nav-item"
-        >
-          <FaGlobeAmericas size={20} />
-        </div>
-      </NavTooltip>
-
-      {settings.general.showHistory && (
-        <NavTooltip title="History" isCollapsed={isSidebarCollapsed}>
-          <div
-            style={{
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: expandedSections.history
-                ? 'rgba(255, 56, 92, 0.1)'
-                : 'transparent',
-              color: expandedSections.history ? '#FF385C' : 'inherit',
-              transition: 'all 0.2s',
-            }}
-            onClick={() => toggleSection('history')}
-            className="nav-item"
-          >
-            <FaHistory size={20} />
+            <FaBookmark size={18} />
           </div>
         </NavTooltip>
       )}
@@ -523,10 +484,50 @@ function Sidebar({
             }}
             className="nav-item"
           >
-            <FaStickyNote size={20} />
+            <FaStickyNote size={18} />
           </div>
         </NavTooltip>
       )}
+
+      {settings.general.showSecretsManager && (
+        <NavTooltip title="Secrets Manager" isCollapsed={isSidebarCollapsed}>
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: currentRoute === '/secrets'
+                ? 'rgba(255, 56, 92, 0.1)'
+                : 'transparent',
+              color: currentRoute === '/secrets' ? '#FF385C' : 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onClick={navigateToSecretsManager}
+            className="nav-item"
+          >
+            <FaKey size={18} />
+          </div>
+        </NavTooltip>
+      )}
+
+      <NavTooltip title="AI Prompts" isCollapsed={isSidebarCollapsed}>
+        <div
+          style={{
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            backgroundColor: currentRoute.startsWith('/ai-prompts')
+              ? 'rgba(255, 56, 92, 0.1)'
+              : 'transparent',
+            color: currentRoute.startsWith('/ai-prompts') ? '#FF385C' : 'inherit',
+            transition: 'all 0.2s',
+          }}
+          onClick={navigateToAIPrompts}
+          className="nav-item"
+        >
+          <FaLightbulb size={18} />
+        </div>
+      </NavTooltip>
 
       {settings.general.showGitHub && (
         <NavTooltip title="GitHub PRs" isCollapsed={isSidebarCollapsed}>
@@ -544,139 +545,12 @@ function Sidebar({
             onClick={navigateToGitHub}
             className="nav-item"
           >
-            <FaGithub size={20} />
+            <FaGithub size={18} />
           </div>
         </NavTooltip>
       )}
-
-      {settings.general.showSecretsManager && (
-        <NavTooltip title="Secrets Manager" isCollapsed={isSidebarCollapsed}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: currentRoute === '/secrets'
-                ? 'rgba(255, 56, 92, 0.1)'
-                : 'transparent',
-              color: currentRoute === '/secrets' ? '#FF385C' : 'inherit',
-              transition: 'all 0.2s',
-            }}
-          >
-            <div
-              style={{
-                cursor: 'pointer',
-              }}
-              onClick={() => {
-                // Clear any active profile ID to show the list view
-                onSelectSecretsProfile && onSelectSecretsProfile({ id: null } as any);
-                navigateToSecretsManager();
-              }}
-              className="nav-item"
-            >
-              <FaKey size={20} />
-            </div>
-            {onAddSecretsProfile && (
-              <div
-                style={{
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '4px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddSecretsProfile();
-                }}
-                title="New Secret Group"
-              >
-                <FaPlus size={12} />
-              </div>
-            )}
-          </div>
-        </NavTooltip>
-      )}
-
-      <NavTooltip title="New Collection" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            transition: 'all 0.2s',
-          }}
-          onClick={showAddCollectionModal}
-          className="nav-item"
-        >
-          <FaFolderPlus size={20} />
-        </div>
-      </NavTooltip>
-
-      <NavTooltip title="New Request" isCollapsed={isSidebarCollapsed}>
-        <div
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            transition: 'all 0.2s',
-          }}
-          onClick={() => {
-            if (collections.length > 0) {
-              onAddRequest([collections[0].id]);
-            } else {
-              showAddCollectionModal();
-            }
-          }}
-          className="nav-item"
-        >
-          <FaPlus size={20} />
-        </div>
-      </NavTooltip>
     </div>
   );
-
-  // Navigation function for Kanban
-  const navigateToKanban = () => {
-    // Navigate to the kanban route
-    if (window.location.pathname !== '/kanban') {
-      window.history.pushState({}, '', '/kanban');
-      
-      // Dispatch a custom event to notify the App component
-      window.dispatchEvent(new Event('popstate'));
-    }
-  };
-
-  // Add a function to navigate to Secrets Manager
-  const navigateToSecretsManager = () => {
-    // Clear any active profile ID to show the list view
-    onSelectSecretsProfile && onSelectSecretsProfile({ id: null } as any);
-    
-    // Navigate to the secrets manager route
-    if (window.location.pathname !== '/secrets') {
-      window.history.pushState({}, '', '/secrets');
-      
-      // Dispatch a custom event to notify the App component
-      window.dispatchEvent(new Event('popstate'));
-    }
-  };
-
-  // Navigation function for GitHub PRs
-  const navigateToGitHub = () => {
-    // Navigate to the github route
-    if (window.location.pathname !== '/github') {
-      window.history.pushState({}, '', '/github');
-      
-      // Dispatch a custom event to notify the App component
-      window.dispatchEvent(new Event('popstate'));
-    }
-  };
 
   return (
     <motion.div
@@ -695,101 +569,81 @@ function Sidebar({
           className={isResizing ? 'active' : ''}
           onMouseDown={handleResizeStart}
         />
-        {/* Don't show the regular sidebar UI if settings are open */}
         {showSettings ? (
           <React.Suspense fallback={<div>Loading Settings...</div>}>
-            <SettingsSection 
+            <SettingsSection
               onClose={toggleSettings}
             />
           </React.Suspense>
         ) : (
           <>
-            <SidebarHeader 
-              isSidebarCollapsed={isSidebarCollapsed} 
-              toggleCreatePanel={toggleCreatePanel} 
+            <SidebarHeader
+              isSidebarCollapsed={isSidebarCollapsed}
             />
 
-            {/* Collapsed or Expanded Sidebar Content */}
             {isSidebarCollapsed ? (
               renderCollapsedNav()
             ) : (
               <>
                 <SidebarSearch filter={filter} setFilter={setFilter} />
 
+                {/* Zone 1: Quick Nav */}
+                <div style={{ padding: '4px 0' }}>
+                  {settings.general.showHistory && (
+                    <NavItemRow
+                      icon={<FaHistory />}
+                      label="History"
+                      badge={requestHistory.length}
+                      active={expandedSections.history}
+                      onClick={navigateToHistory}
+                    />
+                  )}
+                  {settings.general.showBoards && (
+                    <NavItemRow
+                      icon={<FaColumns />}
+                      label="Kanban Board"
+                      active={currentRoute === '/kanban'}
+                      onClick={navigateToKanban}
+                    />
+                  )}
+                  <NavItemRow
+                    icon={<FaRobot />}
+                    label="AI Assistant"
+                    active={currentRoute === '/ai'}
+                    onClick={navigateToAI}
+                  />
+                </div>
+
+                {/* Zone 2: Collections (scrollable middle) */}
                 <SidebarContent style={{ overflowX: 'hidden' }}>
                   {settings.general.showCollections && (
-                    <CollectionsSection
-                      collections={collections}
-                      activeRequestId={activeRequestId}
-                      expandedFolders={expandedFolders}
-                      expandedSections={expandedSections}
-                      toggleSection={() => toggleSection('collections')}
-                      toggleFolder={toggleFolder}
-                      toggleAllFolders={() => toggleAllFolders(collections)}
-                      onSelectRequest={onSelectRequest}
-                      onAddFolder={showAddCollectionModal}
-                      onAddRequest={onAddRequest}
-                      handleContextMenu={handleContextMenu}
-                      onContextMenuAction={handleContextMenuAction}
-                      filter={filter}
-                    />
+                    <>
+                      <SectionLabel>
+                        <span>COLLECTIONS</span>
+                        <SectionLabelAction
+                          onClick={showAddCollectionModal}
+                          title="New Collection"
+                        >
+                          <FaPlus />
+                        </SectionLabelAction>
+                      </SectionLabel>
+                      <CollectionsSection
+                        collections={collections}
+                        activeRequestId={activeRequestId}
+                        expandedFolders={expandedFolders}
+                        toggleFolder={toggleFolder}
+                        onSelectRequest={onSelectRequest}
+                        onAddFolder={showAddCollectionModal}
+                        onAddRequest={onAddRequest}
+                        handleContextMenu={handleContextMenu}
+                        onContextMenuAction={handleContextMenuAction}
+                        filter={filter}
+                      />
+                    </>
                   )}
 
-              
-
-                  {settings.general.showGitHub && (
-                    <GitHubSection
-                      onNavigate={navigateToGitHub}
-                    />
-                  )}
-
-                  {settings.general.showSecretsManager && (
-                    <SecretsSection
-                      secretsProfiles={secretsProfiles}
-                      activeProfileId={activeSecretsProfileId}
-                      expanded={expandedSections.secrets}
-                      toggleSection={navigateToSecretsManager}
-                      onSelectProfile={onSelectSecretsProfile}
-                      onAddProfile={onAddSecretsProfile}
-                      onImportSecrets={onImportSecrets}
-                      onExportSecrets={onExportSecrets}
-                      filter={filter}
-                    />
-                  )}
-
-                  {settings.general.showBoards && (
-                    <KanbanSection
-                      expanded={expandedSections.kanban}
-                      toggleSection={() => toggleSection('kanban')}
-                      onAddTodo={navigateToKanban}
-                      filter={filter}
-                    />
-                  )}
-
-                  {settings.general.showNotes && (
-                    <NotesSection
-                      notes={notes}
-                      activeNoteId={activeNoteId}
-                      expanded={expandedSections.notes}
-                      toggleSection={() => toggleSection('notes')}
-                      onSelectNote={onSelectNote}
-                      onAddNote={onAddNote}
-                      onOpenNoteOptions={setNoteOptionsModal}
-                      filter={filter}
-                      onNavigateToNotes={onNavigateToNotes}
-                    />
-                  )}
-
-                      {/* AI Prompts Section */}
-                      <AIPromptsSection
-                    expanded={expandedSections.aiPrompts}
-                    toggleSection={() => toggleSection('aiPrompts')}
-                    onNavigateToPrompts={navigateToAIPrompts}
-                    onAddNewPrompt={handleAddNewPrompt}
-                    onViewSavedPrompts={handleViewSavedPrompts}
-                  />
-
-                  {settings.general.showHistory && (
+                  {/* Inline expanded sections */}
+                  {expandedSections.history && settings.general.showHistory && (
                     <HistorySection
                       requestHistory={requestHistory}
                       expanded={expandedSections.history}
@@ -799,19 +653,57 @@ function Sidebar({
                     />
                   )}
                 </SidebarContent>
+
+                {/* Zone 3: Lower Nav */}
+                <SidebarDivider />
+                <div style={{ padding: '4px 0' }}>
+                  {settings.general.showNotes && (
+                    <NavItemRow
+                      icon={<FaStickyNote />}
+                      label="Notes"
+                      active={expandedSections.notes}
+                      onClick={() => {
+                        toggleSection('notes');
+                        onNavigateToNotes();
+                      }}
+                    />
+                  )}
+                  {settings.general.showSecretsManager && (
+                    <NavItemRow
+                      icon={<FaKey />}
+                      label="Secrets Manager"
+                      active={currentRoute === '/secrets'}
+                      onClick={navigateToSecretsManager}
+                    />
+                  )}
+                  <NavItemRow
+                    icon={<FaLightbulb />}
+                    label="AI Prompts"
+                    active={currentRoute.startsWith('/ai-prompts')}
+                    onClick={navigateToAIPrompts}
+                  />
+                  {settings.general.showGitHub && (
+                    <NavItemRow
+                      icon={<FaGithub />}
+                      label="Pull Requests"
+                      active={currentRoute === '/github'}
+                      onClick={navigateToGitHub}
+                    />
+                  )}
+                </div>
               </>
             )}
           </>
         )}
 
-        <SidebarFooter 
-          isSidebarCollapsed={isSidebarCollapsed} 
+        <SidebarFooter
+          isSidebarCollapsed={isSidebarCollapsed}
           toggleSidebar={toggleSidebar}
           onOpenSettings={onOpenSettings}
         />
 
         {/* CreatePanel */}
-        <CreatePanel 
+        <CreatePanel
           isVisible={showCreatePanel}
           onClose={() => toggleCreatePanel()}
           onAddCollection={showAddCollectionModal}
@@ -845,7 +737,6 @@ function Sidebar({
           onImport={onImportFromFile}
         />
 
-        {/* Modals */}
         <RenameModal
           isOpen={renameModal.visible}
           onClose={() => setRenameModal({ ...renameModal, visible: false })}
@@ -871,7 +762,6 @@ function Sidebar({
           currentPath={moveModal.path}
         />
 
-        {/* Add the NoteOptionsModal */}
         {noteOptionsModal && (
           <NoteOptionsModal
             isOpen={noteOptionsModal !== null}
@@ -886,7 +776,6 @@ function Sidebar({
               setNoteOptionsModal(null);
             }}
             onUpdateTags={(note, tags) => {
-              // Just close the modal for now - the App component doesn't support tags directly
               setNoteOptionsModal(null);
             }}
             onDuplicate={(note) => {
@@ -920,4 +809,4 @@ function Sidebar({
   );
 }
 
-export default Sidebar; 
+export default Sidebar;

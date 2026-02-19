@@ -1,35 +1,46 @@
 import React from 'react';
-import { FaCog, FaChevronLeft, FaChevronRight, FaGithub, FaUser, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaCog, FaGithub, FaQuestionCircle } from 'react-icons/fa';
 import { SidebarFooter as Footer } from '../../../styles/StyledComponents';
 import NavTooltip from './NavTooltip';
+import NavItemRow from './NavItemRow';
 import styled from 'styled-components';
 import { useGitHubProfile } from '../../../hooks/useGitHubProfile';
+
+const ProfileRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px;
+  border-radius: 8px;
+`;
 
 const ProfileSection = styled.div`
   display: flex;
   align-items: center;
-  padding: 12px;
-  border-radius: 8px;
   cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
   transition: all 0.2s;
-  margin-bottom: 4px;
+  flex: 1;
+  min-width: 0;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.06);
   }
 `;
 
 const Avatar = styled.img`
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 `;
 
 const ProfilePlaceholder = styled.div`
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: #333;
   display: flex;
@@ -37,46 +48,17 @@ const ProfilePlaceholder = styled.div`
   justify-content: center;
   color: #aaa;
   border: 2px solid rgba(255, 255, 255, 0.1);
-`;
-
-const UserInfo = styled.div<{ isCollapsed: boolean }>`
-  display: ${props => props.isCollapsed ? 'none' : 'flex'};
-  flex-direction: column;
-  margin-left: 12px;
-  overflow: hidden;
+  flex-shrink: 0;
 `;
 
 const Username = styled.span`
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.2;
-`;
-
-const Login = styled.span`
-  font-size: 12px;
-  color: #aaa;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 2px;
-`;
-
-const LoadingAnimation = styled.div`
-  @keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-  }
-  display: flex;
-  align-items: center;
-  animation: pulse 1.2s infinite ease-in-out;
-  color: #bbb;
-  font-size: 14px;
-  font-weight: 500;
+  margin-left: 10px;
 `;
 
 interface SidebarFooterProps {
@@ -85,69 +67,65 @@ interface SidebarFooterProps {
   onOpenSettings?: () => void;
 }
 
-const SidebarFooter: React.FC<SidebarFooterProps> = ({ 
-  isSidebarCollapsed, 
+const SidebarFooter: React.FC<SidebarFooterProps> = ({
+  isSidebarCollapsed,
   toggleSidebar,
-  onOpenSettings = () => {} 
+  onOpenSettings = () => {},
 }) => {
-  // Use our new hook instead of managing GitHub state directly
   const { profile, loading, isConnected } = useGitHubProfile();
 
-  // Handle profile section click based on connection status
   const handleProfileClick = () => {
-    // If profile exists, open GitHub profile page in browser
     if (profile) {
       window.open(profile.html_url, '_blank');
     } else {
-      // If not connected, trigger settings panel to open GitHub section
       onOpenSettings();
     }
   };
 
   return (
     <Footer>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-        <NavTooltip title={profile ? profile.login : "Connect to GitHub"} isCollapsed={isSidebarCollapsed}>
-          <ProfileSection className="nav-item" onClick={handleProfileClick}>
+      <NavItemRow
+        icon={<FaQuestionCircle />}
+        label="Support"
+        onClick={() => window.open('https://github.com', '_blank')}
+      />
+      <ProfileRow>
+        <NavTooltip title={profile ? profile.login : 'Connect to GitHub'} isCollapsed={isSidebarCollapsed}>
+          <ProfileSection onClick={handleProfileClick}>
             {profile ? (
               <Avatar src={profile.avatar_url} alt={profile.login} />
             ) : (
               <ProfilePlaceholder>
-                <FaGithub size={20} />
+                <FaGithub size={16} />
               </ProfilePlaceholder>
             )}
-            <UserInfo isCollapsed={isSidebarCollapsed}>
-              {loading ? (
-                <LoadingAnimation>Connecting...</LoadingAnimation>
-              ) : profile ? (
-                <>
-                  <Username>{profile.name || profile.login}</Username>
-                  {profile.name && <Login>@{profile.login}</Login>}
-                </>
-              ) : (
-                <Username>Not connected</Username>
-              )}
-            </UserInfo>
+            {!isSidebarCollapsed && (
+              <Username>
+                {loading ? 'Connecting...' : profile ? (profile.name || profile.login) : 'Not connected'}
+              </Username>
+            )}
           </ProfileSection>
         </NavTooltip>
-
         <NavTooltip title="Settings" isCollapsed={isSidebarCollapsed}>
-          <div 
+          <div
             style={{
               cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
+              padding: '6px',
+              borderRadius: '6px',
               transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              color: 'rgba(255,255,255,0.6)',
             }}
             onClick={onOpenSettings}
             className="nav-item"
           >
-            <FaCog size={20} />
+            <FaCog size={16} />
           </div>
         </NavTooltip>
-      </div>
+      </ProfileRow>
     </Footer>
   );
 };
 
-export default SidebarFooter; 
+export default SidebarFooter;

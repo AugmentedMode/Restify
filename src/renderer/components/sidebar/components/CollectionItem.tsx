@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FaChevronDown, FaChevronRight, FaFolder, FaFolderOpen, FaEllipsisV } from 'react-icons/fa';
-import { CollectionItemContainer, FolderItem, ActionButton } from '../../../styles/StyledComponents';
+import { FaChevronDown, FaChevronRight, FaEllipsisV } from 'react-icons/fa';
+import { CollectionItemContainer, FolderItem, ActionButton, CollectionDot } from '../../../styles/StyledComponents';
 import { Folder } from '../../../types';
+import { getCollectionColor } from '../../../utils/uiUtils';
 
 interface CollectionItemProps {
   collection: Folder;
@@ -49,9 +50,9 @@ const CollectionItem: React.FC<CollectionItemProps> = ({
             transition={{ duration: 0.2 }}
             style={{ marginRight: 8 }}
           >
-            {isExpanded ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+            {isExpanded ? <FaChevronDown size={10} /> : <FaChevronRight size={10} />}
           </motion.div>
-          <div style={{ marginRight: 8 }}>{isExpanded ? <FaFolderOpen /> : <FaFolder />}</div>
+          <CollectionDot color={getCollectionColor(collection.name)} />
           <div>{collection.name}</div>
         </div>
         <ActionButton
@@ -69,4 +70,4 @@ const CollectionItem: React.FC<CollectionItemProps> = ({
   );
 };
 
-export default CollectionItem; 
+export default CollectionItem;
