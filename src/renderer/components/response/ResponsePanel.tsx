@@ -65,26 +65,40 @@ const EnvSelectorButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(to right, rgba(36, 36, 36, 0.9), rgba(40, 40, 40, 0.9));
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.055) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
   padding: 8px 12px;
-  color: #f2f2f2;
+  color: rgba(243, 245, 251, 0.95);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 14px rgba(0, 0, 0, 0.2);
   
   &:hover {
-    background: linear-gradient(to right, rgba(46, 46, 46, 0.9), rgba(50, 50, 50, 0.9));
-    border-color: rgba(255, 255, 255, 0.25);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 56, 92, 0.08) 100%
+    );
+    border-color: rgba(255, 118, 154, 0.44);
     transform: translateY(-1px);
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 8px 16px rgba(255, 56, 92, 0.16);
   }
   
   &:active {
     transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 3px 8px rgba(0, 0, 0, 0.2);
   }
 `;
 
@@ -92,15 +106,17 @@ const EnvDropdown = styled.div<{ isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
-  width: 230px;
-  background-color: #1e1e1e;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  width: 244px;
+  background:
+    radial-gradient(140% 85% at -15% -20%, rgba(255, 56, 92, 0.14), transparent 58%),
+    linear-gradient(180deg, rgba(32, 33, 42, 0.98), rgba(20, 21, 27, 0.98));
+  border-radius: 10px;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.35);
   z-index: 1000;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   display: ${(props) => (props.isOpen ? 'block' : 'none')};
-  margin-top: 4px;
+  margin-top: 6px;
   max-height: 300px;
   overflow-y: auto;
 `;
@@ -111,15 +127,19 @@ const EnvDropdownItem = styled.div<{ active?: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: ${(props) => (props.active ? 'rgba(255, 56, 92, 0.15)' : 'transparent')};
-  color: ${(props) => (props.active ? '#FF385C' : 'inherit')};
+  background-color: ${(props) =>
+    props.active ? 'rgba(255, 56, 92, 0.14)' : 'transparent'};
+  color: ${(props) =>
+    props.active ? 'rgba(255, 242, 246, 0.98)' : 'rgba(223, 227, 240, 0.88)'};
+  transition: all 0.2s ease;
   
   &:hover {
-    background-color: ${(props) => (props.active ? 'rgba(255, 56, 92, 0.2)' : 'rgba(255, 255, 255, 0.05)')};
+    background-color: ${(props) =>
+      props.active ? 'rgba(255, 56, 92, 0.22)' : 'rgba(255, 255, 255, 0.06)'};
   }
   
   &:not(:last-child) {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
 `;
 
@@ -128,30 +148,55 @@ const EnvDropdownHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(0, 0, 0, 0.18);
+  color: rgba(211, 216, 232, 0.72);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 `;
 
 const EnvDropdownActions = styled.div`
   display: flex;
   padding: 8px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(0, 0, 0, 0.18);
   gap: 8px;
 `;
 
 const EnvActionButton = styled.button`
-  background-color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
   padding: 6px 10px;
-  color: white;
+  color: rgba(236, 239, 248, 0.92);
   font-size: 12px;
   cursor: pointer;
   flex: 1;
+  transition: all 0.2s ease;
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 56, 92, 0.14);
+    border-color: rgba(255, 116, 148, 0.5);
+    color: #ffffff;
+  }
+`;
+
+const ResponseSettingsButton = styled(SettingsButton)`
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.045) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  color: rgba(219, 224, 238, 0.88);
+  margin-left: 6px;
+
+  &:hover {
+    background: rgba(255, 56, 92, 0.14);
+    border-color: rgba(255, 122, 156, 0.46);
+    color: rgba(255, 255, 255, 0.96);
   }
 `;
 
@@ -1173,7 +1218,7 @@ function ResponsePanel({
         <EnvSelectorButton onClick={() => setShowEnvDropdown(!showEnvDropdown)}>
           <FaGlobeAmericas size={14} style={{ color: '#FF385C' }} />
           <span style={{ flex: 1 }}>{currentEnvironment ? currentEnvironment.name : 'Global Environment'}</span>
-          <FaChevronDown size={10} style={{ opacity: 0.7 }} />
+          <FaChevronDown size={10} style={{ opacity: 0.75, color: 'rgba(235, 238, 248, 0.85)' }} />
         </EnvSelectorButton>
         
         <EnvDropdown isOpen={showEnvDropdown}>
@@ -1201,7 +1246,7 @@ function ResponsePanel({
                   border: 'none',
                   padding: '4px',
                   cursor: 'pointer',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'rgba(231, 235, 247, 0.72)',
                   borderRadius: '4px',
                   display: 'flex',
                   alignItems: 'center',
@@ -1227,8 +1272,8 @@ function ResponsePanel({
               {env.name}
               <span style={{ 
                 fontSize: '10px', 
-                color: 'rgba(255, 255, 255, 0.5)', 
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                color: 'rgba(219, 223, 238, 0.72)', 
+                backgroundColor: 'rgba(255, 255, 255, 0.07)',
                 padding: '1px 6px',
                 borderRadius: '10px',
                 marginLeft: 'auto',
@@ -1257,7 +1302,7 @@ function ResponsePanel({
                     border: 'none',
                     padding: '4px',
                     cursor: 'pointer',
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    color: 'rgba(231, 235, 247, 0.72)',
                     borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
@@ -1279,7 +1324,7 @@ function ResponsePanel({
                     border: 'none',
                     padding: '4px',
                     cursor: 'pointer',
-                    color: 'rgba(255, 56, 92, 0.7)',
+                    color: 'rgba(255, 120, 155, 0.86)',
                     borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
@@ -1843,26 +1888,26 @@ function ResponsePanel({
             }}
           >
             {!isMassiveResponse && !isVeryLargeResponse && (
-              <SettingsButton
+              <ResponseSettingsButton
                 onClick={toggleFormat}
                 title={
                   isPrettyFormat ? 'View Simple Format' : 'View Pretty Format'
                 }
               >
                 {isPrettyFormat ? <FaCode /> : <FaMagic />}
-              </SettingsButton>
+              </ResponseSettingsButton>
             )}
 
             {isLargeResponse && (
-              <SettingsButton
+              <ResponseSettingsButton
                 onClick={toggleRawMode}
                 title={isRawMode ? 'View Indented JSON' : 'View Compact JSON'}
               >
                 <FaCode />
-              </SettingsButton>
+              </ResponseSettingsButton>
             )}
 
-            <SettingsButton
+            <ResponseSettingsButton
               onClick={handleGenerateTypes}
               title="Generate TypeScript Types"
               style={{
@@ -1870,20 +1915,21 @@ function ResponsePanel({
               }}
             >
               <FaFileCode />
-            </SettingsButton>
+            </ResponseSettingsButton>
 
-            <SettingsButton
+            <ResponseSettingsButton
               onClick={() => handleCopy(JSON.stringify(response.data, null, 2))}
               title={copied ? 'Copied!' : 'Copy Response'}
               style={{
-                background: copied ? '#4a4a4a' : undefined,
+                background: copied ? 'rgba(255, 56, 92, 0.2)' : undefined,
+                borderColor: copied ? 'rgba(255, 118, 154, 0.56)' : undefined,
                 transition: 'all 0.2s ease',
                 transform: copied ? 'scale(0.95)' : 'scale(1)',
               }}
             >
               <FaCopy color={copied ? '#ff7eb9' : undefined} />
-            </SettingsButton>
-            <SettingsButton
+            </ResponseSettingsButton>
+            <ResponseSettingsButton
               onClick={() => {
                 const blob = new Blob(
                   [JSON.stringify(response.data, null, 2)],
@@ -1899,7 +1945,7 @@ function ResponsePanel({
               title="Download Response"
             >
               <FaDownload />
-            </SettingsButton>
+            </ResponseSettingsButton>
           </div>
         )}
       </ResponseTabs>

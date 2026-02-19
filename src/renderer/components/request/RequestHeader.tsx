@@ -7,7 +7,7 @@ import {
   MethodSelector,
   UrlInput,
   UrlContainer,
-  SendButton,
+  RequestSendButton,
   Spinner
 } from '../../styles/StyledComponents';
 
@@ -148,10 +148,10 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
             width: '100%',
             maxHeight: '200px',
             overflowY: 'auto',
-            backgroundColor: '#2a2a2a',
-            border: '1px solid #444',
-            borderRadius: '4px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            backgroundColor: 'rgba(19, 20, 27, 0.98)',
+            border: '1px solid rgba(255,255,255,0.16)',
+            borderRadius: '10px',
+            boxShadow: '0 12px 24px rgba(0, 0, 0, 0.28)',
             marginTop: '4px'
           }}>
             {suggestions.map(variable => (
@@ -161,13 +161,13 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
                 style={{
                   padding: '8px 12px',
                   cursor: 'pointer',
-                  borderBottom: '1px solid #444',
+                  borderBottom: '1px solid rgba(255,255,255,0.08)',
                   transition: 'background-color 0.2s',
                   display: 'flex',
                   alignItems: 'center'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#333';
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
@@ -176,7 +176,7 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
                 <span style={{ color: '#FF385C', fontWeight: 'bold', marginRight: '8px' }}>
                   {variable}
                 </span>
-                <span style={{ color: '#999', fontSize: '12px' }}>
+                <span style={{ color: 'rgba(196,200,214,0.72)', fontSize: '12px' }}>
                   {currentEnvironment?.variables[variable]}
                 </span>
               </div>
@@ -185,11 +185,11 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
         )}
       </UrlContainer>
 
-      <SendButton onClick={() => onSendRequest(request)} disabled={isLoading}>
+      <RequestSendButton onClick={() => onSendRequest(request)} disabled={isLoading}>
         {isLoading ? <Spinner /> : <FaPaperPlane />}
-      </SendButton>
+      </RequestSendButton>
     </RequestHeaderContainer>
   );
 };
 
-export default RequestHeader; 
+export default RequestHeader;

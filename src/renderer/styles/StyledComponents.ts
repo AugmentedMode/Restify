@@ -499,79 +499,95 @@ export const RequestContainer = styled.div`
   display: flex;
   flex-direction: column;
   width: 50%;
-  border-right: 1px solid ${colors.border.light};
+  background:
+    radial-gradient(95% 70% at 6% -16%, rgba(255, 86, 126, 0.12), transparent 62%),
+    linear-gradient(180deg, #14151a 0%, #101116 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
 
   @media (max-width: 1200px) {
     width: 100%;
     height: 50%;
     border-right: none;
-    border-bottom: 1px solid ${colors.border.light};
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 `;
 
 export const StatusBar = styled.div`
   display: flex;
   align-items: center;
-  padding: 6px 16px;
-  background-color: ${colors.background.secondary};
-  border-top: 1px solid ${colors.border.light};
+  padding: 8px 14px;
+  background-color: rgba(20, 21, 27, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 12px;
-  color: ${colors.text.tertiary};
+  color: rgba(194, 198, 212, 0.76);
   justify-content: space-between;
 `;
 
 export const StatusBarItem = styled.div`
   display: flex;
   align-items: center;
-  margin-right: 16px;
+  margin-right: 14px;
 
   svg {
     margin-right: 6px;
-    font-size: 14px;
+    font-size: 12px;
+    color: rgba(255, 137, 168, 0.9);
   }
 `;
 
 export const RequestHeader = styled.div`
   display: flex;
-  padding: 12px 16px;
-  border-bottom: 1px solid ${colors.border.light};
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   align-items: center;
-  background-color: ${colors.background.secondary};
+  gap: 8px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.015)
+  );
 `;
 
 export const UrlContainer = styled.div`
   position: relative;
   flex: 1;
-  margin-right: 8px;
   display: flex;
   align-items: center;
-  background-color: ${colors.background.elevated};
-  border-radius: 8px;
-  border: 1px solid ${colors.border.light};
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 20px rgba(0, 0, 0, 0.16);
   overflow: hidden;
 `;
 
 export const MethodSelector = styled.select`
   background-color: transparent;
-  color: ${colors.text.secondary};
+  color: rgba(220, 224, 238, 0.88);
   padding: 8px 12px;
   font-weight: ${typography.fontWeights.bold};
   width: auto;
-  min-width: 90px;
-  font-size: 13px;
+  min-width: 98px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
   cursor: pointer;
   appearance: none;
   border: none;
-  border-right: 1px solid ${colors.border.light};
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
   background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
   background-repeat: no-repeat;
   background-position: right 8px top 50%;
   background-size: 8px auto;
 
   option {
-    background-color: ${colors.background.tertiary};
-    color: ${colors.text.primary};
+    background-color: #1f2028;
+    color: rgba(245, 246, 250, 0.95);
     padding: 8px;
   }
 
@@ -611,18 +627,18 @@ export const MethodSelector = styled.select`
 export const UrlInput = styled.input<{ hasProtocol?: boolean }>`
   flex: 1;
   background-color: transparent;
-  color: ${colors.text.primary};
+  color: rgba(245, 246, 250, 0.95);
   border: none;
   padding: 10px 12px;
   font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
-  font-size: 13px;
+  font-size: 14px;
   
   &:focus {
     outline: none;
   }
 
   &::placeholder {
-    color: ${colors.text.tertiary};
+    color: rgba(196, 199, 212, 0.62);
   }
 `;
 
@@ -640,23 +656,70 @@ export const SendButton = styled.button`
   }
 `;
 
+export const RequestSendButton = styled.button`
+  border: 1px solid rgba(255, 116, 148, 0.48);
+  background: linear-gradient(145deg, #ff517d 0%, #ff3860 100%);
+  color: #ffffff;
+  width: 44px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 4px 8px rgba(255, 56, 92, 0.14);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.015);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      0 6px 10px rgba(255, 56, 92, 0.18);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  svg {
+    font-size: 15px;
+  }
+`;
+
 export const ResponseContainer = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: ${colors.background.secondary};
-  border-left: 1px solid ${colors.border.light};
+  background:
+    radial-gradient(125% 92% at 12% -18%, rgba(255, 86, 126, 0.11), transparent 58%),
+    radial-gradient(120% 95% at 106% 108%, rgba(255, 149, 88, 0.08), transparent 65%),
+    linear-gradient(180deg, #15161c 0%, #101117 100%);
+  border-left: 1px solid rgba(255, 255, 255, 0.11);
   overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 `;
 
 export const ResponseHeader = styled.div`
   display: flex;
   align-items: center;
-  height: 44px;
-  background-color: ${colors.background.secondary};
-  border-bottom: 1px solid ${colors.border.light};
-  gap: 12px;
-  padding: 0 16px;
+  min-height: 46px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.045) 0%,
+    rgba(255, 255, 255, 0.014) 100%
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  gap: 10px;
+  padding: 0 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
 `;
 
 export const StatusPill = styled.div<{ success: boolean }>`
@@ -664,9 +727,12 @@ export const StatusPill = styled.div<{ success: boolean }>`
   align-items: center;
   justify-content: center;
   padding: 4px 10px;
-  border-radius: 4px;
-  font-weight: 500;
-  font-size: 13px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  border: 1px solid
+    ${({ success }) =>
+      success ? 'rgba(82, 226, 170, 0.28)' : 'rgba(255, 110, 120, 0.3)'};
   background-color: ${({ success }) =>
     success ? 'rgba(0, 192, 127, 0.15)' : 'rgba(255, 58, 48, 0.15)'};
   color: ${({ success }) =>
@@ -676,16 +742,20 @@ export const StatusPill = styled.div<{ success: boolean }>`
 export const ResponseMetric = styled.div`
   display: flex;
   align-items: center;
-  font-size: 13px;
-  color: ${colors.text.secondary};
+  font-size: 12px;
+  color: rgba(204, 208, 222, 0.82);
 `;
 
 export const ResponseTabs = styled.div`
   display: flex;
   align-items: center;
-  height: 40px;
-  background-color: ${colors.background.secondary};
-  border-bottom: 1px solid ${colors.border.light};
+  min-height: 42px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.032) 0%,
+    rgba(255, 255, 255, 0.008) 100%
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   padding-left: 8px;
 `;
 
@@ -693,39 +763,50 @@ export const ResponseTab = styled.div<{ active: boolean }>`
   height: 100%;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 14px;
   font-size: 13px;
   cursor: pointer;
   color: ${({ active }) =>
-    active ? colors.text.primary : colors.text.tertiary};
+    active ? 'rgba(248, 248, 252, 0.98)' : 'rgba(214, 218, 234, 0.9)'};
+  font-weight: ${({ active }) =>
+    active ? typography.fontWeights.semiBold : typography.fontWeights.medium};
   border-bottom: 2px solid
     ${({ active }) => (active ? colors.accent.primary : 'transparent')};
+  border-radius: 8px 8px 0 0;
+  background: ${({ active }) =>
+    active ? 'rgba(255, 56, 92, 0.08)' : 'transparent'};
 
   &[data-active="true"] {
-    color: ${colors.text.primary};
+    color: rgba(248, 248, 252, 0.98);
     border-bottom: 2px solid ${colors.accent.primary};
+    background: rgba(255, 56, 92, 0.08);
   }
 
   &:hover {
-    color: ${colors.text.primary};
-    background-color: ${colors.background.tertiary};
+    color: rgba(248, 248, 252, 0.96);
+    background-color: rgba(255, 56, 92, 0.1);
   }
 `;
 
 export const TabContent = styled.div`
   flex: 1;
   overflow-y: auto;
-  background-color: ${colors.background.primary};
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(255, 76, 116, 0.05), transparent 55%),
+    linear-gradient(180deg, rgba(15, 16, 21, 0.95), rgba(11, 12, 18, 0.985));
 `;
 
 export const ResponseBody = styled.div`
-  padding: 16px;
+  padding: 14px;
   font-family: 'Fira Code', monospace;
   font-size: 13px;
   white-space: pre-wrap;
   overflow: auto;
   height: 100%;
-  color: ${colors.text.primary};
+  color: rgba(241, 243, 251, 0.96);
+  background:
+    radial-gradient(140% 120% at -12% -20%, rgba(255, 56, 92, 0.035), transparent 60%),
+    transparent;
 `;
 
 export const JSONValue = styled.span<{ type: string }>`
@@ -793,24 +874,31 @@ export const EnvironmentSelector = styled.div`
 `;
 
 export const TabContainer = styled.div`
-  background-color: ${colors.background.secondary};
-  border-bottom: 1px solid ${colors.border.light};
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 `;
 
 export const TabList = styled.div`
   display: flex;
-  padding: 0 16px;
+  padding: 0 14px;
 `;
 
 export const Tab = styled.div<{ active: boolean }>`
-  padding: 12px 16px;
-  margin-right: 8px;
+  padding: 11px 14px;
+  margin-right: 4px;
   cursor: pointer;
   position: relative;
   color: ${(props) =>
-    props.active ? colors.text.primary : colors.text.tertiary};
+    props.active ? 'rgba(248, 248, 252, 0.98)' : 'rgba(214, 218, 234, 0.9)'};
   font-weight: ${typography.fontWeights.medium};
   transition: color 0.2s ease;
+  border-radius: 8px 8px 0 0;
+  background: ${(props) =>
+    props.active ? 'rgba(255, 56, 92, 0.08)' : 'transparent'};
 
   &::after {
     content: '';
@@ -818,7 +906,7 @@ export const Tab = styled.div<{ active: boolean }>`
     bottom: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 2px;
     background-color: ${(props) =>
       props.active ? colors.accent.primary : 'transparent'};
     border-radius: 3px 3px 0 0;
@@ -826,7 +914,8 @@ export const Tab = styled.div<{ active: boolean }>`
   }
 
   &:hover {
-    color: ${colors.text.primary};
+    color: rgba(248, 248, 252, 0.96);
+    background: rgba(255, 56, 92, 0.08);
   }
 `;
 
@@ -843,8 +932,8 @@ export const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 16px;
-  gap: 12px;
+  padding: 14px;
+  gap: 10px;
 `;
 
 export const FormRow = styled.div`
@@ -852,38 +941,43 @@ export const FormRow = styled.div`
   align-items: center;
   width: 100%;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 6px;
 
   input[type='text'] {
     flex: 1;
-    padding: 10px 12px;
-    border-radius: 4px;
-    border: 1px solid ${colors.border.light};
-    background-color: ${colors.background.primary};
-    color: ${colors.text.primary};
-    font-size: 14px;
+    padding: 10px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: rgba(12, 13, 18, 0.72);
+    color: rgba(245, 246, 250, 0.95);
+    font-size: 13px;
 
     &:focus {
       outline: none;
-      border-color: ${colors.accent.primary};
-      box-shadow: 0 0 0 2px ${colors.accent.secondary}40;
+      border-color: rgba(255, 104, 140, 0.62);
+      box-shadow: 0 0 0 2px rgba(255, 56, 92, 0.18);
     }
   }
 
   button {
-    background: transparent;
-    border: none;
-    color: ${colors.text.tertiary};
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(181, 186, 204, 0.76);
     cursor: pointer;
     padding: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: 8px;
 
     &:hover {
       color: ${colors.status.error};
-      background-color: rgba(255, 70, 70, 0.1);
+      background-color: rgba(255, 70, 70, 0.14);
+      border-color: rgba(255, 110, 110, 0.26);
     }
   }
 `;
@@ -892,38 +986,50 @@ export const CheckboxLabel = styled.label`
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 6px;
+  padding: 4px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 
   input {
     margin: 0;
     width: 16px;
     height: 16px;
     cursor: pointer;
+    accent-color: #ff3860;
   }
 `;
 
 export const TextArea = styled.textarea`
   ${inputStyle}
   width: 100%;
-  height: 200px;
+  height: 260px;
   resize: vertical;
-  border-radius: 8px;
+  border-radius: 10px;
   font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
   line-height: 1.5;
+  border-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(12, 13, 18, 0.8);
+  color: rgba(245, 246, 250, 0.95);
+
+  &:focus {
+    border-color: rgba(255, 104, 140, 0.62);
+    box-shadow: 0 0 0 2px rgba(255, 56, 92, 0.18);
+  }
 `;
 
 export const AddButton = styled.button`
   ${secondaryButtonStyle}
-  color: ${colors.text.primary};
-  border: 1px solid ${colors.border.light};
+  color: rgba(240, 243, 250, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   padding: 8px 12px;
   margin-top: 8px;
   margin-bottom: 4px;
   font-size: 13px;
   font-weight: ${typography.fontWeights.medium};
   transition: all 0.2s ease;
-  background-color: rgba(255, 255, 255, 0.03);
-  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -937,12 +1043,30 @@ export const AddButton = styled.button`
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    border-color: ${colors.border.medium};
+    border-color: rgba(255, 255, 255, 0.22);
   }
 
   &:active {
     transform: scale(0.98);
   }
+`;
+
+export const EmptyStateHint = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  color: rgba(203, 208, 226, 0.74);
+  font-size: 12px;
+  letter-spacing: 0.01em;
 `;
 
 export const EmptyStateContainer = styled.div`

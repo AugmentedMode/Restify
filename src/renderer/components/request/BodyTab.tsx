@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaCode } from 'react-icons/fa';
+import { FaCode, FaCopy, FaTrash } from 'react-icons/fa';
 import { BodyType } from '../../types';
 import { BodyTabProps } from './types';
 import {
@@ -108,10 +108,29 @@ const BodyTab: React.FC<BodyTabProps> = ({
   // Generate line numbers
   const renderLineNumbers = () => {
     return Array.from({ length: lineCount }, (_, i) => i + 1).map((num) => (
-      <div key={num} className="line-number">
+      <div
+        key={num}
+        style={{
+          height: '1.5em',
+          paddingRight: '8px',
+        }}
+      >
         {num}
       </div>
     ));
+  };
+
+  const copyBodyContent = () => {
+    if (typeof request.body === 'string' && request.body.length > 0) {
+      void navigator.clipboard.writeText(request.body);
+    }
+  };
+
+  const clearBodyContent = () => {
+    onRequestChange({
+      ...request,
+      body: '',
+    });
   };
 
   if (!hasBody) {
@@ -120,7 +139,7 @@ const BodyTab: React.FC<BodyTabProps> = ({
         style={{
           padding: '30px',
           textAlign: 'center',
-          color: 'rgba(255, 255, 255, 0.6)',
+          color: 'rgba(191, 196, 214, 0.75)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -140,7 +159,7 @@ const BodyTab: React.FC<BodyTabProps> = ({
       <div
         style={{
           display: 'flex',
-          marginBottom: '14px',
+          marginBottom: '12px',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -151,26 +170,27 @@ const BodyTab: React.FC<BodyTabProps> = ({
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
+          gap: '8px',
           position: 'relative',
           width: '100%',
         }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            background: 'rgba(255, 255, 255, 0.07)',
-            borderRadius: '8px',
+            background: 'rgba(255, 255, 255, 0.06)',
+            borderRadius: '10px',
             padding: '0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            border: '1px solid rgba(255,255,255,0.14)',
             flex: '1',
             maxWidth: '240px',
             position: 'relative',
           }}>
             <span style={{
               padding: '8px 12px',
-              borderRight: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.5)',
-              fontSize: '13px',
+              borderRight: '1px solid rgba(255,255,255,0.12)',
+              color: 'rgba(186,191,208,0.74)',
+              fontSize: '12px',
+              letterSpacing: '0.03em',
               whiteSpace: 'nowrap',
             }}>
               Format
@@ -183,9 +203,9 @@ const BodyTab: React.FC<BodyTabProps> = ({
                 padding: '8px 30px 8px 12px',
                 appearance: 'none',
                 backgroundColor: 'transparent',
-                color: 'white',
+                color: 'rgba(244,245,250,0.96)',
                 border: 'none',
-                fontSize: '14px',
+                fontSize: '13px',
                 cursor: 'pointer',
                 width: '100%',
               }}
@@ -202,7 +222,7 @@ const BodyTab: React.FC<BodyTabProps> = ({
               position: 'absolute',
               right: '10px',
               pointerEvents: 'none',
-              color: '#FF5A5F',
+              color: '#FF6B92',
               fontSize: '10px',
             }}>
               ▼
@@ -222,8 +242,8 @@ const BodyTab: React.FC<BodyTabProps> = ({
                   type="button"
                   onClick={formatBody}
                   style={{
-                    background: 'rgba(255, 90, 95, 0.15)',
-                    border: '1px solid rgba(255, 90, 95, 0.3)',
+                    background: 'rgba(255, 56, 92, 0.14)',
+                    border: '1px solid rgba(255, 106, 140, 0.34)',
                     color: 'rgba(255, 255, 255, 0.9)',
                     cursor: 'pointer',
                     display: 'flex',
@@ -231,78 +251,54 @@ const BodyTab: React.FC<BodyTabProps> = ({
                     gap: '6px',
                     fontSize: '13px',
                     padding: '7px 12px',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     transition: 'all 0.2s ease',
                     fontWeight: '500',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 90, 95, 0.25)';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 90, 95, 0.15)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 90, 95, 0.25)';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 90, 95, 0.15)';
-                    e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
                   <FaCode /> Format
                 </button>
-                
-                {/* Additional action buttons could go here */}
+
                 <button
                   type="button"
-                  onClick={() => {}}
+                  onClick={copyBodyContent}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.07)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    color: 'rgba(197, 201, 216, 0.82)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '14px',
-                    padding: '7px 7px',
-                    borderRadius: '6px',
+                    fontSize: '13px',
+                    padding: '8px',
+                    borderRadius: '8px',
                     transition: 'all 0.2s ease',
                   }}
                   title="Copy body content"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
+                  <FaCopy />
                 </button>
-                
+
                 <button
                   type="button"
-                  onClick={() => {}}
+                  onClick={clearBodyContent}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.07)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    color: 'rgba(197, 201, 216, 0.82)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '14px',
-                    padding: '7px 7px',
-                    borderRadius: '6px',
+                    fontSize: '13px',
+                    padding: '8px',
+                    borderRadius: '8px',
                     transition: 'all 0.2s ease',
                   }}
                   title="Clear body content"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  </svg>
+                  <FaTrash />
                 </button>
               </>
             )}
@@ -316,10 +312,10 @@ const BodyTab: React.FC<BodyTabProps> = ({
             display: 'flex',
             borderRadius: '12px',
             overflow: 'hidden',
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(8, 8, 16, 0.2)',
+            border: '1px solid rgba(255,255,255,0.14)',
+            background: 'rgba(12, 13, 19, 0.56)',
             position: 'relative',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.18)',
           }}>
             {/* Line Numbers */}
             <div
@@ -327,13 +323,13 @@ const BodyTab: React.FC<BodyTabProps> = ({
               style={{
                 width: '50px',
                 padding: '12px 8px',
-                background: 'rgba(0,0,0,0.3)',
-                color: 'rgba(255,255,255,0.4)',
+                background: 'rgba(0,0,0,0.28)',
+                color: 'rgba(180,185,202,0.62)',
                 fontFamily: 'SF Mono, monospace',
-                fontSize: '14px',
+                fontSize: '13px',
                 textAlign: 'right',
                 userSelect: 'none',
-                borderRight: '1px solid rgba(255,255,255,0.1)',
+                borderRight: '1px solid rgba(255,255,255,0.12)',
                 overflowY: 'hidden',
               }}
             >
@@ -358,55 +354,15 @@ const BodyTab: React.FC<BodyTabProps> = ({
                 border: 'none',
                 resize: 'vertical',
                 background: 'transparent',
-                color: 'rgba(255,255,255,0.9)',
+                color: 'rgba(245,246,250,0.92)',
                 width: 'calc(100% - 50px)',
               }}
             />
           </div>
-          
-          {/* Add styling for the shine animation */}
-          <style>
-            {`
-              @keyframes shine {
-                0% {
-                  transform: translateX(-100%);
-                }
-                50%, 100% {
-                  transform: translateX(100%);
-                }
-              }
-              
-              .line-number {
-                height: 1.5em;
-                padding-right: 8px;
-              }
-              
-              textarea:focus {
-                outline: none;
-                box-shadow: 0 0 0 2px rgba(255, 90, 95, 0.3);
-              }
-              
-              select:focus {
-                outline: none;
-                box-shadow: none;
-              }
-              
-              /* Style for dropdown options (works in some browsers) */
-              option {
-                background-color: #222;
-                color: white;
-                padding: 8px;
-              }
-              
-              button:hover {
-                background: rgba(255, 255, 255, 0.15) !important;
-              }
-            `}
-          </style>
         </>
       )}
     </FormGroup>
   );
 };
 
-export default BodyTab; 
+export default BodyTab;

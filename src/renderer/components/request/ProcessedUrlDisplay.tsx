@@ -19,11 +19,11 @@ const CopyButton = ({ url }: { url: string }) => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       style={{
-        backgroundColor: copied ? 'rgba(73,204,144,0.1)' : 'rgba(255,56,92,0.08)',
+        backgroundColor: copied ? 'rgba(255,170,112,0.14)' : 'rgba(255,56,92,0.08)',
         border: '1px solid',
-        borderColor: copied ? 'rgba(73,204,144,0.2)' : 'rgba(255,56,92,0.15)',
-        color: copied ? 'rgba(73,204,144,0.9)' : 'rgba(255,56,92,0.9)',
-        borderRadius: '4px',
+        borderColor: copied ? 'rgba(255,189,142,0.32)' : 'rgba(255,56,92,0.18)',
+        color: copied ? 'rgba(255,211,181,0.95)' : 'rgba(255,56,92,0.9)',
+        borderRadius: '6px',
         padding: '4px 6px',
         cursor: 'pointer',
         display: 'flex',
@@ -67,9 +67,9 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
         {/* Split the baseUrl by components and highlight env vars */}
         {baseUrl.split(/(https?:\/\/|\/)/g).map((part, index) => {
           if (part === 'http://' || part === 'https://') {
-            return <span key={`base-${index}`} style={{ color: '#61afef' }}>{part}</span>;
+            return <span key={`base-${index}`} style={{ color: '#8ab4ff' }}>{part}</span>;
           } else if (part === '/') {
-            return <span key={`base-${index}`} style={{ color: '#c678dd' }}>{part}</span>;
+            return <span key={`base-${index}`} style={{ color: '#ff8bc2' }}>{part}</span>;
           } else {
             // Check if the original URL had a variable that was replaced in this part
             const originalPart = originalUrl.split(/(https?:\/\/|\/)/g)[index];
@@ -113,7 +113,7 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
                   <span 
                     key={`query-${index}`} 
                     style={{ 
-                      color: '#56b6c2',
+                      color: '#ffb36e',
                       fontWeight: 'bold'
                     }}
                   >
@@ -121,7 +121,7 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
                   </span>
                 );
               } else { // Parameter values
-                return <span key={`query-${index}`} style={{ color: '#98c379' }}>{part}</span>;
+                return <span key={`query-${index}`} style={{ color: '#d9ddee' }}>{part}</span>;
               }
             })}
           </>
@@ -136,17 +136,17 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       style={{ 
-        margin: '4px 0 12px 0',
+        margin: '4px 0 10px 0',
         position: 'relative',
       }}
     >
       <div style={{ 
         padding: '14px',
-        borderRadius: '8px',
-        background: 'linear-gradient(145deg, rgba(14,14,16,0.8) 0%, rgba(22,22,26,0.8) 100%)',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.05) inset',
+        borderRadius: '10px',
+        background: 'linear-gradient(145deg, rgba(17,18,24,0.88) 0%, rgba(20,21,29,0.9) 100%)',
+        boxShadow: '0 10px 18px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.08) inset',
         backdropFilter: 'blur(10px)',
-        color: '#f5f5f5',
+        color: 'rgba(245,246,250,0.95)',
         overflow: 'hidden',
         position: 'relative',
       }}>
@@ -157,7 +157,7 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
           left: '-10%',
           width: '30%',
           height: '150%',
-          background: 'radial-gradient(circle, rgba(255,56,92,0.05) 0%, rgba(255,56,92,0) 70%)',
+          background: 'radial-gradient(circle, rgba(255,56,92,0.06) 0%, rgba(255,56,92,0) 70%)',
           zIndex: 0,
         }} />
         
@@ -177,7 +177,7 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
               gap: '8px',
               fontSize: '12px',
               fontWeight: 500,
-              color: 'rgba(255,255,255,0.6)',
+              color: 'rgba(196,200,214,0.74)',
               textTransform: 'uppercase',
               letterSpacing: '0.5px'
             }}>
@@ -205,9 +205,9 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
             overflowY: 'hidden',
             whiteSpace: 'nowrap',
             padding: '8px 10px',
-            backgroundColor: 'rgba(0,0,0,0.3)',
-            borderRadius: '4px',
-            border: '1px solid rgba(255,56,92,0.1)',
+            backgroundColor: 'rgba(0,0,0,0.28)',
+            borderRadius: '6px',
+            border: '1px solid rgba(255,255,255,0.12)',
             position: 'relative',
           }}>
             {/* Render the URL with highlighted variables and params */}
@@ -222,7 +222,7 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
               gap: '6px',
               marginTop: '8px',
               fontSize: '11px',
-              color: 'rgba(255,255,255,0.4)',
+              color: 'rgba(186,191,208,0.72)',
             }}>
               <FaLock size={9} />
               Using <span style={{ 
@@ -242,4 +242,4 @@ const ProcessedUrlDisplay: React.FC<ProcessedUrlDisplayProps> = ({
   );
 };
 
-export default ProcessedUrlDisplay; 
+export default ProcessedUrlDisplay;

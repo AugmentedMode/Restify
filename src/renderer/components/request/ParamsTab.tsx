@@ -7,6 +7,7 @@ import {
   FormRow,
   CheckboxLabel,
   AddButton,
+  EmptyStateHint,
 } from '../../styles/StyledComponents';
 
 const ParamsTab: React.FC<ParamsTabProps> = ({ request, onRequestChange }) => {
@@ -44,8 +45,15 @@ const ParamsTab: React.FC<ParamsTabProps> = ({ request, onRequestChange }) => {
     });
   };
 
+  const hasParams = request.params.length > 0;
+
   return (
     <FormGroup>
+      {!hasParams && (
+        <EmptyStateHint>
+          No query parameters yet. Add one to test filters, search terms, or pagination.
+        </EmptyStateHint>
+      )}
       {request.params.map((param: RequestParam, index: number) => {
         // Generate a stable key that doesn't include the name property
         // Using a prefix that clearly indicates it's not relying *just* on index

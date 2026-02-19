@@ -7,16 +7,17 @@ import {
   FormRow,
   CheckboxLabel,
   AddButton,
+  EmptyStateHint,
 } from '../../styles/StyledComponents';
 
 const HeadersTab: React.FC<HeadersTabProps> = ({ request, onRequestChange }) => {
+  const currentHeaders = Array.isArray(request.headers) ? request.headers : [];
+
   const handleHeaderChange = (
     index: number,
     field: keyof RequestHeader,
     value: string | boolean,
   ) => {
-    // Ensure headers is an array before attempting to spread it
-    const currentHeaders = Array.isArray(request.headers) ? request.headers : [];
     const updatedHeaders = [...currentHeaders];
     
     updatedHeaders[index] = {
@@ -31,9 +32,6 @@ const HeadersTab: React.FC<HeadersTabProps> = ({ request, onRequestChange }) => 
   };
 
   const addHeader = () => {
-    // Ensure headers is an array before attempting to spread it
-    const currentHeaders = Array.isArray(request.headers) ? request.headers : [];
-    
     onRequestChange({
       ...request,
       headers: [...currentHeaders, { name: '', value: '', enabled: true }],
@@ -41,8 +39,6 @@ const HeadersTab: React.FC<HeadersTabProps> = ({ request, onRequestChange }) => 
   };
 
   const removeHeader = (index: number) => {
-    // Ensure headers is an array before attempting to spread it
-    const currentHeaders = Array.isArray(request.headers) ? request.headers : [];
     const updatedHeaders = [...currentHeaders];
     updatedHeaders.splice(index, 1);
 
@@ -54,7 +50,12 @@ const HeadersTab: React.FC<HeadersTabProps> = ({ request, onRequestChange }) => 
 
   return (
     <FormGroup>
-      {Array.isArray(request.headers) && request.headers.map((header: RequestHeader, index: number) => {
+      {currentHeaders.length === 0 && (
+        <EmptyStateHint>
+          No headers yet. Add auth or custom headers to mirror real client requests.
+        </EmptyStateHint>
+      )}
+      {currentHeaders.map((header: RequestHeader, index: number) => {
         // Generate a stable key that doesn't include the name property
         // Using a prefix that clearly indicates it's not relying *just* on index
         return (
